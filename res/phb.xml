@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="utf-8"?><!-- ex: softtabstop=3 shiftwidth=3 tabstop=3 expandtab -->
+<pinapplebun xmlns="data:sheepy.pineapplebun">
+   <comment>
+      Coder: Sheepy
+   </comment>
+   <entity type="language" id="common" name="Common" letter="Common" rarity="common" />
+   <entity type="language" id="dwarvish" name="Dwarvish" letter="Dwarvish" rarity="common" />
+   <entity type="alignment" id="lg" name="Lawful Good"     lawful="1" chaotic="0" good="1" evil="0" />
+   <entity type="alignment" id="ng" name="Neutral Good"    lawful="0" chaotic="0" good="1" evil="0" />
+   <entity type="alignment" id="cg" name="Chaotic Good"    lawful="0" chaotic="1" good="1" evil="0" />
+   <entity type="alignment" id="ln" name="Lawful Neutral"  lawful="1" chaotic="0" good="0" evil="0" />
+   <entity type="alignment" id="tn" name="True Neutral"    lawful="0" chaotic="0" good="0" evil="0" />
+   <entity type="alignment" id="cn" name="Chaotic Neutral" lawful="0" chaotic="1" good="0" evil="0" />
+   <entity type="alignment" id="le" name="Lawful Evil"     lawful="1" chaotic="0" good="0" evil="1" />
+   <entity type="alignment" id="ne" name="Neutral Evil"    lawful="0" chaotic="0" good="0" evil="1" />
+   <entity type="alignment" id="ce" name="Chaotic Evil"    lawful="0" chaotic="1" good="0" evil="1" />
+
+   <!--ability_generation id="standard" name="Standard Array" option="16,14,13,12,10,8" />
+   <ability_generation id="pt_buy_30" name="Normal Point Buy" min="8" max="16">
+      <point score="9" point="1" />
+      <point score="10" point="2" />
+      <point score="11" point="3" />
+      <point score="12" point="4" />
+      <point score="13" point="5" />
+      <point score="14" point="7" />
+      <point score="15" point="9" />
+      <point score="16" point="12" />
+   </ability_generation-->
+
+   <character id="pc" name="PHB Character">
+      <choice id="race" option="race" />
+      <choice id="alignment" option="entity[type=alignment]" />
+      <choice id="bonus_language" multiple="you.intm@level&lt;=1" repeat="false" option="entity[type=language][rarity=common]" />
+      <choice id="background" option="background" min="0" />
+      <choice id="class" option="class" />
+   </character>
+
+   <race id="dwarf">
+      <feature id="size" set.size="m" />
+      <feature id="speed" set.speed="25" />
+      <feature id="language" prof.language="list[common,dwarvish]" />
+      <feature id="darkvision">
+         <effect type="darkvision">60</effect>
+      </feature>
+      <feature id="ability_score_adjustment">
+         <adj prop="con" value="1" />
+      </feature>
+      <feature id="dwarven_weapon_proficiency">
+         <prof type="weapon" value="list[battleaxe,handaxe,throwing_hammer,warhammer]" />
+      </feature>
+      <feature id="dwarven_resilience">
+         <victum type="save" when="effect[type=poison]" set.advantage="1" />
+         <victum type="damage" when="effect[type=poison]" set.resistant="1" />
+      </feature>
+      <feature id="stonecunning" /><!-- You have advantage on any intelligence (history) check related to the origin of particular stonework. Additionally, when exploring underground environments, you cannot become lost. -->
+      <feature id="subrace">
+         <choice repeat="false">
+            <option>
+               <feature id="hill">
+                  <feature id="ability_score_adjustment" adj.str="1" />
+                  <feature id="dwarven_toughness" adj.hp_max="you.level" />
+               </feature>
+            </option>
+            <option>
+               <feature id="mountain">
+                  <feature id="ability_score_adjustment" adj.wis="1" />
+                  <feature id="armor_mastery">
+                     <prof type="weapon" value="equipment[type=armor][category=light,medium]" />
+                     <when true="you.equiped.has[category=medium,heavy][type=armor]" adj.ac="1" />
+                  </feature>
+               </feature>
+            </option>
+         </choice>
+      </feature>
+   </race>
+</pinapplebun>
