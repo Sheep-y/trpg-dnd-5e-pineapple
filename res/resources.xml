@@ -1,4 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?><!-- ex: softtabstop=3 shiftwidth=3 tabstop=3 expandtab -->
-<pinapplebun xmlns="data:sheepy.pineapplebun">
-   <source id="PHB" name="Product Catalog" publisher="Wizards of the Coast" category="Rulebook" type="Corerules" url="res/phb.xml" autoload="1" />
-</pinapplebun>

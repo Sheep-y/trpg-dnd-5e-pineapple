@@ -1,4 +1,4 @@
-<!DOCTYPE html><html><head><meta charset="UTF-8"> <!-- ex: softtabstop=3 shiftwidth=3 tabstop=3 expandtab 
+<!DOCTYPE html><html><head><meta charset="UTF-8"> <!-- ex: softtabstop=3 shiftwidth=3 tabstop=3 expandtab
 -->
 <link rel="stylesheet" href="css/style.css" />
 </head><body>
@@ -6,23 +6,25 @@
    <div id="dlg"></div>
 </div>
 <script src='js/sparrow.js'></script>
-<script src='js/dd5e/core.js'></script>
-<script src='js/dd5e/rule.js'></script>
-<script src='js/dd5e/factory.js'></script>
+<script src='js/dd5/core.js'></script>
+<script src='js/dd5/resource.js'></script>
+<script src='js/dd5/part.js'></script>
+<script src='js/dd5/parser.js'></script>
+<script src='js/dd5/effect.js'></script>
+<script src='js/dd5/expression.js'></script>
+<script src='js/dd5/loader.js'></script>
 <script>(function(){ 'use strict';
 
-if ( ! document.querySelectorAll || ! window.Storage ) {
-   alert('Please use a modern browser. 請使用最新的瀏覽器。');
-}
+if ( ! document.querySelectorAll || ! window.Storage || ! dd5 ) {
+   return alert('Please use a modern browser. 請使用最新的瀏覽器。');
+}/*
+try {
+   let harmony = true;
+} catch ( SyntaxError ) {
+   alert( 'Requires IE 11+ or Firefox, or enable "experimental JavaScript features" on Chrome.' )
+}*/
 
-function append_dialog( msg ) { _('#dlg')[0].innerHTML += msg + "<br/>"; }
-
-append_dialog( 'Initialised.' );
-dd5e.Loader.init({ 
-   url: 'res/resources.xml', 
-   onload: function ui_init_onload(){ append_dialog( 'Loaded resource list.' ); },
-   onres: function ui_init_onres( res ){ append_dialog( 'Loaded ' + res.name + '.' ); },
-});
+dd5.loader.load( 'res/sources.js' );
 
 })()</script>
 </body></html>

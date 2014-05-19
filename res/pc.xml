@@ -1,15 +1,19 @@
 <?xml version="1.0" encoding="UTF-8"?><!-- ex: softtabstop=3 shiftwidth=3 tabstop=3 expandtab -->
-<pinapple xmlns="data:sheepy.pineapplebun">
-   <character type="pc" name="xx">
-      <slot id="race" selection="dwarf">
-         <slot id="subrace" selection="hill">
+<pinapplebun xmlns="data:sheepy.pineapplebun" version="20140325">
+   <character chosen="pc" name="Firstname Lastname">
+      <slot id="race" chosen="dwarf">
+         <slot id="subrace" chosen="hill">
       </slot>
-      <choice id="bonus_language" multiple="you.intm@level&lt;=1" repeat="false" option="entity[type=language][rarity=common]" />
-      <slot id='background' selection="solider">
-         <slot id='skill_1' selection="bluff" />
+      <slot id="bonus_language">
+         <chosen>elven</chosen>
+         <chosen>dwarven</chosen>
       </slot>
-      <slot id='class' selection="solider">
-         <skill1 selection="bluff" />
+      <slot id='background' chosen="solider">
+         <slot id='skill' chosen="athletic,mount_land" />
+      </slot>
+      <slot id='class' chosen="fighter">
+         <slot id='skill' chosen="history" />
       </slot>
    </character>
-</pinapple>
+   <!-- Can have other characters, settings etc -->
+</pinapplebun>
