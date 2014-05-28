@@ -11,6 +11,7 @@ var template = ns.template;
 var part = ns.template.part;
 
 var err_loader = '[dd5.loader] ';
+var nserr = ns.event.error;
 
 var loader = ns.loader = {
 
@@ -24,7 +25,7 @@ var loader = ns.loader = {
          var src, version = data.version;
 
          // Version validation
-         if ( version === undefined ) return ns.error( err_loader + "Cannot load data without version." );
+         if ( version === undefined ) return nserr( err_loader + "Cannot load data without version." );
          delete data.version;
 
          // Set the sourcebook of this data, if provided
@@ -80,7 +81,7 @@ var loader = ns.loader = {
                   break;
 
                default :
-                  ns.error( err_loader + "Unknown resource type: " + type );
+                  nserr( err_loader + "Unknown resource type: " + type );
             }
 
             if ( ! proc ) continue;
@@ -90,7 +91,7 @@ var loader = ns.loader = {
                   var result = proc( e );
                   loader.jsonp.check_unused_attr( e, ' in ' + result.l10n );
                } catch ( ex ) {
-                  ns.error( err_loader + 'Cannot load ' + type + ( e.id ? '.'+e.id : '' ) + ':\n' + ex );
+                  nserr( err_loader + 'Cannot load ' + type + ( e.id ? '.'+e.id : '' ) + ':\n' + ex );
                }
             };
             if ( data_entry instanceof Array ) data_entry.forEach( safe );
@@ -113,6 +114,7 @@ var loader = ns.loader = {
                   delete e.slot;
                }
 
+               var id = e.id;
                if ( ! e.part ) throw "Part type not specified: " + JSON.stringify( e );
                that.add( loader.jsonp.compile_part( e ) );
                delete e.part;
@@ -120,7 +122,9 @@ var loader = ns.loader = {
                loader.jsonp.check_unused_attr( e, ' in part #' + i + ' of ' + that.l10n );
 
             } catch ( ex ) {
-               ns.error( err_loader + 'Cannot compile part #' + i + ' of ' + that.l10n + ':\n' + ex );
+               var msg = 'Cannot compile part #' + i;
+               if ( id ) msg += ' (' + id + ')';
+               nserr( err_loader + msg + ' of ' + that.l10n + ':\n' + ex );
             }
          } );
          _.info( 'Compiled ' + this.l10n );
@@ -129,7 +133,7 @@ var loader = ns.loader = {
       },
 
       check_unused_attr : function dd5_Loader_jsonp_check_unused_attr ( e, postfix ) {
-         for ( var a in e ) _.warn( err_loader + 'Unused attribute "' + a + '" (value "' + e[a] + '")' + postfix ); 
+         for ( var a in e ) ns.event.warn( err_loader + 'Unused attribute "' + a + '" (value "' + e[a] + '")' + postfix ); 
       },
 
       compile_shortcut : function dd5_Loader_jsonp_compile_shortcut ( e ) {
@@ -224,7 +228,6 @@ var loader = ns.loader = {
       }
    },
 
-   Parser : null, // Defined in parser.js
    parser : null // Created in parser.js
 };
 

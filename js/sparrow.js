@@ -164,7 +164,7 @@ _.mapper._map = function _mapper_map( base, prop ) {
 
    } else {
       // Object, assume to be property map.
-      var result = {};
+      var result = new _.map();
       for ( var p in prop ) {
          result[ p ] = _mapper_map( base, prop[ p ] );
       }
@@ -173,13 +173,15 @@ _.mapper._map = function _mapper_map( base, prop ) {
 };
 
 /**
- * Map given array-like data.
+ * Usage 1: Map given array-like data.
+ * Usage 2: Create a new object suitable for map.
  *
- * @param {Array} data Data to map. Will be modified and returned.
- * @param {string|Array} field Name of field to grab or mapping to perform.
+ * @param {Array=} data Data to map. Will be modified and returned.
+ * @param {string|Array=} field Name of field to grab or mapping to perform.
  * @returns {Array} Mapped data.
  */
 _.map = function _map ( data, field ) {
+   if ( arguments.length <= 0 ) return Object.create( null );
    return _.ary( data ).map( _.mapper.apply( null, _.ary( arguments ).slice( 1 ) ) );
 };
  
@@ -195,11 +197,13 @@ _.dummy = function _dummy () {};
 
 /**
  * A function that returns whatever passed in.
+ * @param  {*} v Any input.
+ * @return {*} Output first parameter.
  */
 _.echo = function _echo ( v ) { return v; };
 
 /**
- * Call a function - if it is not undefined - in a try block and return its return value.
+ * Call a function - but only if it is defined - and return its return value.
  *
  * @param {Function} func   function to call. Must be function, null, or undefined.
  * @param {Object} thisObj  'this' to be passed to the function
@@ -208,14 +212,12 @@ _.echo = function _echo ( v ) { return v; };
  */
 _.call = function _call ( func, thisObj, param /*...*/ ) {
    if ( func === undefined || func === null ) return undefined;
-   if ( arguments.length <= 1 ) return func();
-   else if ( arguments.length <= 3 ) return func.call( thisObj, param );
-   else return func.apply( thisObj, _.ary(arguments, 2) );
+   return func.apply( thisObj, _.ary(arguments, 2) );
 };
 
 /**
  * Given a function, return a function that when called multiple times, only the first call will be transferred.
- * Useful for concurrent error callback, so that the first error pass through and subsequence error doesn't.
+ *
  * Parameters passed to the returned function will be supplied to the callback as is.
  * This function will disregard any additional parameters.
  *
@@ -228,24 +230,8 @@ _.callonce = function _call ( func ) {
       if ( ! func ) return; // func would be set to null after first call
       var f = func;
       func = null;
-      return _.call.apply( this, [ f, this ].concat( _.ary( arguments ) ) );
+      return f.apply( this, arguments );
    };
-};
-
-/**
- * Capture parameters in a closure and return a callback function
- * that can be called at a later time.
- *
- * @param {function(...*)} func   function to call. Must be function, null, or undefined.
- * @param {Object=} thisObj  'this' to be passed to the function
- * @param {...*} param      call parameters, can have multiple.
- * @returns {function()}      A callback function that, when called, will call func with given this and parameters.
- */
-_.callfunc = function _callfunc ( func, thisObj, param /*...*/ ) {
-   if ( arguments.length <= 1 ) return func;
-   if ( arguments.length <= 3 ) return function _callback1 () { func.call( thisObj, param ); };
-   var arg = _.ary( arguments, 2 );
-   return function _callback () { func.apply( thisObj, arg ); };
 };
 
 if ( window.setImmediate === undefined ) {
@@ -315,7 +301,7 @@ _.ajax = function _ajax ( option, onload ) {
                _.call( option.ondone, xhr, xhr );
             } );
          }
-         xhr.onreadystatechange = function(){}; // Avoid repeated call
+         xhr.onreadystatechange = function() {}; // Avoid repeated call
       }
    };
    try {
@@ -491,7 +477,7 @@ _.xml = function _xml ( txt ) {
  * @returns {Object} Converted JS object.
  */
 _.xml.toObject = function _xml_toObject ( root, base ) {
-   if ( base === undefined ) base = {};
+   if ( base === undefined ) base = new _.map();
    base.tagName = root.tagName;
    _.ary( root.attributes ).forEach( function _xml_toObject_attr_each( attr ) {
       base[attr.name] = attr.value;
@@ -658,7 +644,7 @@ _.alert = function _alert ( msg ) {
 };
 _.alert.timeout = 0;
 _.alert.log = [];
-alert
+
 /**
  * Coarse timing function. Will show time relative to previous call as well as last reset call.
  * Time is in unit of ms. This routine is not designed for fine-grain measurement that would justify using high performance timer.
@@ -714,7 +700,7 @@ _.escJs = function _escJs ( txt ) {
  * @returns {string} Escaped text.
  */
 _.escRegx = function _escRegx ( txt ) {
-   return txt.replace( /[()?*+.\\{}[\]]/g, '\\$0' );
+   return txt.replace( /([()?*+.\\{}[\]])/g, '\\$1' );
 };
 
 /**
@@ -800,8 +786,8 @@ _.inherit = function _inherit ( base, constructor, prototype ) {
    _.assert( ! base || base.prototype, _inherit.name + ': base must be inheritable' );
    _.assert( constructor === null || typeof( constructor ) === 'function', _inherit.name + ': constructor must be function' );
    if ( constructor === null ) {
-      if ( base ) constructor = function _inherit_constructor (){ base.apply( this, arguments ); };
-      else constructor = function (){}; // Must always create new function, do not share
+      if ( base ) constructor = function _inherit_constructor () { base.apply( this, arguments ); };
+      else constructor = function _dummy_constructor () {}; // Must always create new function, do not share
    }
    if ( base ) {
       var proto = constructor.prototype = Object.create( base.prototype );
@@ -826,6 +812,7 @@ _.deepclone = function _clone( base ) {
  */
 _.clone = function _clone( base, deep ) {
    var result, type = typeof( base );
+   if ( base === null ) return base;
    switch ( type ) {
       case 'object' :
          // TODO: Handle RegExp, Date, DOM etc
@@ -835,12 +822,14 @@ _.clone = function _clone( base, deep ) {
             result = Object.create( Object.getPrototypeOf( base ) );
          }
          break;
+
       case 'function' :
          result = function _cloned_function() { return base.apply( this, arguments ); };
          result.prototype = base.prototype;
          break;
+
       default :
-         result = base;
+         return base;
    }
    for ( var k in base ) result[k] = deep ? _.clone( base[k], deep ) : base[k];
    return result;
@@ -910,22 +899,50 @@ _.domlist = function _domlist ( e ) {
  * @param {(string|Node|NodeList|Array|Object)} ary Element selcetor, dom list, or Array of JS objects.
  * @param {(Object|string)} obj Attribute or attribute object to set.
  * @param {*=} value Value to set.
+ * @param {string=} flag w for non-writable, e for non-enumerable, c for non-configurable.  Can start with '^' for easier understanding.
  * @returns {Array} Array-ifed ary
  */
-_.set = function _set ( ary, obj, value ) {
+_.set = function _set ( ary, obj, value, flag ) {
+   // Forward to _.attr if looks like DOM stuff
    if ( typeof( ary ) === 'string' || ( ary && ary[0] instanceof Element ) ) {
+      if ( flag && flag !== '^' ) throw new Error( 'Property flags cannot be set on DOM elements' );
       return _.attr( ary, obj, value );
    }
-   var attr = obj;
+   // Normalise obj to attr.  e.g. given 'val', it will become {'val':'val'}
+   var attr = obj, setFunc;
    if ( _.is.literal( obj ) ) {
       attr = {};
       attr[ obj ] = value;
    }
    ary = _.ary( ary );
-   ary.forEach( function _setEach ( e ) {
-      for ( var name in attr )
-         e[ name ] = attr[ name ];
-   } );
+   // Actual run
+   if ( ! flag || flag === '^' || ! Object.defineProperties ) {
+      setFunc = function _setEach ( e ) {
+         for ( var name in attr ) {
+            e[ name ] = attr[ name ];
+         }
+      };
+
+   } else {
+      // Need to set property properties.
+      flag = flag.toLowerCase();
+      var prop = {}
+        , c = flag.indexOf( 'c' ) < 0  // False if have 'c'
+        , e = flag.indexOf( 'e' ) < 0  // False if have 'e'
+        , w = flag.indexOf( 'w' ) < 0; // False if have 'w'
+      for ( var name in attr ) {
+         prop[ name ] = {
+           value : attr[ name ],
+           configurable : c,
+           enumerable : e,
+           writable : w
+         };
+      };
+      setFunc = function _defineEach ( e ) {
+         Object.defineProperties( e, prop );
+      };
+   }
+   ary.forEach( setFunc );
    return ary;
 };
 
@@ -1100,7 +1117,7 @@ _.toggleClass = function _toggleClass ( e, className, toggle ) {
          }
       }
       cls = lst.join( ' ' );
-      if ( className != cls ) {
+      if ( className !== cls ) {
          e[ i ].className = cls;
       }
    }
@@ -1221,7 +1238,7 @@ _.Executor.prototype = {
 
       function _executor_schedule_notice ( delay ) {
          if ( exe._timer ) clearTimeout( exe._timer );
-         exe._timer = setTimeout( _.callfunc( exe.notice, exe ), delay );
+         exe._timer = setTimeout( exe.notice.bind( exe ), delay );
          return exe;
       }
 
@@ -1243,7 +1260,7 @@ _.Executor.prototype = {
             exe.running[i] = r;
             //_.info('Schedule task #' + i + ' ' + r[0].name );
             exe._lastRun = new Date().getTime();
-            setImmediate( _.callfunc( _executor_run, null, i, r ) );
+            setImmediate( _executor_run.bind( null, i, r ) );
             if ( exe.interval > 0 ) return _executor_schedule_notice ( exe.interval );
          }
       }
@@ -1265,7 +1282,7 @@ _.Executor.prototype = {
  */
 _.EventManager = function _EventManager ( events, owner ) {
    this.owner = owner;
-   var lst = this.lst = {};
+   var lst = this.lst = new _.map();
    if ( events === undefined ) {
       this.strict = false;
    } else {
@@ -1291,7 +1308,7 @@ _.EventManager.prototype = {
       var lst = this.lst[event];
       if ( ! lst ) {
          if ( this.strict && lst === undefined )
-            throw new Error( "Cannot add to unknown event '" + event + "'" );
+            throw new Error( "[sparrow.EventManager.add] Cannot add to unknown event '" + event + "'" );
          lst = this.lst[event] = [];
       }
       this.lst[event].push( listener );
@@ -1309,7 +1326,7 @@ _.EventManager.prototype = {
       var lst = this.lst[event];
       if ( ! lst ) {
          if ( this.strict && lst === undefined )
-            throw new Error( "Cannot remove from unknown event '" + event + "'" );
+            throw new Error( "[sparrow.EventManager.remove] Cannot remove from unknown event '" + event + "'" );
          return;
       }
       var i = lst.indexOf( listener );
@@ -1329,13 +1346,23 @@ _.EventManager.prototype = {
       var lst = this.lst[event];
       if ( ! lst ) {
          if ( this.strict && lst === undefined )
-            throw new Error( "Cannot fire unknown event '" + event + "'" );
+            throw new Error( "[sparrow.EventManager.fire] Cannot fire unknown event '" + event + "'" );
          return;
       }
       var l = lst.length, param = _.ary( arguments, 1 );
       for ( var i = 0 ; i < l ; i++ ) {
          lst[i].apply( this.owner, param );
       }
+   },
+   "createFireMethods" : function _EventManager_createFireMethods ( event ) {
+      var self = this;
+      _.ary( event ).forEach( function _EventManager_createFireMethods_each( evt ) {
+         if ( ! Object.hasOwnProperty( self, evt ) ) {
+            self[evt] = self.fire.bind( self, evt );
+         } else {
+            _.warn( '[sparrow.EventManager.createFireMethods] Fire method "' + evt + "' cannot be created." );
+         }
+      } );
    }
 };
 
@@ -1381,7 +1408,7 @@ _.l.currentLocale = 'en';
 _.l.fallbackLocale = 'en';
 
 /** L10n resources. */
-_.l.data = {};
+_.l.data = new _.map();
 
 /**
  * Set current locale.
@@ -1443,7 +1470,7 @@ _.l.getset = function _l_getset ( path, set, locale ) {
    // Explore path
    for ( var i = 0, len = p.length ; i < len ; i++ ) {
       var node = p[i];
-      if ( base[node] === undefined ) base[node] = {};
+      if ( base[node] === undefined ) base[node] = new _.map();
       base = base[node];
    }
    // Set or get data

@@ -10,11 +10,10 @@ var l10n = 'dd5.';
 var error_core = '[dd5] ';
 
 ns.event = new _.EventManager( [ 'error', 'warn' ], ns );
-ns.warn = function dd5_warn ( msg ) { ns.event.fire( 'warn', msg ); }
-ns.error = function dd5_error ( msg ) { ns.event.fire( 'error', msg ); };
+ns.event.createFireMethods( [ 'error', 'warn' ] );
 
-ns.event.add( 'warn', function dd5_error_handler_console ( msg ) { _.warn( msg ); } );
-ns.event.add( 'error', function dd5_error_handler_console ( msg ) { _.error( msg ); } );
+ns.event.add( 'warn', function dd5_onwarn_console ( msg ) { _.warn( msg ); } );
+ns.event.add( 'error', function dd5_onerror_console ( msg ) { _.error( msg ); } );
 
 var sys = ns.sys = {};
 
@@ -85,6 +84,17 @@ sys.Value.prototype = {
    }
 };
 
+sys.Query = function dd5_Query ( query ) {
+   this.query = query;
+   this.source = [];
+};
+sys.Query.prototype = {
+   template : undefined, // Set to true or false by first caller.
+   value : undefined,  // Return value
+   you : undefined,  // A common property
+   _source : []    // First element is latest source.
+};
+
 /**
  * A composite object. It is the shared base of components and tempalates.
  *
@@ -139,16 +149,29 @@ sys.Composite.prototype = {
    },
    toString : function dd5_Composite_toString ( ) { return this.getName(); },
 
-   query : function dd5_Composite_query ( query, source ) {
+   query : function dd5_Composite_query ( query ) {
+      if ( typeof query === 'string' )
+         query = new sys.Query( query );
+      query.template = ! ( this instanceof sys.Component );
+      this._query( query );
+      return query;
+   },
+
+   _query : function dd5_Composite__query ( query ) {
+      var children = this.getChildren();
+      if ( children.length <= 0 ) return; // If we have no children, don't border.
+
       var that = this;
-      this.getChildren().forEach( function dd5_Component_query_each ( e ) { try {
-         if ( ! source && ! e.l10n ) source = this;
-         e.query( query, source );
+      if ( this.l10n ) query._source.unshift( this );
+
+      children.forEach( function dd5_Component_query_each ( e, i ) { try {
+         e._query( query );
       } catch ( ex ) {
          if ( ! that.l10n ) throw ex;
-         ns.error( error_core + "Error when querying '" + e.type + "' in " + that.l10n + ':\n' + ex );
+         ns.event.error( error_core + "Error when querying '" + query.query + "' in " + that.l10n + '.' + i + '(' + e + '):\n' + ex );
       } } );
-      return query;
+
+      if ( this.l10n ) query._source.shift();
    },
 
    recur : function dd5_Composite_recur( pre, leaf, post, parent ) {
@@ -175,20 +198,79 @@ sys.Component = _.inherit( sys.Composite, function dd5_Component ( template ) {
 }, {
    res_template : null,
 
-   query : function dd5_Component_query ( query ) {
-      this.res_template.query( query );
-      return sys.Composite.prototype.query.call( this, query );
+   _query : function dd5_Component_query ( query ) {
+      this.res_template._query( query );
+      sys.Composite.prototype._query.call( this, query );
    }
 });
 
 sys.Character = _.inherit( sys.Component, function dd5_Character( template ) {
    sys.Component.call( this, template );
 }, {
-   query : function dd5_Character_query ( query ) {
-      if ( typeof( query ) === 'string' ) query = { query: query };
+   _query : function dd5_Character_query ( query ) {
       if ( ! query.you ) query.you = this;
-      return sys.Component.prototype.query.call( this, query );
+      sys.Component.prototype._query.call( this, query );
    }
 });
+
+
+
+var Catalog = _.inherit( null, function dd5__Catalog () {
+   this._list = [];
+}, {
+   _list : null,
+   add : function dd5__Catalog_add ( item ) { this._list.push( item ); },
+   remove : function dd5__Catalog_remove ( item ) { this._list.splice( this._list.indexOf( item ), 1 ); },
+   // find( { 'level': { '>=': 4, '<=': 6 },
+   //         'freq' : [ 'daily', 'at-will' ] } )
+   get : function dd5__Catalog_find ( criteria ) {
+      // We can do optimisation later
+      if ( typeof( criteria ) === 'string' ) criteria = { 'id' : criteria };
+      var result = this._list.concat();
+      if ( criteria ) {
+         for ( var i in criteria ) {
+            var criteron = criteria[i], filter;
+            if ( criteron instanceof Array ) {
+               // List match
+               filter = function dd5_Catalog_find_list( e ) { return criteron.indexOf(　e[i] ) >= 0; };
+            } else if ( typeof( criteron ) === 'object' ) {
+               // Range match
+               var lo = criteron['>='], hi = criteron['<='];
+               filter = function dd5_Catalog_find_range( e ) {
+                  var val = +e[i];
+                  if ( isNaN( val ) ) return false;
+                  if ( lo !== undefined && val < lo ) return false;
+                  if ( hi !== undefined && val > hi ) return false;
+                  return true;
+               };
+            } else {
+               // Plain value match
+               criteron += "";
+               filter = function dd5_Catalog_find_text( e ) { return criteron === ""+e[i]; };
+            }
+            result = result.filter( filter );
+            if ( result.length <= 0 ) break;
+         }
+      }
+      return result;
+   }
+} );
+
+/** In-system Resources */
+ns.res = {
+   "sourcebook": new Catalog(),
+   "entity"    : new Catalog(),
+   "character" : new Catalog(),
+   "feature"   : new Catalog(),
+
+   "race"      : new Catalog(),
+   "skill"     : new Catalog(),
+   "background": new Catalog(),
+   "class"     : new Catalog(),
+   "equipment" : new Catalog(),
+   "feat"      : new Catalog(),
+   "spell_list": new Catalog(),
+   "spell"     : new Catalog()
+};
 
 })( dd5 );

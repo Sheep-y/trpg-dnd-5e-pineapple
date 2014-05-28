@@ -18,17 +18,17 @@ dd5.loader.jsonp.load( { "version":"20140325", // ex: softtabstop=3 shiftwidth=3
 {"id": "sys", // Implementation of basec system rules
    "type":"system",
    "parts": [
-      "adj.str_mod : floor ( ( you.str - 10 ) / 2 )",
-      "adj.str_chk : you.str_mod", // { "part":"adj", "property":"str_chk" , "value":"you.str_mod" },
-      "adj.str_sv  : you.str_mod"
+      " adj.str_mod : floor ( ( you.str - 10 ) / 2 ) ",
+      " adj.str_chk : you.str_mod ", // alias of { "part":"adj", "property":"str_chk" , "value":"you.str_mod" },
+      " adj.str_sv  : you.str_mod "
    ]
 },
 {"id": "pc", // Standard PC
    "type":"pc",
    "parts": [
-      "set.prof_mod: [1,2,2,2,2,3,3,3,3,4,4,4,4,5,5,5,5,6,6,6,6][you.level]",
-      "adj.str_sv  : you.prof_str_sv ? you.prof_mod : 0",
-      "include : #character.sys",
+      " set.prof_mod : [1,2,2,2,2,3,3,3,3,4,4,4,4,5,5,5,5,6,6,6,6][you.level] ",
+      " adj.str_sv   : you.prof_str_sv ? you.prof_mod : 0 ",
+      " include      : #character.sys ",
 
       { "slot":"str", "minVal": 3, "maxVal": 18, "default": 10 },
       { "slot":"dex", "minVal": 3, "maxVal": 18, "default": 10 },

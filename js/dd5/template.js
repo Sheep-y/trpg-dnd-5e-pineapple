@@ -1,70 +1,13 @@
 'use strict'; // ex: softtabstop=3 shiftwidth=3 tabstop=3 expandtab
 
-_.assert( dd5, '[dd5.res] 5e core module must be loaded first.');
-_.assert( ! dd5.res, '5e resource module already loaded.' );
+_.assert( dd5, '[dd5.template] 5e core module must be loaded first.');
+_.assert( ! dd5.template, '5e template module already loaded.' );
 
-(function dd5_resource_init ( ns ){
+(function dd5_template_init ( ns ){
 
 var l10n = 'dd5.';
 var sys = ns.sys;
-
-var Catalog = _.inherit( null, function dd5__Catalog () {
-   this._list = [];
-}, {
-   _list : null,
-   add : function dd5__Catalog_add ( item ) { this._list.push( item ); },
-   remove : function dd5__Catalog_remove ( item ) { this._list.splice( this._list.indexOf( item ), 1 ); },
-   // find( { 'level': { '>=': 4, '<=': 6 },
-   //         'freq' : [ 'daily', 'at-will' ] } )
-   get : function dd5__Catalog_find ( criteria ) {
-      // We can do optimisation later
-      if ( typeof( criteria ) === 'string' ) criteria = { 'id' : criteria };
-      var result = this._list.concat();
-      if ( criteria ) {
-         for ( var i in criteria ) {
-            var criteron = criteria[i], filter;
-            if ( criteron instanceof Array ) {
-               // List match
-               filter = function dd5_Catalog_find_list( e ) { return criteron.indexOf(　e[i] ) >= 0; };
-            } else if ( typeof( criteron ) === 'object' ) {
-               // Range match
-               var lo = criteron['>='], hi = criteron['<='];
-               filter = function dd5_Catalog_find_range( e ) {
-                  var val = +e[i];
-                  if ( isNaN( val ) ) return false;
-                  if ( lo !== undefined && val < lo ) return false;
-                  if ( hi !== undefined && val > hi ) return false;
-                  return true;
-               };
-            } else {
-               // Plain value match
-               criteron += "";
-               filter = function dd5_Catalog_find_text( e ) { return criteron === ""+e[i]; };
-            }
-            result = result.filter( filter );
-            if ( result.length <= 0 ) break;
-         }
-      }
-      return result;
-   }
-} );
-
-/** In-system Resources */
-var res = ns.res = {
-   "sourcebook": new Catalog(),
-   "entity"    : new Catalog(),
-   "character" : new Catalog(),
-   "feature"   : new Catalog(),
-
-   "race"      : new Catalog(),
-   "skill"     : new Catalog(),
-   "background": new Catalog(),
-   "class"     : new Catalog(),
-   "equipment" : new Catalog(),
-   "feat"      : new Catalog(),
-   "spell_list": new Catalog(),
-   "spell"     : new Catalog()
-};
+var res = ns.res;
 
 /** Resource Templates */
 var template = ns.template = {};
@@ -77,18 +20,17 @@ template._opt_delete = function dd5_Template_opt_delete ( opt, field ) {
 };
 
 template._parse_and_delete = function dd5_Template_parse_and_delete ( that, opt, field ) {
-   field = _.ary( field );
-   try {
-      for ( var f in field ) {
-         f = field[ f ];
+   var expression = ns.loader.expression; // ns.loader may not exist when we declare this function
+   _.ary( field ).forEach( function dd5_Template_parse_and_delete_each ( f ) {
+      try {
          if ( opt[ f ] !== undefined ) {
-            that[ f ] = new template.expression.create( opt[ f ] );
+            that[ f ] = expression.create( opt[ f ] );
             delete opt[f];
          }
+      } catch ( ex ) {
+         throw 'Error parsing "' + opt[f] + '" as ' + f + ':\n' + ex;
       }
-   } catch ( ex ) {
-      throw 'Error parsing "' + opt[field] + '" as ' + field + ':\n' + ex;
-   }
+   } );
 };
 
 function check_dup ( that, criteria, id ) {

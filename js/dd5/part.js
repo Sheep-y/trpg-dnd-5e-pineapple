@@ -1,7 +1,7 @@
 'use strict'; // ex: softtabstop=3 shiftwidth=3 tabstop=3 expandtab
 
-_.assert( dd5 && dd5.res, '[dd5.template.part] 5e resource template module must be loaded first.');
-_.assert( ! dd5.template.part, '5e part template module already loaded.' );
+_.assert( dd5 && dd5.template, '[dd5.template.part] 5e template module must be loaded first.');
+_.assert( ! dd5.template.part, '5e part module already loaded.' );
 
 (function dd5_part_init ( ns ){
 
@@ -30,9 +30,9 @@ part.Slot = _.inherit( part.Part, function dd5_template_Part_Slot ( opt ) {
 
    "toString" : function dd5_Slot_toString ( ) {
       if ( this.options ) {
-         return "slot#" + this.id + ':' + this.options.exp;
+         return "slot#" + this.id + ':' + this.options;
       } else {
-         return "slot#" + this.id + ':' + this.minVal.exp + '..' + this.maxVal.exp;
+         return "slot#" + this.id + ':' + this.minVal+ '..' + this.maxVal;
       }
    },
    "_createInstance" : function dd5_Slot_createInstance () {
@@ -65,7 +65,7 @@ part.Slot.Instance = _.inherit( sys.Component, function dd5_template_Part_Slot_I
       if ( pick.createInstance ) pick = pick.createInstance();
       this.pick = pick;
    },
-   "query" : function dd5_SlotIns_query ( query, source ) {
+   "_query" : function dd5_SlotIns_query ( query ) {
       if ( this.pick ) {
          if ( query.query === this.id && query.value === undefined ) {
             if ( typeof( this.pick ) === 'number' ) {
@@ -73,11 +73,10 @@ part.Slot.Instance = _.inherit( sys.Component, function dd5_template_Part_Slot_I
             } else {
                query.value = this.pick;
             }
-         } else if ( this.pick.query ) {
-            return this.pick.query( query , source );
+         } else if ( this.pick._query ) {
+            this.pick._query( query );
          }
       }
-      return query;
    }
 });
 
@@ -87,17 +86,32 @@ part.Include = _.inherit( part.Part, function dd5_template_Part_Include ( opt ) 
    _.assert( this.include, '[dd5.Part.Include] Include part must have include property.' );
    _.assert( ! opt.parts, '[dd5.Part.Include] Include cannot have child parts.' );
 },{
+   "includeTemplate" : null,
    "copyToParentInstance" : true, // Used by Resource.create.
 
    "toString" : function dd5_Include_toString ( ) {
-      return "include." + this.include.exp;
+      return "include." + this.include;
    },
+
+   "getInclude" : function dd5_Include_getInclude ( ) {
+      if ( this.includeTemplate ) return this.includeTemplate;
+      var result = this.includeTemplate = this.include.value();
+      if ( result instanceof Array ) result = this.includeTemplate = result[0];
+      if ( ! result ) throw "[dd5.Part.Include] Include subject '" + this.include + "' not found.";
+      return result;
+   },
+
+   "_query" : function dd5_Adj_query ( query ) {
+      // If a query is originated in an instance, the included resource will receive query as a child.
+      // But if the query originates in template, it is not a child and we need to manually forward the query.
+      if ( query.template ) this.getInclude()._query( query );
+      // Query children.  Should do nothing, but better safe.
+      part.Part.prototype._query.call( this, query );
+   },
+
    "_createInstance" : function dd5_Include_createInstance () {
       var result = part.Part.prototype._createInstance.call( this );
-      var candidate = this.include.value();
-      if ( candidate instanceof Array ) candidate = candidates[0];
-      if ( ! candidate ) throw "Include subject '" + this.include + "' not found.";
-      result.add( candidate.create() );
+      result.add( this.getInclude().create() );
       return result;
    }
 });
@@ -109,21 +123,21 @@ part.Adj = _.inherit( part.Part, function dd5_template_Part_Adj ( opt ) {
    _.assert( ! opt.parts, '[dd5.Part.Adj] Adj cannot have child parts.' );
 }, {
    "toString" : function dd5_Adj_toString ( ) {
-      var str = "adj." + this.property.exp;
-      if ( this.min ) str += '.min' + this.min.exp;
-      if ( this.max ) str += '.max' + this.max.exp;
-      return str + ':' + this.value.exp;
+      var str = "adj." + this.property;
+      if ( this.min ) str += '.min' + this.min;
+      if ( this.max ) str += '.max' + this.max;
+      return str + ':' + this.value;
    },
-   "query" : function dd5_Adj_query ( query, source ) {
+   "_query" : function dd5_Adj_query ( query ) {
       var prop = this.property.value( query );
       if ( prop === query.query ) {
          if ( query.value === undefined ) query.value = new sys.Value();
          var val = this.value.value( query );
          if ( this.min ) val = Math.min( val, this.min.value( query ) );
          if ( this.max ) val = Math.max( val, this.max.value( query ) );
+         var source = query._source[0] || this;
          query.value.add( new sys.Bonus( source, val, this.type ) );
       }
-      return query;
    }
 });
 
@@ -134,18 +148,19 @@ part.Set = _.inherit( part.Part, function dd5_template_Part_Set ( opt ) {
    _.assert( ! opt.parts, '[dd5.Part.Set] Set cannot have child parts.' );
 }, {
    "toString" : function dd5_Set_toString ( ) {
-      var str = "set." + this.property.exp;
-      if ( this.min ) str += '.min' + this.min.exp;
-      if ( this.max ) str += '.max' + this.max.exp;
-      return str + ':' + this.value.exp;
+      var str = "set." + this.property;
+      if ( this.min ) str += '.min' + this.min;
+      if ( this.max ) str += '.max' + this.max;
+      return str + ':' + this.value;
    },
-   "query" : function dd5_Set_query ( query, source ) {
+   "_query" : function dd5_Set_query ( query ) {
       var prop = this.property.value( query );
       if ( prop === query.query ) {
          if ( query.value === undefined ) query.value = new sys.Value();
          var val = this.value.value( query );
          if ( this.min ) val = Math.min( val, this.min.value( query ) );
          if ( this.max ) val = Math.max( val, this.max.value( query ) );
+         var source = query._source[0] || this;
          query.value.add( new sys.Bonus( source, val, this.type ) );
       }
       return query;

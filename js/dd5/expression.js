@@ -1,11 +1,30 @@
 'use strict'; // ex: softtabstop=3 shiftwidth=3 tabstop=3 expandtab
 
-_.assert( dd5 && dd5.template, '[dd5.template.expression] 5e resource module must be loaded first.');
-_.assert( ! dd5.template.expression, '5e expression module already loaded.' );
+_.assert( dd5 && dd5.loader, '[dd5.loader.expression] 5e loader module must be loaded first.');
+_.assert( ! dd5.loader.expression, '5e expression module already loaded.' );
 
 (function dd5_expression_init ( ns ){
 
-var err_expression = '[dd5.template.expression] ';
+var err_expression = '[dd5.loader.expression] ';
+
+var exp = ns.loader.expression = { 
+   _cache : new _.map(),
+   create : function dd5_loader_expression_create ( ex ) {
+      ex = (""+ex).trim();
+      var cache = exp._cache;
+      if ( cache[ ex ] ) return cache[ ex ];
+
+      // Optimise: Create simple object for simple values.
+      var tree = ns.loader.parser.parse( ex );
+      return cache[ ex ] = new exp.Expression( ex, tree );
+   }
+};
+
+ns.eval = function dd5_eval ( exp ) {
+   return exp.create( exp ).value();
+};
+
+
 
 /**
  * A generic expression. The value() may be number, list, object, or just about anything.
@@ -13,12 +32,12 @@ var err_expression = '[dd5.template.expression] ';
  * @param {string} exp Textual expression. Mostly used in error messages for debug purpose.
  * @param {object} tree Parsed expression tree.
  */
-function dd5_Template_Expression ( exp, tree ) {
+exp.Expression = function dd5_Loader_Expression ( exp, tree ) {
    this.exp = exp;
    this.tree = tree;
    _.freeze( this );
 }
-dd5_Template_Expression.prototype = {
+exp.Expression.prototype = {
    tree : null,
    exp : null,
 
@@ -52,9 +71,9 @@ dd5_Template_Expression.prototype = {
          base = base[ prop ];
 
       } else if ( base.query ) {
-         var newQuery = _.clone( context );
+         var newQuery = Object.create( context || null );
          newQuery.query = prop;
-         delete newQuery.value;
+         newQuery.value = undefined;
          base = base.query( newQuery ).value;
 
       } else if ( base.get ) {
@@ -139,7 +158,8 @@ dd5_Template_Expression.prototype = {
          var param_val = function dd5_Expression_recurVal_param ( e, i ) { // i is unused but useful for debug
             return that._recurNum( e, context );
          };
-         switch ( root.function ) {
+         var function_name = this._recurVal( root.function, context );
+         switch ( function_name ) {
             case 'random' :
                var param = root.param.map( param_val );
                if ( param.length === 0 ) return Math.random();
@@ -158,8 +178,8 @@ dd5_Template_Expression.prototype = {
             default :
                // Process math functions
                var param = root.param.map( param_val );
-               if ( Math[ root.function ] !== undefined ) return Math[ root.function ].apply( Math, param );
-               throw "Unknown function '" + root.function + "'";
+               if ( Math[ function_name ] !== undefined ) return Math[ function_name ].apply( Math, param );
+               throw "Unknown function '" + function_name + "'";
          }
       }
    },
@@ -168,16 +188,6 @@ dd5_Template_Expression.prototype = {
       if ( ! root ) return '';
    }
 
-};
-
-ns.template.expression = { 
-   Expression : dd5_Template_Expression,
-   create: function dd5_Template_Expression_create ( exp ) {
-      // Optimise: Create simple object for simple values.
-      var tree = ns.template.Parser.instance.parse( exp );
-      // Optimise: Use fly weight to share same expression.
-      return new dd5_Template_Expression( exp, tree );
-   }
 };
 
 })( dd5 );
