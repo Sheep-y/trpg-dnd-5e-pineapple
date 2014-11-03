@@ -1,27 +1,27 @@
 'use strict'; // ex: softtabstop=3 shiftwidth=3 tabstop=3 expandtab
 
-_.assert( dd5, '[dd5.template] 5e core module must be loaded first.');
-_.assert( ! dd5.template, '5e template module already loaded.' );
+(function dd5_rule_init ( ns ){
 
-(function dd5_template_init ( ns ){
+var err_rule = '[dd5.rule] ';
+_.assert( dd5, err_rule + '5e core module must be loaded first.');
+_.assert( ! dd5.rule, err_rule + '5e rule module already loaded.' );
 
-var l10n = 'dd5.';
 var sys = ns.sys;
 var res = ns.res;
 
-/** Resource Templates */
-var template = ns.template = {};
+/** Rules */
+var rule = ns.rule = {};
 
-template._opt_delete = function dd5_Template_opt_delete ( opt, field ) {
+rule._opt_delete = function dd5_rule_opt_delete ( opt, field ) {
    field = _.ary( field );
    for ( var a in opt ) {
       if ( field.indexOf( a ) >= 0 ) delete opt[ a ];
    }
 };
 
-template._parse_and_delete = function dd5_Template_parse_and_delete ( that, opt, field ) {
+rule._parse_and_delete = function dd5_rule_parse_and_delete ( that, opt, field ) {
    var expression = ns.loader.expression; // ns.loader may not exist when we declare this function
-   _.ary( field ).forEach( function dd5_Template_parse_and_delete_each ( f ) {
+   _.ary( field ).forEach( function dd5_rule_parse_and_delete_each ( f ) {
       try {
          if ( opt[ f ] !== undefined ) {
             that[ f ] = expression.create( opt[ f ] );
@@ -33,6 +33,7 @@ template._parse_and_delete = function dd5_Template_parse_and_delete ( that, opt,
    } );
 };
 
+/** Internal function used to check for duplication */
 function check_dup ( that, criteria, id ) {
    if ( ! id ) criteria = id = that.id;
    if ( ! id ) throw "id is required.";
@@ -49,16 +50,16 @@ function check_dup ( that, criteria, id ) {
 
 /*****************************************************************************/
 
-template.Resource = _.inherit( sys.Composite, function dd5_template_Resource ( type, opt, def ) {
+rule.Resource = _.inherit( sys.Composite, function dd5_rule_Resource ( type, opt, def ) {
    if ( opt ) {
       sys.Composite.call( this, opt.id );
       if ( opt.sourcebook ) {
          if ( typeof( opt.sourcebook ) === 'string' ) opt.sourcebook = res.sourcebook.get({ id: opt.sourcebook })[0];
          this.sourcebook = opt.sourcebook;
       }
-      template._opt_delete( opt, [ 'id', 'sourcebook' ] );
+      rule._opt_delete( opt, [ 'id', 'sourcebook' ] );
    } else {
-      sys.Composite.call( this );
+      sys.Composite.call();
    }
    this.res_type = type;
    if ( opt ) for ( var attr in opt ) if ( this[attr] === undefined ) this[attr] = opt[attr];
@@ -68,48 +69,48 @@ template.Resource = _.inherit( sys.Composite, function dd5_template_Resource ( t
    "sourcebook": undefined,
 
    "_createInstance" : function dd5_Resource_createInstance ( ) {
-      return new sys.Component( this );
+      return new sys.Component( this.id, this );
    },
    "create" : function dd5_Resource_create ( ) {
       var result = this._createInstance( this );
       this.getChildren().forEach( function dd5_Resource_createInstance_copyslot ( e ) {
-         if ( e.copyToParentInstance ) result.add( e.create() );
+         result.add( e.create() );
       } );
       return result;
    }
 });
 
-template.LazyResource = _.inherit( template.Resource, function dd5_template_LazyResource ( type, opt, def ) {
-   template.Resource.call( this, type, opt, def );
+rule.LazyResource = _.inherit( rule.Resource, function dd5_rule_LazyResource ( type, opt, def ) {
+   rule.Resource.call( this, type, opt, def );
 }, {
-   "parts" : undefined,
+   "subrules" : undefined,
    "compile" : _.dummy, // Set by loader depending on data type
    "_createInstance" : function dd5_LazyResource_createInstance ( ) {
       this.compile();
-      return template.Resource.prototype._createInstance.call( this );
+      return rule.Resource.prototype._createInstance.call( this );
    }
 });
 
-template.SourceBook = _.inherit( template.Resource, function dd5_template_Book ( opt ) {
-   template.Resource.call( this, 'sourcebook', opt );
+rule.SourceBook = _.inherit( rule.Resource, function dd5_rule_Book ( opt ) {
+   rule.Resource.call( this, 'sourcebook', opt );
    this.l10n = 'sourcebook.' + this.id;
    check_dup( this );
-   template._opt_delete( opt, [ 'name', 'publisher', 'category', 'type', 'url', 'autoload' ] );
+   rule._opt_delete( opt, [ 'name', 'publisher', 'category', 'type', 'url', 'autoload' ] );
 });
 
-template.Entity = _.inherit( template.Resource, function dd5_Entity ( opt ) {
-   template.Resource.call( this, 'entity', opt );
+rule.Entity = _.inherit( rule.Resource, function dd5_Entity ( opt ) {
+   rule.Resource.call( this, 'entity', opt );
    this.l10n = 'entity.' + this.id;
    check_dup( this );
-   // With entity, assume all properties are valid. This will also delete parts, but an Entity shouldn't need it!
+   // With entity, assume all properties are valid. This will also delete subrules, but an Entity shouldn't need it!
    for ( var a in opt ) delete opt[a];
 });
 
-template.Character = _.inherit( template.LazyResource, function dd5_template_Character ( opt ) {
-   template.LazyResource.call( this, 'character', opt );
+rule.Character = _.inherit( rule.LazyResource, function dd5_rule_Character ( opt ) {
+   rule.LazyResource.call( this, 'character', opt );
    this.l10n = 'character.' + this.id;
    check_dup( this );
-   template._opt_delete( opt, [ 'type' ] );
+   rule._opt_delete( opt, [ 'type' ] );
 }, {
    "type" : undefined, // 'system', 'pc', 'npc', 'mob'
    "visible" : true,
@@ -120,18 +121,18 @@ template.Character = _.inherit( template.LazyResource, function dd5_template_Cha
    }
 });
 
-template.Feature = _.inherit( template.LazyResource, function dd5_template_Feature ( opt, parent, element ) {
-   template.LazyResource.call( this, 'feature', opt, null, element );
+rule.Feature = _.inherit( rule.LazyResource, function dd5_rule_Feature ( opt, parent, element ) {
+   rule.LazyResource.call( this, 'feature', opt, null, element );
    this.parent = parent;
    this.l10n = ( parent ? parent.l10n : 'feature' ) + '.' + this.id;
    check_dup( this, { path: this.l10n }, this.l10n );
 });
 
-template.Race = _.inherit( template.LazyResource, function dd5_template_Race ( opt ) {
-   template.LazyResource.call( this, 'race', opt, { 'rarity': 'common', 'size': 0 } );
+rule.Race = _.inherit( rule.LazyResource, function dd5_rule_Race ( opt ) {
+   rule.LazyResource.call( this, 'race', opt, { 'rarity': 'common', 'size': 0 } );
    this.l10n = 'race.' + this.id;
    check_dup( this );
-   template._opt_delete( opt, [ 'rarity' ] );
+   rule._opt_delete( opt, [ 'rarity' ] );
 });
 
 })( dd5 );

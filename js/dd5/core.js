@@ -1,8 +1,9 @@
 'use strict'; // ex: softtabstop=3 shiftwidth=3 tabstop=3 expandtab
 
-_.assert( ! dd5, '5e core module already loaded.' );
+_.assert( _ && _.Map, '[dd5] Sprrow libirary must be loaded first.' );
+_.assert( ! dd5, '[dd5] 5e core module already loaded.' );
 
-var dd5 = {};
+var dd5 = new _.Map();
 
 (function dd5_core_init ( ns ){
 
@@ -12,10 +13,10 @@ var error_core = '[dd5] ';
 ns.event = new _.EventManager( [ 'error', 'warn' ], ns );
 ns.event.createFireMethods( [ 'error', 'warn' ] );
 
-ns.event.add( 'warn', function dd5_onwarn_console ( msg ) { _.warn( msg ); } );
+ns.event.add( 'warn' , function dd5_onwarn_console  ( msg ) { _.warn ( msg ); } );
 ns.event.add( 'error', function dd5_onerror_console ( msg ) { _.error( msg ); } );
 
-var sys = ns.sys = {};
+var sys = ns.sys = new _.Map();
 
 /**
  * An expression can stand in anywhere a complex expression is expected.
@@ -89,7 +90,7 @@ sys.Query = function dd5_Query ( query ) {
    this.source = [];
 };
 sys.Query.prototype = {
-   template : undefined, // Set to true or false by first caller.
+   rule : undefined, // Set to true or false by first caller.
    value : undefined,  // Return value
    you : undefined,  // A common property
    _source : []    // First element is latest source.
@@ -150,28 +151,21 @@ sys.Composite.prototype = {
    toString : function dd5_Composite_toString ( ) { return this.getName(); },
 
    query : function dd5_Composite_query ( query ) {
-      if ( typeof query === 'string' )
-         query = new sys.Query( query );
-      query.template = ! ( this instanceof sys.Component );
-      this._query( query );
-      return query;
-   },
-
-   _query : function dd5_Composite__query ( query ) {
       var children = this.getChildren();
       if ( children.length <= 0 ) return; // If we have no children, don't border.
 
-      var that = this;
-      if ( this.l10n ) query._source.unshift( this );
+      var that = this, l10n = this.l10n;
+      if ( l10n ) query._source.unshift( this );
 
       children.forEach( function dd5_Component_query_each ( e, i ) { try {
-         e._query( query );
+         e.query( query );
       } catch ( ex ) {
          if ( ! that.l10n ) throw ex;
          ns.event.error( error_core + "Error when querying '" + query.query + "' in " + that.l10n + '.' + i + '(' + e + '):\n' + ex );
       } } );
 
-      if ( this.l10n ) query._source.shift();
+      if ( l10n ) query._source.shift();
+      return query;
    },
 
    recur : function dd5_Composite_recur( pre, leaf, post, parent ) {
@@ -185,37 +179,26 @@ sys.Composite.prototype = {
          if ( leaf ) leaf.call( this, parent );
       }
    }
-
 };
 
-/**
- * A character component. Such as a race, a feat, or a class feature effect.
- */
-sys.Component = _.inherit( sys.Composite, function dd5_Component ( template ) {
-   sys.Composite.call( this );
-   this.res_template = template;
-   if ( template.l10n ) this.l10n = template.l10n;
+sys.Component = _.inherit( sys.Composite, function dd5_Character ( id, rule ) {
+   sys.Composite.call( id );
+   if ( rule ) this.rule = rule;
 }, {
-   res_template : null,
-
-   _query : function dd5_Component_query ( query ) {
-      this.res_template._query( query );
-      sys.Composite.prototype._query.call( this, query );
-   }
+   rule: null,
 });
 
-sys.Character = _.inherit( sys.Component, function dd5_Character( template ) {
-   sys.Component.call( this, template );
+sys.Character = _.inherit( sys.Component, function dd5_Character ( id, rule ) {
+   sys.Component.call( id, rule );
 }, {
-   _query : function dd5_Character_query ( query ) {
+   query : function dd5_Character_query ( query ) {
+      if ( typeof( query ) === 'string' ) query = new sys.Query( query );
       if ( ! query.you ) query.you = this;
-      sys.Component.prototype._query.call( this, query );
+      return sys.Component.prototype.query.call( this, query );
    }
 });
 
-
-
-var Catalog = _.inherit( null, function dd5__Catalog () {
+ns.res = _.inherit( null, function dd5__Catalog () {
    this._list = [];
 }, {
    _list : null,
@@ -232,7 +215,7 @@ var Catalog = _.inherit( null, function dd5__Catalog () {
             var criteron = criteria[i], filter;
             if ( criteron instanceof Array ) {
                // List match
-               filter = function dd5_Catalog_find_list( e ) { return criteron.indexOf(　e[i] ) >= 0; };
+               filter = function dd5_Catalog_find_list( e ) { return criteron.indexOf( e[i] ) >= 0; };
             } else if ( typeof( criteron ) === 'object' ) {
                // Range match
                var lo = criteron['>='], hi = criteron['<='];
@@ -257,20 +240,20 @@ var Catalog = _.inherit( null, function dd5__Catalog () {
 } );
 
 /** In-system Resources */
-ns.res = {
-   "sourcebook": new Catalog(),
-   "entity"    : new Catalog(),
-   "character" : new Catalog(),
-   "feature"   : new Catalog(),
+_.extend( ns.res, {
+   "sourcebook": new ns.res(),
+   "entity"    : new ns.res(),
+   "character" : new ns.res(),
+   "feature"   : new ns.res(),
 
-   "race"      : new Catalog(),
-   "skill"     : new Catalog(),
-   "background": new Catalog(),
-   "class"     : new Catalog(),
-   "equipment" : new Catalog(),
-   "feat"      : new Catalog(),
-   "spell_list": new Catalog(),
-   "spell"     : new Catalog()
-};
+   "race"      : new ns.res(),
+   "skill"     : new ns.res(),
+   "background": new ns.res(),
+   "class"     : new ns.res(),
+   "equipment" : new ns.res(),
+   "feat"      : new ns.res(),
+   "spell_list": new ns.res(),
+   "spell"     : new ns.res()
+} );
 
 })( dd5 );

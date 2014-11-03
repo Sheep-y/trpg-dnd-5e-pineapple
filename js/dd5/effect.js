@@ -1,13 +1,13 @@
 'use strict'; // ex: softtabstop=3 shiftwidth=3 tabstop=3 expandtab
 
-_.assert( dd5 && dd5.template && dd5.template.part, '[dd5.effect] 5e part template module must be loaded first.' );
-_.assert( ! dd5.template.effect, '5e effect module already loaded.' );
+_.assert( dd5 && dd5.rule && dd5.rule.subrule, '[dd5.effect] 5e rules and subrules modules must be loaded first.' );
+_.assert( ! dd5.rule.effect, '5e effect module already loaded.' );
 
 (function dd5_effect_init ( ns ){
 
 var l10n = 'dd5.';
 var sys = ns.sys;
-var effect = ns.template.effect = {};
+var effect = ns.rule.effect = {};
 
 /*
 

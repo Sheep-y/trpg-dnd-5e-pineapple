@@ -1,4 +1,4 @@
-'use strict'; // ex: softtabstop=3 shiftwidth=3 tabstop=3 expandtab
+(function sparrrow_init() { 'use strict'; // ex: softtabstop=3 shiftwidth=3 tabstop=3 expandtab
 /**
  *
  * sparrow.js
@@ -8,6 +8,8 @@
  * Feature support varies by browser, target is IE 9+, Chrome, Firefox
  *
  */
+
+var ns = this;
 
 // Simple check for browser features
 //if ( ! document.querySelectorAll || !window.Storage ) {
@@ -22,7 +24,7 @@
  * @param {string=} selector CSS selector to run. Has shortcut for simple id/class/tag.
  * @returns {Array|NodeList} Array or NodeList of DOM Node result.
  */
-window._ = function sparrow ( root, selector ) {
+var _ = function sparrow ( root, selector ) {
    if ( selector === undefined ) {
       selector = root;
       root = document;
@@ -39,6 +41,8 @@ window._ = function sparrow ( root, selector ) {
    if ( selector.charAt(0) === '.' ) return root.getElementsByClassName( selector.substr(1) );
    return root.getElementsByTagName( selector );
 };
+
+if ( ns ) ns._ = _;
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Array Helpers
@@ -71,21 +75,14 @@ _.toAry = function _toAry ( subject ) {
 };
 
 /**
- * Given an array-like object and one or more columns, extract and return those columns from subject.
+ * alias of _.map
  *
  * @param {(Array|NodeList|Object)} subject Array-like object to be extracted.
  * @param {string=} column Columns (field) to extract.
- * @returns {Array} Array (if single column) or Array of Array (if multiple columns).
+ * @returns {Array} Array (if single column) or Array of Object (if multiple columns).
  */
 _.col = function _col ( subject, column /* ... */) {
-   subject = _.ary( subject );
-   if ( column === undefined ) return subject.map(function(e){ return e[0]; });
-   if ( arguments.length === 2 ) return subject.map(function(e){ return e[column]; });
-   return subject.map(function(e){
-      var result = [];
-      for ( var i = 1, l = arguments.length ; i < l ; i++ ) result.push( e[arguments[i]] );
-      return result ;
-   });
+   return _.map( _.ary( subject ), column === undefined ? 0 : column );
 };
 
 /**
@@ -164,7 +161,7 @@ _.mapper._map = function _mapper_map( base, prop ) {
 
    } else {
       // Object, assume to be property map.
-      var result = new _.map();
+      var result = new _.Map();
       for ( var p in prop ) {
          result[ p ] = _mapper_map( base, prop[ p ] );
       }
@@ -173,18 +170,15 @@ _.mapper._map = function _mapper_map( base, prop ) {
 };
 
 /**
- * Usage 1: Map given array-like data.
- * Usage 2: Create a new object suitable for map.
+ * Map given array-like data.
  *
- * @param {Array=} data Data to map. Will be modified and returned.
- * @param {string|Array=} field Name of field to grab or mapping to perform.
+ * @param {Array} data Data to map. Will be modified and returned.
+ * @param {string|Array} field Name of field to grab or mapping to perform.
  * @returns {Array} Mapped data.
  */
 _.map = function _map ( data, field ) {
-   if ( arguments.length <= 0 ) return Object.create( null );
    return _.ary( data ).map( _.mapper.apply( null, _.ary( arguments ).slice( 1 ) ) );
 };
- 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Function Helpers
@@ -216,7 +210,7 @@ _.call = function _call ( func, thisObj, param /*...*/ ) {
 };
 
 /**
- * Given a function, return a function that when called multiple times, only the first call will be transferred.
+ * Given a function, return a function that when called multiple times, only the first call will be executed.
  *
  * Parameters passed to the returned function will be supplied to the callback as is.
  * This function will disregard any additional parameters.
@@ -234,20 +228,23 @@ _.callonce = function _call ( func ) {
    };
 };
 
-if ( window.setImmediate === undefined ) {
-   if ( window.requestAnimationFrame ) {
-      window.setImmediate = window.requestAnimationFrame;
-      window.clearImmediate = window.cancelAnimationFrame;
-   } else {
-      /**
-       * Call a callback immediately after current stack is resolved.
-       *
-       * @param {function(...*)} func Function to call
-       * @returns {integer} Id of callback.
-       */
-      window.setImmediate = function setImmediate ( func ) { return window.setTimeout(func, 0); };
-      window.clearImmediate = window.clearTimeout;
-   }
+/**
+ * Call a function immediately after current JS stack is resolved.
+ *
+ * @param {function(...*)} func Function to call
+ * @returns {integer} Id of callback.
+ */
+if ( this && this.setImmediate ) {
+   _.setImmediate = this.setImmediate.bind( this );
+   _.clearImmediate = this.clearImmediate.bind( this );
+
+} else if ( this && ns.requestAnimationFrame ) {
+   _.setImmediate = this.requestAnimationFrame.bind( this );
+   _.clearImmediate = this.cancelAnimationFrame.bind( this );
+
+} else {
+   _.setImmediate = function setImmediate ( func ) { return setTimeout(func, 0); };
+   _.clearImmediate = this.clearTimeout;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -287,14 +284,14 @@ _.ajax = function _ajax ( option, onload ) {
          _.info( '[AJAX] Complete, status ' + xhr.status + ': ' + url );
          // 0 is a possible response code for local file access under IE 9 ActiveX
          if ( [0,200,302].indexOf( xhr.status ) >= 0 && xhr.responseText ) {
-            setImmediate( function _ajax_onload_call () {
+            _.setImmediate( function _ajax_onload_call () {
                if ( finished ) return;
                finished = true;
                _.call( option.onload, xhr, xhr.responseText, xhr );
                _.call( option.ondone, xhr, xhr );
             } );
          } else {
-            setImmediate( function _ajax_onerror_call () {
+            _.setImmediate( function _ajax_onerror_call () {
                if ( finished ) return;
                finished = true;
                _.call( option.onerror, xhr, xhr, "HTTP Response Code " + xhr.status );
@@ -355,12 +352,13 @@ _.js = function _js ( option, onload ) {
       done = true;
       if ( log ) _.info( log );
       _.call( callback, e, url, option );
+      _.call( option.ondone, e, url, option );
       if ( e && e.parentNode === document.body ) document.body.removeChild(e);
    }
 
    e.addEventListener( 'load', function _js_load () {
       // Delay execution to make sure validate/load is called _after_ script has been ran.
-      setImmediate( function _js_load_delayed () {
+      _.setImmediate( function _js_load_delayed () {
          if ( option.validate && ! _.call( option.validate, e, url, option )  ) {
             return _js_done( option.onerror, "[JS] Script loaded but fails validation: " + url );
          }
@@ -416,12 +414,23 @@ _.is = {
    /**
     * Retuan true if given value is a literal value (instead of an object)
     * @param {*} val Value to check.
-    * @returns {(undefined|null|boolean)} True if value is boolean, number, or string. False if function, object, or other non-null types. Otherwise undefined or null.
+    * @returns {(undefined|null|boolean)} True if value is boolean, number, or string. Undefined or null if input is one of them.  False otherwise.
     */
    literal : function _is_literal ( val ) {
       if ( val === undefined || val === null ) return val;
       var type = typeof( val );
       return type === 'boolean' || type === 'number' || type === 'string';
+   },
+
+   /**
+    * Retuan true if given value is an object (instead of literals)
+    * @param {*} val Value to check.
+    * @returns {(undefined|null|boolean)} True if value is object or function. Undefined or null if input is one of them.  False otherwise.
+    */
+   object : function _is_object ( val ) {
+      if ( val === undefined || val === null ) return val;
+      var type = typeof( val );
+      return type === 'object' || type === 'function';
    },
 
    /**
@@ -477,7 +486,7 @@ _.xml = function _xml ( txt ) {
  * @returns {Object} Converted JS object.
  */
 _.xml.toObject = function _xml_toObject ( root, base ) {
-   if ( base === undefined ) base = new _.map();
+   if ( base === undefined ) base = new _.Map();
    base.tagName = root.tagName;
    _.ary( root.attributes ).forEach( function _xml_toObject_attr_each( attr ) {
       base[attr.name] = attr.value;
@@ -495,15 +504,21 @@ _.xml.toObject = function _xml_toObject ( root, base ) {
 };
 
 /**
- * Parse html and return an html dom element.
+ * A) Parse html and return an html dom element.
+ * B) Set dom element's html.
  *
- * @param {string} txt HTML text to parse.
+ * @param {(string|DOMElement|NodeList)} txt HTML text to parse.
+ * @param {string=} html HTML text to parse.
  * @returns {Node} A div element that contains parsed html as dom child.
  */
-_.html = function _html ( txt ) {
-   var e = _.html.node = document.createElement( 'div' );
-   e.innerHTML = txt;
-   return e;
+_.html = function _html ( txt, html ) {
+   if ( html === undefined && typeof( txt ) === 'string' ) {
+      var e = _.html.node = document.createElement( 'div' );
+      e.innerHTML = txt;
+      return e;
+   } else {
+      _.attr( txt, { html: html } );
+   }
 };
 
 /**
@@ -516,8 +531,8 @@ _.html = function _html ( txt ) {
 _.xsl = function _xsl ( xml, xsl ) {
    var xmlDom = typeof( xml ) === 'string' ? _.xml( xml ) : xml;
    var xslDom = typeof( xsl ) === 'string' ? _.xml( xsl ) : xsl;
-   if ( window.XSLTProcessor ) {
-      var xsltProcessor = new XSLTProcessor();
+   if ( ns.XSLTProcessor ) {
+      var xsltProcessor = new ns.XSLTProcessor();
       xsltProcessor.importStylesheet( xslDom );
       return xsltProcessor.transformToFragment( xmlDom, document );
 
@@ -573,20 +588,9 @@ _.xpath = function _xpath ( node, path ) {
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /**
- * If @check is not true, throw msg.
- * @param {*} check Anything that should not be false, undefined, or null.
- * @param {string=} msg Message to throw if it does happen. Default to 'Assertion failed'.
- */
-_.assert = function _assert( check, msg ) {
-   if ( check === false || check === undefined || check === null ) {
-      if ( msg === undefined ) msg = '';
-      if ( typeof( msg ) === 'string' ) msg = 'Assertion failed (' + msg + ')';
-      throw msg;
-   }
-};
-
-/**
  * Console log function.
+ * Will automaticall switch to dir or table when subject is object or array.
+ * This behaviour does not apply to info/warn/error
  *
  * @param {string} type Optional. Type of console function to run, e.g. 'info' or 'warn'. If not found then fallback to 'log'.
  * @param {*=}  msg  Message objects to pass to console function.
@@ -596,9 +600,13 @@ _.log = function _log ( type, msg ) {
       msg = type;
       type = 'log';
    }
-   if ( console ) {
-      if ( ! console[type] ) type = 'log';
-      console[type]( msg );
+   if ( ns.console ) {
+      if ( ! ns.console[type] ) type = 'log';
+      if ( type === 'log' ) {
+         if ( ns.console.table && msg instanceof Array ) type = 'table';
+         else if ( ns.console.dir && _.is.object( msg ) ) type = 'dir';
+      };
+      ns.console[type]( msg );
    }
 };
 
@@ -658,13 +666,33 @@ _.time = function _time ( msg ) {
    if ( msg === undefined ) {
       t.base = now;
       t.last = null;
-      return;
+      return now;
    }
    var fromBase = now - t.base;
    var fromLast = t.last ? ( 'ms,+' + (now - t.last) ) : '';
    _.info( msg + ' (+' + fromBase + fromLast + 'ms)' );
    t.last = now;
    return [now - t.last, fromBase];
+};
+
+if ( ns.console && ns.console.assert ) {
+   _.assert = ns.console.assert.bind( ns.console );
+} else {
+   _.assert = _.dummy();
+}
+
+_.log.group = function _log_group( msg ) {
+   if ( ns.console && ns.console.group ) return ns.console.group( msg );
+   return _.log( msg );
+};
+
+_.log.collapse = function _log_groupCollapsed( msg ) {
+   if ( ns.console && ns.console.groupCollapsed ) return ns.console.groupCollapsed( msg );
+   return _.log( msg );
+};
+
+_.log.end = function _log_groupEnd() {
+   if ( ns.console && ns.console.groupEnd ) return ns.console.groupEnd();
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -835,6 +863,13 @@ _.clone = function _clone( base, deep ) {
    return result;
 };
 
+_.extend = function _extend( target, prop ) {
+   Object.keys( prop ).forEach( function _extend_each( e ) {
+      target[ e ] = prop[ e ];
+   });
+   return target;
+};
+
 // Prevent changing properties
 _.freeze = Object.freeze ? function _freeze ( o ) { return Object.freeze(o); } : _.echo;
 // Prevent adding new properties and removing old properties
@@ -851,6 +886,8 @@ _.noDef = function _noDef ( e ) { if ( e && e.preventDefault ) e.preventDefault(
 
 /**
  * Create a DOM element and set its attributes / contents.
+ *
+ * Creating 'script' should also set the async attribute, whether to enable or prevent async execution.
  *
  * @param {string} tag Tag name of element to create.
  * @param {(Object|string)=} attr Text content String, or object with properties to set. e.g. text, html, class, onclick, disabled, style, etc.
@@ -947,6 +984,22 @@ _.set = function _set ( ary, obj, value, flag ) {
 };
 
 /**
+ * Safe method to get an object's prototype
+ * 
+ * @param {*} base Base object to get prototype.
+ * @returns {Object|undefined|null} Null or undefined if base cannot have prototype.  Otherwise Object.getPrototypeOf.
+ */
+_.proto = function _proto ( base ) {
+   if ( base === undefined || base === null ) return base;
+   if ( ! _.is.object( base ) ) return;
+   return Object.getPrototypeOf( base );
+};
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// DOM Helpers
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/**
  * Set a list of object's DOM attribute to set to given value.
  * Can also mass add event listener.
  * Please use _.css to set specific inline styles.
@@ -967,10 +1020,12 @@ _.attr = function _attr( ary, obj, value ) {
       for ( var name in attr ) {
          switch ( name ) {
             case 'text':
+            case 'textContent' :
                e.textContent = attr.text;
                break;
 
             case 'html':
+            case 'innerHTML' :
                e.innerHTML = attr.html;
                break;
 
@@ -1123,6 +1178,15 @@ _.toggleClass = function _toggleClass ( e, className, toggle ) {
    }
    return e;
 };
+ 
+/**
+ * Create a new object suitable for map.
+ *
+ * @returns {Array} A blank object with no prototype.
+ */
+_.Map = function _Map ( ) {
+    return Object.create( null );
+};
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Asynchronous programming
@@ -1260,7 +1324,7 @@ _.Executor.prototype = {
             exe.running[i] = r;
             //_.info('Schedule task #' + i + ' ' + r[0].name );
             exe._lastRun = new Date().getTime();
-            setImmediate( _executor_run.bind( null, i, r ) );
+            _.setImmediate( _executor_run.bind( null, i, r ) );
             if ( exe.interval > 0 ) return _executor_schedule_notice ( exe.interval );
          }
       }
@@ -1282,8 +1346,8 @@ _.Executor.prototype = {
  */
 _.EventManager = function _EventManager ( events, owner ) {
    this.owner = owner;
-   var lst = this.lst = new _.map();
-   if ( events === undefined ) {
+   var lst = this.lst = new _.Map();
+   if ( events === undefined || events === null ) {
       this.strict = false;
    } else {
       for ( var i = 0, l = events.length ; i < l ; i++ ) {
@@ -1293,8 +1357,9 @@ _.EventManager = function _EventManager ( events, owner ) {
 };
 _.EventManager.prototype = {
    "lst" : {},
-   "owner" : null, // Owner, as context of handler calls
-   "strict" : true, // Whether this manager allow arbitary events
+   "owner" : null, // Owner, as context of handler calls.
+   "strict" : true, // Whether this manager allow arbitary events.
+   "log" : false, // If true, will log event firing.
    /**
     * Register an event handler.  If register twice then it will be called twice.
     *
@@ -1311,6 +1376,7 @@ _.EventManager.prototype = {
             throw new Error( "[sparrow.EventManager.add] Cannot add to unknown event '" + event + "'" );
          lst = this.lst[event] = [];
       }
+      if ( this.log ) _.log( "Add " + event + " listener: " + listener );
       this.lst[event].push( listener );
    },
    /**
@@ -1331,6 +1397,7 @@ _.EventManager.prototype = {
       }
       var i = lst.indexOf( listener );
       if ( i >= 0 ) {
+         if ( this.log ) _.log( "Remove " + event + " listener: " + listener );
          lst.splice( i, 1 );
          if ( lst.length < 0 ) this.lst[event] = null;
       }
@@ -1350,6 +1417,7 @@ _.EventManager.prototype = {
          return;
       }
       var l = lst.length, param = _.ary( arguments, 1 );
+      if ( this.log ) _.log( "Fire " + event + " on " + l + " listeners" );
       for ( var i = 0 ; i < l ; i++ ) {
          lst[i].apply( this.owner, param );
       }
@@ -1408,7 +1476,7 @@ _.l.currentLocale = 'en';
 _.l.fallbackLocale = 'en';
 
 /** L10n resources. */
-_.l.data = new _.map();
+_.l.data = new _.Map();
 
 /**
  * Set current locale.
@@ -1470,7 +1538,7 @@ _.l.getset = function _l_getset ( path, set, locale ) {
    // Explore path
    for ( var i = 0, len = p.length ; i < len ; i++ ) {
       var node = p[i];
-      if ( base[node] === undefined ) base[node] = new _.map();
+      if ( base[node] === undefined ) base[node] = new _.Map();
       base = base[node];
    }
    // Set or get data
@@ -1543,31 +1611,64 @@ _.l.event = new _.EventManager( ['set','locale'], _.l );
 
 /**
  * Run a test suite and write result to document, or check a specific test.
- * TODO: Rewrite to separate test and presentation.
  *
  * @param {*} condition Either an assertion or a test suite object.
  * @param {string} name Name of assertion
  */
 _.test = function _test ( condition, name ) {
+   var add = 'appendChild', create = _.create;
    if ( name !== undefined ) {
-      document.write( '<tr><td>' + _.escHtml( name ) + '</td><td>' + ( condition ? 'OK' : '<b>FAIL</b>' ) + '</td></tr>' );
+      // Single test case, append to latest test table
+      if ( ! _test.body ) _test( { test: _dummy() } ); // Create body if not exists
+      var tr = create( 'tr' ), td = create( td );
+      if ( condition ) td.textContent = 'OK';
+      else td.appendChild( 'b', { class: 'err', text: 'FAIL' } );
+      tr[add]( create( 'td', _.escHtml( name ) ) );
+      tr[add]( td );
+      _test.body[add]( tr );
    } else {
-      document.open();
-      document.write( "<!DOCTYPE html><h1 id='sparrow_test'> Testing... </h1>" );
+      // Test suite object
+      var title = create( 'h1', 'Testing' );
+      var success = true;
+      document.body[add]( title );
       for ( var test in condition ) {
          if ( ! test.match( /^test/ ) ) continue;
          if ( typeof( condition[test] ) === 'function' ) {
-            document.write( "<table class='sparrow_test_result' border='1'><tr><th colspan='2'>"
-                            + _.escHtml( test ).replace( /^test_+/, '' ).replace( /_/g, ' ' ) + '</th></tr>' );
-            condition[test]();
-            document.write( "</table>" );
+
+            var table = create( 'table', { class: 'sparrow_test', border: 1 } );
+            var cap = create( 'caption', _.escHtml( test ).replace( /^test_+/, '' ) );
+            var tbody = _test.body = create( 'tbody' );
+            table[add]( cap );
+            table[add]( tbody );
+            document.body[add]( table );
+
+            // Run test
+            try {
+               condition[test]();
+            } catch ( e ) {
+               var tr = _.create( 'tr' );
+               tr[add]( _.create( 'td', { colspan:2, class:'err', text: 'Exception during testing: ' + e } ) );
+               tbody[add]( tr );
+            }
+
+            // Update table caption
+            var result;
+            if ( _( table, '.err' ).length ) {
+               result = _.create( 'b', 'FAILED: ' );
+               success = false;
+            } else {
+               result = _.create( 'span', 'OK: ' );
+            }
+            cap.insertBefore( result, cap.firstChild );
          }
       }
-      document.close();
-      var err = _('.sparrow_test_result b'), success = err.length === 0;
-      _( '#sparrow_test' )[0].textContent = success ? 'Test Success' : 'Test FAILED';
+      title.textContent = success ? 'Test Success' : 'Test FAILED';
    }
 };
 
-_.info('Sparrow loaded.');
+_.info('[Sparrow] Sparrow loaded.');
 _.time();
+
+return _;
+
+}).call( this );

@@ -1,9 +1,12 @@
-dd5.loader.jsonp.load( { "version":"20140325", // ex: softtabstop=3 shiftwidth=3 tabstop=3 expandtab
+dd5.loader.jsonp.load( { "version":"20140325",
+"id": "dd5_phb",
 "sourcebook" : "phb",
 "comment": "Coder: sheepy",
 "entity": [
    { "type":"language" , "id":"common",   "letter":"Common",   "rarity":"common" },
    { "type":"language" , "id":"dwarvish", "letter":"Dwarvish", "rarity":"common" },
+   { "type":"language" , "id":"elvish",   "letter":"Elvish",   "rarity":"common" },
+   { "type":"language" , "id":"halfing",  "letter":"Halfing",  "rarity":"common" },
    { "type":"alignment", "id":"lg", "name":"Lawful Good",     "lawful":1, "chaotic":0, "good":1, "evil":0 },
    { "type":"alignment", "id":"ng", "name":"Neutral Good",    "lawful":0, "chaotic":0, "good":1, "evil":0 },
    { "type":"alignment", "id":"cg", "name":"Chaotic Good",    "lawful":0, "chaotic":1, "good":1, "evil":0 },
@@ -17,19 +20,20 @@ dd5.loader.jsonp.load( { "version":"20140325", // ex: softtabstop=3 shiftwidth=3
 "character": [
 {"id": "sys", // Implementation of basec system rules
    "type":"system",
-   "parts": [
-      " adj.str_mod : floor ( ( you.str - 10 ) / 2 ) ",
-      " adj.str_chk : you.str_mod ", // alias of { "part":"adj", "property":"str_chk" , "value":"you.str_mod" },
-      " adj.str_sv  : you.str_mod "
+   "subrules": [
+      " adj.str_mod : floor( ( you.str - 10 ) / 2 ) ",
+      " adj.str_chk : you.str_mod ", // alias of { "part":"adj", "property":"str_chk", "value":"you.str_mod" },
+      " adj.str_sv  : you.str_mod ",
+      " adj.athletic : you.str_mod ",
    ]
 },
 {"id": "pc", // Standard PC
    "type":"pc",
-   "parts": [
-      " set.prof_mod : [1,2,2,2,2,3,3,3,3,4,4,4,4,5,5,5,5,6,6,6,6][you.level] ",
-      " adj.str_sv   : you.prof_str_sv ? you.prof_mod : 0 ",
+   "subrules": [
+//      " set.prof_mod : [ 2,2,2,2,3,3,3,3,4,4,4,4,5,5,5,5,6,6,6,6 ][ you.level ] ",
+//      " adj.str_sv   : you.prof_str_sv ? you.prof_mod : 0 ",
       " include      : #character.sys ",
-
+/*
       { "slot":"str", "minVal": 3, "maxVal": 18, "default": 10 },
       { "slot":"dex", "minVal": 3, "maxVal": 18, "default": 10 },
       { "slot":"con", "minVal": 3, "maxVal": 18, "default": 10 },
@@ -38,21 +42,21 @@ dd5.loader.jsonp.load( { "version":"20140325", // ex: softtabstop=3 shiftwidth=3
       { "slot":"cha", "minVal": 3, "maxVal": 18, "default": 10 },
 
       { "slot":"race", "options":"#race" },
-      { "slot":"alignment", "options":"#entity" },
-      { "slot":"bonus_language", "count":"you.int_mod", "options":"#entity" },
-      //{ "slot":"alignment", "options":"#entity{type=alignment}" },
-      //{ "slot":"bonus_language", "count":"you.int_mod@level=0", "options":"#entity{type=language}{rarity=common}" },
+      { "slot":"alignment", "options":"#entity({type:alignment})" },
+      { "slot":"bonus_language", "count":"you.int_mod", "options":"#entity({type:language,rarity:common})" },
+      //{ "slot":"bonus_language", "count":"you.int_mod@{level:0}", "options":"#entity[@type=language][@rarity=common]" },
       { "slot":"background", "options":"#background" },
       { "slot":"level", "minVal": 1, "maxVal": 20, "default": 1 },
       { "slot":"level_1", "level":'1', "options":"#class" },
       { "slot":"level_2", "level":'2', "options":"#class" },
       { "slot":"level_3", "level":'3', "options":"#class" }
+            */
    ]
 }
 ],
 "race":[
 {"id": "dwarf",
-   "parts": [
+   "subrules": [
       "set.speed : 30",
    ]
 }

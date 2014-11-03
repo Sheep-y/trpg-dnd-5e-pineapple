@@ -12,7 +12,7 @@ var Parser = function _StringParser () {
    var self = this;
    if ( ! self instanceof Parser ) self = new Parser();
    self._rules = [];
-   self._map = new _.map();
+   self._map = new _.Map();
    self._reset( '' );
    return self;
 };
@@ -31,6 +31,7 @@ Parser.prototype = {
    _map : null, // {}
    _rules : null, // []
    _skip_ws_regx : /^\s+/,
+   _onparse : null,
 
    _cache_pos : 0,
    _cache : '',
@@ -71,8 +72,14 @@ Parser.prototype = {
       this._reset( exp );
       var result = this._parseTop();
       this._skip_ws();
-      if ( this._pos < this._val.length ) throw new EvalError( this._error( 'Unexpected "' + this._val[ this._pos ] + '" after expression' ) );
+      if ( this._pos < this._val.length ) throw new EvalError( this._error( 'Unexpected "' + this._val[ this._pos ] + '"' ) );
       return result;
+   },
+
+   onparse : function _StringParser_onparse ( callback ) {
+      if ( typeof( callback ) !== 'function' ) throw new TypeError( this._error( 'Callback parameter of onparse() must be a function.' ) );
+      this._onparse = callback;
+      return this;
    },
 
    partialParse : function _StringParser_partial_parse ( exp ) {
@@ -83,7 +90,7 @@ Parser.prototype = {
    _getpre : function _StringParser_getpre ( ) {
       return this._val.substr( 0, this._pos );
    },
-   
+
    _get : function _StringParser_get ( ) {
       if ( this._cache_pos === this._pos ) return this._cache;
       this._cache = this._val.substr( this._pos );
@@ -104,7 +111,7 @@ Parser.prototype = {
       this._val = this._cache = exp;
       this._pos = this._cache_pos = 0;
       this._cur_rule = null;
-      this._stack = new _.map();
+      this._stack = new _.Map();
    },
 
    _skip_ws : function _StringParser_skip_ws ( ) {
@@ -129,7 +136,7 @@ Parser.prototype = {
 
    _nextRule : function _StringParser__nextRule( ) {
       if ( ! this._cur_rule ) return this._firstRule();
-      
+
       var level = this._cur_rule.level;
       var ruleno = this._cur_rule.ruleno;
       var r = this._rules[ level ];
@@ -158,31 +165,40 @@ Parser.prototype = {
 //      return match.regx.test( this._get() );
 //   },
 
-   _eat : function _StringParser__eat ( match, opt ) {
+   _match : function _StringParser__match ( matcher, matched ) {
+      if ( matcher.regx ) {
+         return !! matcher.regx.exec( matched );
+
+      } else if ( matcher.func ) {
+         return !! matcher.func( this._getpre(), matched );
+      }
+   },
+
+   _eat : function _StringParser__eat ( matcher, opt ) {
       var next = this._get();
       //if ( match.min && next.length < match.min ) throw new EvalError( this._error( '['+errns+'] Expected ' + match.exp ) );
-      if ( match.regx ) {
+      if ( matcher.regx ) {
          // RegExp or compiled string match
-         var m = match.regx.exec( next );
+         var m = matcher.regx.exec( next );
          if ( m ) {
             ++ this._cur_rule._atecount;
             this._pos += m[0].length;
             return [ m[0], m[0] ];
          }
 
-      } else if ( match.func ) {
+      } else if ( matcher.func ) {
          // Function match
-         var m = ~~match.func( this._getpre(), next );
+         var m = ~~matcher.func( this._getpre(), next );
          if ( m ) {
             var str = next.substr( 0, m );
             this._pos += m;
             return [ str, str ];
          }
 
-      } else if ( match.rule ) {
+      } else if ( matcher.rule ) {
          // Rule match
          var rule;
-         switch ( match.rule ) {
+         switch ( matcher.rule ) {
             case 'next' :
                rule = this._nextRule();
                break;
@@ -197,11 +213,11 @@ Parser.prototype = {
 
             default:
                // Named rule match
-               rule = this._map[ match.rule ];
+               rule = this._map[ matcher.rule ];
          }
-         if ( ! rule || ! rule._run ) throw new ReferenceError( this._error( 'Rule not found: {' + match.rule + '}'  ) );
+         if ( ! rule || ! rule._run ) throw new ReferenceError( this._error( 'Rule not found: {' + matcher.rule + '}'  ) );
 
-         // Check for recursion
+         // Check for simple recursion
          if ( this._stack[ rule.name ] === this._pos ) throw new EvalError( this._error( 'Infinite recursion at {' + rule.name + '}' ) );
          this._stack[ rule.name ] = this._pos;
 
@@ -210,21 +226,15 @@ Parser.prototype = {
          ++ this._cur_rule._atecount;
          ++ this._cur_rule._aterule;
 
-         if ( ! opt ) {
-            // Match is not optional.
-            var result = rule._run( this ); 
-            this._cur_rule = state.rule;
-            this._cur_rule._lastrulematch = result;
-            return result;
-         }
-
-         // Match is optional and can fail safely.
          try {
-            var result = rule._run( this ); 
+            var result = rule._run( this );
             this._cur_rule = state.rule;
             this._cur_rule._lastrulematch = result;
             return result;
          } catch ( ex ) {
+            // Match is not optional?
+            if ( ! opt ) throw ex;
+            // Match is optional and can fail safely.
             // Restore state as if nothing happened, and reply match failure
             this._pos = state.pos;
             this._cur_rule = state.rule;
@@ -235,12 +245,10 @@ Parser.prototype = {
 
       // When we didn't get a match...
       if ( opt ) return [ '', null ];
-      throw new EvalError( this._error( 'Expected ' + match.exp ) );
+      throw new EvalError( this._error( 'Expected ' + matcher.exp ) );
    }
 };
 
-// Can split into top rule and child rule, but we may need a new common rule class.
-// Main difference is in constructor and _run.
 Parser.Rule = _.inherit( null, function _StringParser_Rule ( levelup, name ) {
    this.rules = [];
    if ( Object.defineProperty ) {
@@ -267,11 +275,6 @@ Parser.Rule = _.inherit( null, function _StringParser_Rule ( levelup, name ) {
    partialParse : function _StringParser_Rule_partialParse ( exp ) { return this._root.parser.partialParse( exp ); },
    parse : function _StringParser_Rule_parse ( exp ) { return this._root.parser.parse( exp ); },
 
-   /* Proxy methods for root rule */
-   shortResult : function _StringParser_Rule_shortCircuit ( sc ) { return this._root.shortResult( sc ); },
-   onparse : function _StringParser_Rule_onparse ( callback ) { return this._root.onparse( callback ); },
-
-
    _error : function _StringParser_Rule_error ( msg ) {
       return '['+errns+'.Rule] ' + msg;
    },
@@ -286,10 +289,26 @@ Parser.Rule = _.inherit( null, function _StringParser_Rule ( levelup, name ) {
       for ( var i = 0, len = r.length ; i < len ; i++ ) {
          text += r[ i ]( parser, this );
          // Full text is updated in loop mainly for user functions (call command), and for parsing purpose can be moved after the loop.
-         this._fulltext = text; 
+         this._fulltext = text;
       }
 
       return [ this._fulltext, this._fulltext ];
+   },
+
+   shortResult : function _StringParser_Rule_shortResult ( sc ) {
+      this.rules.push( function _StringParser_Rule_shortResult_exec ( parser, self ) {
+         self._root._short_result = sc;
+         return '';
+      } );
+      return this;
+   },
+   onparse : function _StringParser_Rule_onparse ( callback ) {
+      if ( typeof( callback ) !== 'function' ) throw new TypeError( this._error( 'onparse\'s callback parameter must be a function.' ) );
+      this.rules.push( function _StringParser_Rule_onparse_exec ( parser, self ) {
+         self._root._onparse = callback;
+         return '';
+      } );
+      return this;
    },
 
    /**
@@ -371,7 +390,7 @@ Parser.Rule = _.inherit( null, function _StringParser_Rule ( levelup, name ) {
       if ( bound ) {
          if ( ! ( bound instanceof Array ) ) throw new TypeError( this._error( 'multi(): Bound parameter must be an array.' ) );
       } else {
-         bound = [ 0, 0 ];
+         bound = [ 0, 0 ]; // 0 to unlimited
       }
       bound[0] = ~~bound[0];
       if ( bound[1] && bound[1] < bound[0] ) throw new RangeError( this._error( 'multi(): Second value of bound parameter must be bigger then first.' ) );
@@ -406,7 +425,7 @@ Parser.Rule = _.inherit( null, function _StringParser_Rule ( levelup, name ) {
             if ( separator ) {
                ate = parser._eat( separator, 'optional' );
                // If no separator found, break loop
-               if ( ! ate[1] ) break;  
+               if ( ! ate[1] ) break;
                // If we have separator, append to text and prepare for next match.
                text += ate[0] + parser._skip_ws();
             }
@@ -442,6 +461,30 @@ Parser.Rule = _.inherit( null, function _StringParser_Rule ( levelup, name ) {
          self._lastmatch = ate[1];
          return self._lasttext = text;
       };
+      func.when = true;
+      this.rules.push( func );
+      return rule;
+   },
+   ifwas : function _StringParser_Rule_ifwas ( match ) {
+      match = Parser.compile_match( match );
+      if ( match.rule ) throw new TypeError( this._error( 'ifwas cannot check againt a rule (yet).' ) );
+      var self = this;
+      var rule = new Parser.Rule( this, this.name + '.ifwas' );
+      var func = function _StringParser_rule_when_exec ( parser, self ) {
+         var text = self._lasttext, ate;
+         var was = parser._match( match, text );
+         if ( was ) {
+            ate = rule._run( parser, text, self._lastmatch );
+         } else if ( func.otherwise ) {
+            ate = func.otherwise._run( parser, text, self._lastmatch );
+         }
+         if ( ate ) {
+            self._lastmatch = ate[1];
+            return self._lasttext = ate[0];
+         }
+         return '';
+      };
+      func.when = true;
       this.rules.push( func );
       return rule;
    },
@@ -451,8 +494,8 @@ Parser.Rule = _.inherit( null, function _StringParser_Rule ( levelup, name ) {
    },
    else : function _StringParser_Rule_else ( ) {
       var r = this.rules, last = r.length ? r[ r.length - 1 ] : null ;
-      if ( ! last || last.name !== '_StringParser_rule_when_exec' ) throw new SyntaxError( this._error( 'else() without when().' ) );
-      if ( last.otherwise ) throw new SyntaxError( this._error( 'when() already has else().' ) );
+      if ( ! last || ! last.when ) throw new SyntaxError( this._error( 'else() without when() or ifwas().' ) );
+      if ( last.otherwise ) throw new SyntaxError( this._error( 'when() or ifwas() already has else().' ) );
 
       var rule = last.otherwise = new Parser.Rule( this, this.name );
       // Do not push to rules because handled by the when login in var last.
@@ -511,7 +554,6 @@ Parser.TopRule = _.inherit( Parser.Rule, function _StringParser_TopRule ( name )
    _onparse : null, // Callback / constructor
    _result : null,  // Result buffer for save() and text()
 
-
    _short_result : null, // Override parser short result state.
    _lastrulematch : null, // The returned result when short result.
    _atecount : null, // Count of processed _eat that is rule.  Part of short result condition.
@@ -522,24 +564,19 @@ Parser.TopRule = _.inherit( Parser.Rule, function _StringParser_TopRule ( name )
    ruleno : null,
    parser : null,
 
-   shortResult : function _StringParser_TopRule_shortResult ( sc ) {
-      if ( sc !== true && sc !== false && sc !== null && sc !== undefined ) 
-         throw new TypeError( this._error( 'short result parameter should be boolean or null.' ) );
-      this._short_circuit = sc;
-      return this;
-   },
-
    _run : function _StringParser_TopRule_run ( parser ) {
       parser._cur_rule = this;
       var state = this._statesave();
+      this._short_result = parser.short_result;
+      this._onparse = parser._onparse;
 
       Parser.Rule.prototype._run.call( this, parser, '', null );
 
       // Save run result
       var fulltext = this._fulltext;
 
+      // If only one consumption happened and it is a rule, return the result of that rule.
       if ( ( parser.short_result || this._short_result ) && this._aterule === 1 && this._atecount === 1 && this._short_result !== false ) {
-         // If only one consumption happened and it is a rule, return the result of that rule.
          var result = [ fulltext, this._lastrulematch[1] ];
          this._stateload( state );
          return result;
@@ -548,9 +585,9 @@ Parser.TopRule = _.inherit( Parser.Rule, function _StringParser_TopRule ( name )
       // Otherwise prepare result object
       var result = this._result;
       if ( this._onparse ) {
-         // Call callback
          result = this._onparse( result, fulltext, this, parser );
-      } else {
+
+      } else if ( _.is.object( result ) )  {
          // Set textual expression and toString as non-enumerable property of result.
          if ( result._expression === undefined ) _.set( result, '_expression', fulltext, '^e' );
          if ( result.toString === undefined ) _.set( result, 'toString', Parser.TopRule.prototype._resultToString, '^e' );
@@ -564,11 +601,13 @@ Parser.TopRule = _.inherit( Parser.Rule, function _StringParser_TopRule ( name )
          result : this._result,
          rulematch : this._lastrulematch,
          aterule : this._aterule,
-         atecount : this._atecount
+         atecount : this._atecount,
+         short_result : this._short_result,
+         onparse : this._onparse
       };
       this._atecount = 0;
       this._aterule = 0;
-      this._result = new _.map();
+      this._result = new _.Map();
       this._lastrulematch = null;
       return result;
    },
@@ -578,16 +617,11 @@ Parser.TopRule = _.inherit( Parser.Rule, function _StringParser_TopRule ( name )
       this._aterule = state.aterule;
       this._atecount = state.atecount;
       this._lastrulematch = state.rulematch;
+      this._short_result = state.short_result;
+      this._onparse = state.onparse;
    },
 
    _resultToString : function __StringParser_Rule_resultToString ( ) { return this._expression; },
-
-   onparse : function _StringParser_TopRule_onparse ( callback ) {
-      if ( this._onparse ) throw this._error( 'onparse callback only need to be set once per rule.' );
-      if ( typeof( callback ) !== 'function' ) throw new TypeError( this._error( 'onparse\'s callback parameter must be a function.' ) );
-      this._onparse = callback;
-      return this;
-   },
 
    end : function _StringParser_TopRule_end ( match ) {
       throw new SyntaxError( this._error( 'Cannot end match logic; already at top level.' ) );
@@ -596,7 +630,7 @@ Parser.TopRule = _.inherit( Parser.Rule, function _StringParser_TopRule ( name )
 
 /**
  * Pre-compile string matching parameter.
- * 
+ *
  * Many rule is about matching specific string, such as one(), opt(), any(), or when().
  * This function will pre-compile the parameter to a regular expression.
  *
