@@ -1,138 +1,208 @@
-'use strict'; // ex: softtabstop=3 shiftwidth=3 tabstop=3 expandtab
+var dd5; // Globals
+if ( ! dd5 ) throw new Error( '[dd5.rule] 5e core module must be loaded first.' );
+else if ( ! dd5.rule ) ( function dd5_rule_init ( ns ) { 'use strict';
 
-(function dd5_rule_init ( ns ){
-
-var err_rule = '[dd5.rule] ';
-_.assert( dd5, err_rule + '5e core module must be loaded first.');
-_.assert( ! dd5.rule, err_rule + '5e rule module already loaded.' );
+/**
+ * Rules are the building blocks of system.
+ * A spell, a equipment, a background, they are all Rule, as does actual system rules.
+ *
+ * @param {Object} ns Namespace object (dd5)
+ */
 
 var sys = ns.sys;
 var res = ns.res;
+var log = ns.event;
 
-/** Rules */
-var rule = ns.rule = {};
+/****************** Helpers *******************/
 
-rule._opt_delete = function dd5_rule_opt_delete ( opt, field ) {
-   field = _.ary( field );
-   for ( var a in opt ) {
-      if ( field.indexOf( a ) >= 0 ) delete opt[ a ];
-   }
-};
+var rule = ns.rule = Object.create( null );
 
-rule._parse_and_delete = function dd5_rule_parse_and_delete ( that, opt, field ) {
-   var expression = ns.loader.expression; // ns.loader may not exist when we declare this function
-   _.ary( field ).forEach( function dd5_rule_parse_and_delete_each ( f ) {
-      try {
-         if ( opt[ f ] !== undefined ) {
-            that[ f ] = expression.create( opt[ f ] );
-            delete opt[f];
-         }
-      } catch ( ex ) {
-         throw 'Error parsing "' + opt[f] + '" as ' + f + ':\n' + ex;
+/** Wrap up object for easier use. */
+rule.wrapper = {
+   you : {
+      // Divert unknown properties to query function
+      'get' ( that, name ) {
+         return name in that ? that[ name ] : that.query( sys.Query.create( name, that ) ).value;
       }
-   } );
-};
-
-/** Internal function used to check for duplication */
-function check_dup ( that, criteria, id ) {
-   if ( ! id ) criteria = id = that.id;
-   if ( ! id ) throw "id is required.";
-   if ( typeof( criteria ) === 'string' ) criteria = { id: criteria };
-   var sourcebook = that.sourcebook;
-   sourcebook = sourcebook ? ' with ' + sourcebook.id : '';
-   var dup = res[that.res_type].get( criteria );
-   if ( dup.length > 1 ) {
-      throw 'Redeclaring ' + that.l10n + sourcebook + '. First declared in ' + dup[0].sourcebook.id;
-   } else {
-      _.info( '[dd5] Created ' + that.l10n + sourcebook );
+   },
+   res : {
+      // Repack categories as function
+      'get' ( that, name ) {
+         return name in that
+            ? criteria => new Proxy( that[ name ].get( criteria ), rule.wrapper.first )
+            : null;
+      }
+   },
+   first : {
+      // if there is only one match, divert unknown properties to first result
+      'get' ( that, name ) {
+         return name in that ? that[ name ] : ( that.length == 1 ? that[0][ name ] : undefined );
+      }
    }
-}
+};
 
 /*****************************************************************************/
 
-rule.Resource = _.inherit( sys.Composite, function dd5_rule_Resource ( type, opt, def ) {
-   if ( opt ) {
-      sys.Composite.call( this, opt.id );
-      if ( opt.sourcebook ) {
-         if ( typeof( opt.sourcebook ) === 'string' ) opt.sourcebook = res.sourcebook.get({ id: opt.sourcebook })[0];
-         this.sourcebook = opt.sourcebook;
+function compile_property ( subject, prop, value ) {
+   return function property_compiler ( ) {
+      try {
+         var body = String( value ), func;
+         if ( (""+value).match( /^(\d+|[^"\r\n]*"|'[^'\r\n]*'|`[^`]*`|true|false|null|undefined)$/ ) ) { // simple values
+            body = 'return ' + body;
+            func = subject[ prop ] = new Function( body );
+         } else {
+            var head = '', varlist = [];
+            if ( body.match( /\bdb\b/ ) ) varlist.push( 'db=new Proxy(dd5.res,dd5.rule.wrapper.res)' );
+            if ( body.match( /\byou\b/ ) ) varlist.push( 'you=new Proxy(this.getCharacter(),dd5.rule.wrapper.you)' );
+            if ( body.match( /\bmin\b/ ) ) varlist.push( 'min=Math.min' );
+            if ( body.match( /\bmax\b/ ) ) varlist.push( 'max=Math.max' );
+            if ( body.match( /\bfloor\b/ ) ) varlist.push( 'floor=Math.floor' );
+            if ( body.match( /\bround\b/ ) ) varlist.push( 'round=Math.round' );
+            if ( varlist.length ) head += `var ${ varlist.join( ',' ) };`;
+            if ( ! body.match( /\breturn\b/ ) ) head += 'return ';
+            body = head + body;
+            var func = create_function( body );
+         }
+         subject[ prop ] = func;
+         func.exp = body;
+      } catch ( ex ) {
+         log.error( `Cannot compile ${ subject.cid }.${ prop }: ${ value }`, ex );
+         delete subject[ prop ];
       }
-      rule._opt_delete( opt, [ 'id', 'sourcebook' ] );
-   } else {
-      sys.Composite.call();
-   }
-   this.res_type = type;
-   if ( opt ) for ( var attr in opt ) if ( this[attr] === undefined ) this[attr] = opt[attr];
-   if ( def ) for ( var attr in def ) if ( this[attr] === undefined ) this[attr] = def[attr];
-}, {
-   "res_type"  : undefined,
-   "sourcebook": undefined,
+      return func.apply( this, _.ary( arguments, 3 ) ); // this may be inherited from subject and is different
+   };
+}
 
-   "_createInstance" : function dd5_Resource_createInstance ( ) {
-      return new sys.Component( this.id, this );
+function create_function( body ) {
+   // Evaluate a function expression at global scope. Should be much faster then new Function().bind.
+   return (0,eval)( `(function compiled_property(){'use strict';try{${body}}catch(exception){exception.message+='; source: '+compiled_property.exp;throw exception}})` );
+}
+
+/**
+ * Prototype of Resource (catagorised) and Subrule (non-catagorised).
+ */
+rule.Rule = {
+   '__proto__' : sys.Composite,
+   'create' ( opt ) {
+      var that = _.newIfSame( this, rule.Rule );
+      sys.Composite.create.call( that, opt );
+      _.assert( rule.Resource.isPrototypeOf( that ) || rule.subrule.Subrule.isPrototypeOf( that ), 'Rule not resource or subrule!' );
+      if ( opt.id ) _.assert( opt.id.match( /^[0-9a-zA-Z_-]+$/ ), `Invalid id "${ opt.id }", must be alphanumeric, underscore, or hypen.` );
+      for ( var prop of that.copy_list ) { var val = opt[ prop ];
+         if ( val !== undefined && val !== null ) {
+            _.assert( ! that.hasOwnProperty( prop ), `[dd5.Rule] Rule ${ this.cid } cannot copy property "${ prop }" to created component.` );
+            that[ prop ] = val;
+            delete opt[ prop ];
+         }
+      }
+      for ( var prop of that.compile_list ) { var val = opt[ prop ];
+         if ( val !== undefined && val !== null ) {
+            _.assert( ! that.hasOwnProperty( prop ), `[dd5.Rule] Rule ${ this.cid } cannot copy property "${ prop }" to created component.` );
+            that[ prop ] = compile_property( that, prop, val );
+            delete opt[ prop ];
+         }
+      }
+      return that;
    },
-   "create" : function dd5_Resource_create ( ) {
-      var result = this._createInstance( this );
-      this.getChildren().forEach( function dd5_Resource_createInstance_copyslot ( e ) {
-         result.add( e.create() );
-      } );
+   'compile_list' : [],
+   'copy_list' : [],
+   'build' ( ) {
+      log.finer( '[dd5.rule] Creating ' + this.cid );
+      var result = sys.Composite.create.call( Object.create( this ) );
+      result.build = null;
+      for ( var c of this.children ) result.add( c.build() );
       return result;
+   },
+};
+
+var Resource = rule.Resource = {
+   '__proto__' : rule.Rule,
+   'create' ( type, opt ) {
+      var that = _.newIfSame( this, Resource );
+      if ( ! opt.cid ) opt.cid = type + '.' + opt.id;
+      rule.Rule.create.call( that, opt );
+      _.assert( type && that.id && that.cid, '[dd5.Resource] Resource must have id and compoent id.' );
+      var dup = res[ type ].get( opt.id );
+      if ( dup.length ) throw new Error( `Redeclaring ${ type }.${ that.id  }. (already declared by ${ dup[0].source.cid })` );
+      if ( opt ) {
+         if ( opt.source ) {
+            if ( typeof( opt.source ) === 'string' ) opt.source = res.source.get({ id: opt.source })[0];
+            that.source = opt.source;
+         }
+         _.curtail( opt, [ 'id', 'cid', 'name', 'parent', 'source' ] );
+      }
+      that.res_type = type;
+      res[ type ].add( that );
+      log.fine( 'Loaded resource: ' + that.cid );
+      return that;
+   },
+   'res_type' : undefined,
+   'source'   : undefined,
+};
+
+rule.Source = {
+   '__proto__' : Resource,
+   'create' ( opt ) {
+      var that = _.newIfSame( this, rule.Source );
+      Resource.create.call( that, 'source', opt );
+      return that;
+   },
+   'copy_list' : [
+      'publisher',
+      'category',
+      'type',
+      'url',
+   ],
+   'loaded' : null, // Array of loaded rules
+};
+
+rule.Entity = {
+   '__proto__' : Resource,
+   'create' ( opt ) {
+      var that = _.newIfSame( this, rule.Entity );
+      Resource.create.call( that, 'entity', opt );
+      // With entity, assume all properties are valid.
+      for ( var prop in opt ) {
+         if ( prop !== 'subrules' ) {
+            if ( prop in that ) {
+               log.warn( `Cannot set "${ prop }" of ${ that.cid }.` );
+            } else {
+               that[ prop ] = opt[ prop ];
+               delete opt[ prop ];
+            }
+         }
+      }
+      return that;
    }
-});
+};
 
-rule.LazyResource = _.inherit( rule.Resource, function dd5_rule_LazyResource ( type, opt, def ) {
-   rule.Resource.call( this, type, opt, def );
-}, {
-   "subrules" : undefined,
-   "compile" : _.dummy, // Set by loader depending on data type
-   "_createInstance" : function dd5_LazyResource_createInstance ( ) {
-      this.compile();
-      return rule.Resource.prototype._createInstance.call( this );
+rule.Character = {
+   '__proto__' : Resource,
+   'create' ( opt ) {
+      var that = _.newIfSame( this, rule.Character );
+      Resource.create.call( that, 'character', opt );
+      return that;
    }
-});
+};
 
-rule.SourceBook = _.inherit( rule.Resource, function dd5_rule_Book ( opt ) {
-   rule.Resource.call( this, 'sourcebook', opt );
-   this.l10n = 'sourcebook.' + this.id;
-   check_dup( this );
-   rule._opt_delete( opt, [ 'name', 'publisher', 'category', 'type', 'url', 'autoload' ] );
-});
-
-rule.Entity = _.inherit( rule.Resource, function dd5_Entity ( opt ) {
-   rule.Resource.call( this, 'entity', opt );
-   this.l10n = 'entity.' + this.id;
-   check_dup( this );
-   // With entity, assume all properties are valid. This will also delete subrules, but an Entity shouldn't need it!
-   for ( var a in opt ) delete opt[a];
-});
-
-rule.Character = _.inherit( rule.LazyResource, function dd5_rule_Character ( opt ) {
-   rule.LazyResource.call( this, 'character', opt );
-   this.l10n = 'character.' + this.id;
-   check_dup( this );
-   rule._opt_delete( opt, [ 'type' ] );
-}, {
-   "type" : undefined, // 'system', 'pc', 'npc', 'mob'
-   "visible" : true,
-
-   "_createInstance" : function dd5_Character_createInstance ( ) {
-      this.compile();
-      return new sys.Character( this );
+rule.Feature = {
+   '__proto__' : Resource,
+   'create' ( opt ) {
+      var that = _.newIfSame( this, rule.Feature );
+      Resource.create.call( that, 'feature', opt );
+      return that;
    }
-});
+};
 
-rule.Feature = _.inherit( rule.LazyResource, function dd5_rule_Feature ( opt, parent, element ) {
-   rule.LazyResource.call( this, 'feature', opt, null, element );
-   this.parent = parent;
-   this.l10n = ( parent ? parent.l10n : 'feature' ) + '.' + this.id;
-   check_dup( this, { path: this.l10n }, this.l10n );
-});
+rule.Race = {
+   '__proto__' : Resource,
+   'create' ( opt ) {
+      var that = _.newIfSame( this, rule.Race );
+      Resource.create.call( that, 'race', opt );
+      return that;
+   }
+};
 
-rule.Race = _.inherit( rule.LazyResource, function dd5_rule_Race ( opt ) {
-   rule.LazyResource.call( this, 'race', opt, { 'rarity': 'common', 'size': 0 } );
-   this.l10n = 'race.' + this.id;
-   check_dup( this );
-   rule._opt_delete( opt, [ 'rarity' ] );
-});
+pinbun.event.load( 'dd5.rule' );
 
 })( dd5 );

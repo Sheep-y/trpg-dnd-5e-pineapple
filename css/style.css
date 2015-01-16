@@ -1,2 +1,4 @@
-html, body { margin: 0; width: 100%; background: #FFF; }
-#container { margin: 1ex; }
+* { box-sizing: border-box; }
+html { font-family: Arial; }
+html, body { margin: 0; width: 100%; background: black; color: white; }
+div { padding: 0; margin: 0; }

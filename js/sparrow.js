@@ -5,7 +5,7 @@
  *
  * Sparrow - light weight JS library. Lower level and boarder then JQuery, not DOM oriented.
  *
- * Feature support varies by browser, target is IE 9+, Chrome, Firefox
+ * Feature support varies by browser, target is latest IE, Chrome, Firefox
  *
  */
 
@@ -56,11 +56,30 @@ if ( ns ) ns._ = _;
  * @param {integer=} length If this and startpos is given, work like Array.slice( startpos, length ).
  * @returns {Array} Clone or slice of subject.
  */
-_.ary = function _ary ( subject, startpos, length ) {
-   if ( typeof( subject ) === 'string' || subject.length === undefined ) return [ subject ]; // String also has length!
-   if ( subject.length <= 0 ) return [];
-   if ( startpos === undefined ) return subject instanceof Array ? subject : Array.prototype.slice.call( subject, 0 );
-   return Array.prototype.slice.call( subject, startpos, length );
+if ( Array.from )
+   _.ary = function _ary ( subject, startpos, length ) {
+      if ( typeof( subject ) === 'string' || ( subject.length === undefined && typeof( subject.next ) !== 'function' ) ) return [ subject ]; // String also has length!
+      if ( subject.length <= 0 ) return [];
+      if ( ! ( subject instanceof Array ) ) subject = Array.from( subject );
+      return startpos === undefined ? subject : subject.slice( startpos, length );
+   };
+else
+   _.ary = function _ary ( subject, startpos, length ) {
+      if ( typeof( subject ) === 'string' || subject.length === undefined ) return [ subject ]; // String also has length!
+      if ( subject.length <= 0 ) return [];
+      if ( startpos === undefined ) return subject instanceof Array ? subject : Array.prototype.slice.call( subject, 0 );
+      return Array.prototype.slice.call( subject, startpos, length );
+   };
+
+/**
+ * Call forEach on an array-like object.
+ * @param {(Array|NodeList|*)} subject Subject to call forEach on
+ * @param {Function=} callbcak Callback function (element, index)
+ * @param {*=} thisarg The 'this' argument of callback.  Passed straight to Array.forEach.
+ */
+_.forEach = function _forEach ( subject, callback, thisarg ) {
+   if ( subject.forEach ) return subject.forEach( callback, thisarg );
+   return Array.prototype.forEach.call( subject, callback, thisarg );
 };
 
 /**
@@ -93,8 +112,9 @@ _.col = function _col ( subject, column /* ... */) {
  * @returns {function(*,*)} Sorter function
  */
 _.sorter = function _sorter ( field, des ) {
-   var ab = ! des ? 1 : 0, ba = -ab;
-   return function _sorter( a, b ) { return a[ field ] > b[ field ] ? ab : ( a[ field ] < b[ field ] ? ba : 0 ); };
+   var ab = ! des ? 1 : -1, ba = -ab;
+   if ( field === undefined || field === null ) return function _sorter_val( a, b ) { return a > b ? ab : ( a < b ? ba : 0 ); };
+   return function _sorter_fld( a, b ) { return a[ field ] > b[ field ] ? ab : ( a[ field ] < b[ field ] ? ba : 0 ); };
 };
 
 /**
@@ -105,11 +125,11 @@ _.sorter = function _sorter ( field, des ) {
  * @returns {function(*,*)} Sorter function
  */
 _.sorter.number = function _sorter_number ( field, des ) {
-   var ab = ! des ? 1 : 0, ba = -ab;
-   if ( field === undefined ) {
+   var ab = ! des ? 1 : -1, ba = -ab;
+   if ( field === undefined || field === null ) {
       return function _sorter_number_val( a, b ) { return +a > +b ? ab : ( +a < +b ? ba : 0 ); };
    } else {
-      return function _sorter_number_field( a, b ) { return +a[ field ] > +b[ field ] ? ab : ( +a[ field ] < +b[ field ] ? ba : 0 ); };
+      return function _sorter_number_fld( a, b ) { return +a[ field ] > +b[ field ] ? ab : ( +a[ field ] < +b[ field ] ? ba : 0 ); };
    }
 };
 
@@ -161,7 +181,7 @@ _.mapper._map = function _mapper_map( base, prop ) {
 
    } else {
       // Object, assume to be property map.
-      var result = new _.Map();
+      var result = Object.create( null );
       for ( var p in prop ) {
          result[ p ] = _mapper_map( base, prop[ p ] );
       }
@@ -178,6 +198,31 @@ _.mapper._map = function _mapper_map( base, prop ) {
  */
 _.map = function _map ( data, field ) {
    return _.ary( data ).map( _.mapper.apply( null, _.ary( arguments ).slice( 1 ) ) );
+};
+
+/**
+ * Return first non-null, non-undefined parameter.
+ *
+ * @returns {*} First non null data.  If none, returns the last argument or undefined.
+ */
+_.coalesce = function _coalesce ( a ) {
+   for ( var i in arguments ) {
+      a = arguments[ i ];
+      if ( a !== undefined && a !== null ) return a;
+   }
+   return a;
+};
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Text Helpers
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+_.ucfirst = function _ucfirst ( txt ) {
+   return txt ? txt.substr(0,1).toUpperCase() + txt.substr(1) : txt;
+};
+
+_.ucword = function _ucword ( txt ) {
+   return txt ? txt.split( /\b(?=[a-zA-Z])/g ).map( ns.ucfirst ).join( '' ) : txt;
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -337,11 +382,12 @@ _.js = function _js ( option, onload ) {
    if ( option.validate && option.validate.call( null, url, option ) ) return _js_done( option.onload );
 
    var url = option.url;
-   if ( option.harmony && _.is.firefox() ) option.type = "application/javascript;version=1.8";
+   if ( option.harmony && ! option.type && _.is.firefox() ) option.type = "application/javascript;version=1.8";
 
    var attr = { 'src' : url };
    if ( option.charset ) attr.charset = option.charset;
    if ( option.type ) attr.type = option.type;
+   if ( option.async ) attr.async = option.async;
 
    var e = _.create( 'script', attr );
    _.info( "[JS] Load script: " + url );
@@ -486,12 +532,12 @@ _.xml = function _xml ( txt ) {
  * @returns {Object} Converted JS object.
  */
 _.xml.toObject = function _xml_toObject ( root, base ) {
-   if ( base === undefined ) base = new _.Map();
+   if ( base === undefined ) base = Object.create( null );
    base.tagName = root.tagName;
-   _.ary( root.attributes ).forEach( function _xml_toObject_attr_each( attr ) {
+   _.forEach( root.attributes, function _xml_toObject_attr_each( attr ) {
       base[attr.name] = attr.value;
-   } );
-   _.ary( root.children ).forEach( function _xml_toObject_children_each( child ) {
+   });
+   _.forEach( root.children, function _xml_toObject_children_each( child ) {
       var name = child.name, obj = _xml_toObject( child );
       if ( base[name] === undefined ) {
          base[name] = obj;
@@ -499,13 +545,13 @@ _.xml.toObject = function _xml_toObject ( root, base ) {
          base[name] = _.ary( base[name] );
          base[name].push( obj );
       }
-   } );
+   });
    return base;
 };
 
 /**
- * A) Parse html and return an html dom element.
- * B) Set dom element's html.
+ * A) Parse html and return a dom element or a document fragment.
+ * B) Set a dom element's html.
  *
  * @param {(string|DOMElement|NodeList)} txt HTML text to parse.
  * @param {string=} html HTML text to parse.
@@ -513,12 +559,18 @@ _.xml.toObject = function _xml_toObject ( root, base ) {
  */
 _.html = function _html ( txt, html ) {
    if ( html === undefined && typeof( txt ) === 'string' ) {
-      var e = _.html.node = document.createElement( 'div' );
-      e.innerHTML = txt;
-      return e;
+      var range = _.html.range || ( _.html.range = document.createRange() );
+      var frag = range.createContextualFragment( txt );
+      return frag.childElementCount > 1 ? frag : frag.firstElementChild;
    } else {
-      _.attr( txt, { html: html } );
+      _.forEach( _.domlist( txt ), function _html_each( e ) {
+         e.innerHTML = html;
+      });
    }
+};
+
+_.html.contains = function _html_contains( root, child ) {
+   return root == child || ( root.compareDocumentPosition( child ) & 16 );
 };
 
 /**
@@ -669,10 +721,11 @@ _.time = function _time ( msg ) {
       return now;
    }
    var fromBase = now - t.base;
-   var fromLast = t.last ? ( 'ms,+' + (now - t.last) ) : '';
-   _.info( msg + ' (+' + fromBase + fromLast + 'ms)' );
+   var fromLast = now - t.last;
+   var txtLast = t.last ? ( 'ms,+' + fromLast ) : '';
+   _.info( msg + ' (+' + fromBase + txtLast + 'ms)' );
    t.last = now;
-   return [now - t.last, fromBase];
+   return [fromLast, fromBase];
 };
 
 if ( ns.console && ns.console.assert ) {
@@ -796,9 +849,20 @@ _.halfwidth = function _halfwidth( src ) {
  * @returns {Object|null|undefined} Prototype of e, or null|undefined if e is null|undefined.
  */
 _.proto = function _proto ( e ) {
-   if ( e === null || e === undefined ) return e;
-   if ( typeof( e ) !== 'object' && typeof( e ) !== 'function' ) return;
+   if ( e === null || e === undefined || ! _.is.object( e ) ) return e;
    return Object.getPrototypeOf( e );
+};
+
+/**
+ * If subject is null or is exactly same as prototype, create a new object from the prototype.
+ *
+ * @param {Object|null|undefined} that Subject to control creation.
+ * @param {Object} prototype Prototype of result if new object need to be created.
+ * @returns {Object|null|undefined} Prototype of e, or null|undefined if e is null|undefined.
+ */
+_.newIfSame = function _newIfSame ( that, prototype ) {
+   if ( that === undefined || that === null ) that = prototype;
+   return that !== prototype ? that : Object.create( prototype );
 };
 
 /**
@@ -815,57 +879,54 @@ _.inherit = function _inherit ( base, constructor, prototype ) {
    _.assert( constructor === null || typeof( constructor ) === 'function', _inherit.name + ': constructor must be function' );
    if ( constructor === null ) {
       if ( base ) constructor = function _inherit_constructor () { base.apply( this, arguments ); };
-      else constructor = function _dummy_constructor () {}; // Must always create new function, do not share
+      else constructor = function _dummy_constructor () {}; // Must always create new function, do not share it
    }
    if ( base ) {
       var proto = constructor.prototype = Object.create( base.prototype );
-      if ( prototype ) for ( var k in prototype ) proto[k] = prototype[k];
+      if ( prototype ) _.extend( proto, prototype );
    } else {
       constructor.prototype = prototype;
    }
-   // _.freeze( proto ); Frozen properties are inherited, preventing normal property assignment
    return constructor;
 };
 
-_.deepclone = function _clone( base ) {
-   return _.clone( base, true );
+/**
+ * Add properties from one object to another.
+ * Properties owned by target will not be overwritten, but inherited properties may be copied over.
+ * Similiarly, properties owned by subsequence arguments will be copied, but not inherited properties.
+ *
+ * @param {Object} target Target object, will have its properties expanded.
+ * @param {Object} copyFrom An object with properties
+ * @returns {Object} Extended target object
+ */
+_.extend = function _extend( target, copyFrom ) {
+   var prop = [], exists = Object.getOwnPropertyNames( target );
+   if ( Object.getOwnPropertySymbols ) exists = exists.concat( Object.getOwnPropertySymbols( target ) );
+   for ( var i = 1, len = arguments.length ; i < len ; i++ ) {
+      var from = arguments[ i ], keys = Object.getOwnPropertyNames( from );
+      if ( Object.getOwnPropertySymbols ) keys = keys.concat( Object.getOwnPropertySymbols( from ) );
+      keys.forEach( function _extend_copy_prop ( name ) {
+         if ( exists.indexOf( name ) < 0 ) {
+            prop[ name ] = Object.getOwnPropertyDescriptor( from, name );
+            exists.push( name );
+         }
+      } );
+   }
+   Object.defineProperties( target, prop );
+   return target;
 };
 
 /**
- * Clone a given object shallowly or deeply.
- *
- * @param {Object} base Base object
- * @param {boolean=} deep True for deep clone, false for shallow clone (default).
- * @returns {Object} Cloned object
+ * Remove properities from an object.
+ * @param {Object} target Target object, will have its properties removed.
+ * @param {*} prop Array like property list, or an object with properties.
+ * @returns {Object} Curtailed target object
  */
-_.clone = function _clone( base, deep ) {
-   var result, type = typeof( base );
-   if ( base === null ) return base;
-   switch ( type ) {
-      case 'object' :
-         // TODO: Handle RegExp, Date, DOM etc
-         if ( base instanceof Array ) {
-            result = [];
-         } else {
-            result = Object.create( Object.getPrototypeOf( base ) );
-         }
-         break;
-
-      case 'function' :
-         result = function _cloned_function() { return base.apply( this, arguments ); };
-         result.prototype = base.prototype;
-         break;
-
-      default :
-         return base;
-   }
-   for ( var k in base ) result[k] = deep ? _.clone( base[k], deep ) : base[k];
-   return result;
-};
-
-_.extend = function _extend( target, prop ) {
-   Object.keys( prop ).forEach( function _extend_each( e ) {
-      target[ e ] = prop[ e ];
+_.curtail = function _curtail( target, prop ) {
+   if ( prop.length !== undefined ) prop = _.ary( prop );
+   else prop = Object.keys( prop );
+   prop.forEach( function _curtail_each( e ) {
+      if ( target.hasOwnProperty( e ) ) delete target[ e ];
    });
    return target;
 };
@@ -925,7 +986,7 @@ _.create = function _create ( tag, attr ) {
  */
 _.domlist = function _domlist ( e ) {
    if ( typeof( e ) === 'string' ) return _( e );
-   else if ( e.length === undefined ) return [ e ];
+   else if ( e.tagName || e.length === undefined ) return [ e ];
    return e;
 };
 
@@ -985,7 +1046,7 @@ _.set = function _set ( ary, obj, value, flag ) {
 
 /**
  * Safe method to get an object's prototype
- * 
+ *
  * @param {*} base Base object to get prototype.
  * @returns {Object|undefined|null} Null or undefined if base cannot have prototype.  Otherwise Object.getPrototypeOf.
  */
@@ -1116,6 +1177,21 @@ _.visible = function _visible ( e, visible ) {
 };
 
 /**
+ * Clear a DOM elements of all children.
+ *
+ * @param {(string|Node|NodeList)} e Selector or element(s).
+ * @returns {Array} Array-ifed e
+ */
+_.clear = function _clear ( e ) {
+   _.forEach( e = _.domlist( e ), function _clear_each ( p ) {
+      var c = p.firstChild;
+      if ( ! c ) return;
+      do { p.removeChild( c ); } while ( c = p.firstChild );
+   } );
+   return e;
+};
+
+/**
  * Check whether given DOM element(s) contain a class.
  *
  * @param {(string|Node|NodeList)} e Selector or element(s).
@@ -1124,7 +1200,7 @@ _.visible = function _visible ( e, visible ) {
  */
 _.hasClass = function _hasClass ( e, className ) {
    // TODO: May fail when e returns a domlist, e.g. if passed a selector?
-   return _.domlist( e ).some( function(c){ return c.className.split( /\s+/ ).indexOf( className ) >= 0; } );
+   return _.domlist( e ).some( function(c){ return c.classList.contains( className ); } );
 };
 
 /**
@@ -1134,9 +1210,7 @@ _.hasClass = function _hasClass ( e, className ) {
  * @param {(string|Array)} className  Class(es) to add.  Can be String or Array of String.
  * @returns {Array|NodeList} Array-ifed e
  */
-_.addClass = function _addClass ( e, className ) {
-   return _.toggleClass( e, className, true );
-};
+_.addClass = function _addClass ( e, className ) { return _.toggleClass( e, className, 'add' ); };
 
 /**
  * Removes class(es) from DOM element(s).
@@ -1145,52 +1219,30 @@ _.addClass = function _addClass ( e, className ) {
  * @param {(string|Array)} className  Class(es) to remove.  Can be String or Array of String.
  * @returns {Array|NodeList} Array-ifed e
  */
-_.removeClass = function _removeClass ( e, className ) {
-   if ( className === undefined ) className = e.match(/\.[^. :#>+~()\[\]]+$/)[0].substr( 1 );
-   return _.toggleClass( e, className, false );
-};
+_.removeClass = function _removeClass ( e, className ) { return _.toggleClass( e, className, 'remove' ); };
 
 /**
  * Adds or removes class(es) from DOM element(s).
  *
  * @param {(string|Node|NodeList)} e Selector or element(s).
  * @param {(string|Array)} className  Class(es) to toggle.  Can be String or Array of String.
- * @param {boolean} toggle   True for add, false for remove, undefined for toggle.
+ * @param {string=} method classList method to run.  Default to 'toggle'.
  * @returns {Array|NodeList} Array-ifed e
  */
-_.toggleClass = function _toggleClass ( e, className, toggle ) {
-   e = _.domlist( e );
-   var c = typeof( className ) === 'string' ? [ className ] : className;
-   for ( var i = e.length-1 ; i >= 0 ; i-- ) {
-      var className = e[ i ].className, cls = className, lst = cls.split( /\s+/ );
-      for ( var j = c.length-1 ; j >= 0 ; j-- ) {
-         var thisClass = c[ j ], pos = lst.indexOf( thisClass );
-         if ( pos < 0 && ( toggle || toggle === undefined ) ) { // Absent and need to add
-            lst.push( thisClass );
-         } else if ( pos >= 0 && ( ! toggle || toggle === undefined ) ) { // Exists and need to remove
-            lst.splice( pos, 1 );
-         }
-      }
-      cls = lst.join( ' ' );
-      if ( className !== cls ) {
-         e[ i ].className = cls;
-      }
-   }
+_.toggleClass = function _toggleClass ( e, className, method ) {
+   if ( method === undefined ) method = 'toggle';
+   var cls = _.ary( className );
+   _.forEach( _.domlist( e ), function _toggleClass_each ( dom ) {
+      cls.forEach( function _toggleClass_each_each( c ) { dom.classList[ method ]( c ); } );
+   } );
    return e;
-};
- 
-/**
- * Create a new object suitable for map.
- *
- * @returns {Array} A blank object with no prototype.
- */
-_.Map = function _Map ( ) {
-    return Object.create( null );
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Asynchronous programming
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+// TODO: Can be replaced by Promise?
 
 /**
  * Countdown Latch object
@@ -1289,6 +1341,7 @@ _.Executor.prototype = {
    "clear"  : function _executor_clear () { this.waiting = []; },
    "pause"  : function _executor_pause () { this._paused = true; if ( this._timer ) clearTimeout( this._timer ); return this; },
    "resume" : function _executor_resume () { this._paused = false; this.notice(); return this; },
+
    /**
     * Check state of threads and schedule tasks to fill the threads.
     * This method always return immediately; tasks will run after current script finish.
@@ -1344,21 +1397,23 @@ _.Executor.prototype = {
  * @param {Object=} owner Owner of this manager, handlers would be called with this object as the context. Optional.
  * @returns {_.EventManager}
  */
-_.EventManager = function _EventManager ( events, owner ) {
-   this.owner = owner;
-   var lst = this.lst = new _.Map();
-   if ( events === undefined || events === null ) {
-      this.strict = false;
-   } else {
-      for ( var i = 0, l = events.length ; i < l ; i++ ) {
-         lst[events[i]] = null;
+_.EventManager = {
+   "create" : function ( events, owner ) {
+      var that = _.newIfSame( this, _.EventManager );
+      that.owner = owner;
+      var lst = that.lst = Object.create( null );
+      if ( events === undefined || events === null ) {
+         that.strict = false;
+      } else {
+         for ( var i = 0, l = events.length ; i < l ; i++ ) {
+            lst[events[i]] = null;
+         }
       }
-   }
-};
-_.EventManager.prototype = {
-   "lst" : {},
+      return that;
+   },
+   "lst" : Object.create( null ), // Observer list by event name
    "owner" : null, // Owner, as context of handler calls.
-   "strict" : true, // Whether this manager allow arbitary events.
+   "strict" : true, // Whether this manager allow arbitrary events.
    "log" : false, // If true, will log event firing.
    /**
     * Register an event handler.  If register twice then it will be called twice.
@@ -1366,7 +1421,7 @@ _.EventManager.prototype = {
     * @param {(string|Array)} event Event to register to.
     * @param {(Function|Array)} listener Event handler.
     */
-   "add" : function _EventManager_add ( event, listener ) {
+   "add" : function ( event, listener ) {
       var thisp = this;
       if ( event instanceof Array ) return event.forEach( function( e ){ thisp.add( e, listener ); } );
       if ( listener instanceof Array ) return listener.forEach( function( l ){ thisp.add( event, l ); } );
@@ -1385,7 +1440,7 @@ _.EventManager.prototype = {
     * @param {(string|Array)} event Event to un-register from.
     * @param {(Function|Array)} listener Event handler.
     */
-   "remove" : function _EventManager_remove ( event, listener ) {
+   "remove" : function ( event, listener ) {
       var thisp = this;
       if ( event instanceof Array ) return event.forEach( function( e ){ thisp.remove( e, listener ); } );
       if ( listener instanceof Array ) return listener.forEach( function( l ){ thisp.remove( event, l ); } );
@@ -1409,7 +1464,7 @@ _.EventManager.prototype = {
     * @param {string} event Event to call.
     * @param {...*} param Parameters to pass to event handlers.
     */
-   "fire" : function _EventManager_remove ( event, param ) {
+   "fire" : function ( event, param ) {
       var lst = this.lst[event];
       if ( ! lst ) {
          if ( this.strict && lst === undefined )
@@ -1422,15 +1477,23 @@ _.EventManager.prototype = {
          lst[i].apply( this.owner, param );
       }
    },
-   "createFireMethods" : function _EventManager_createFireMethods ( event ) {
+   /** Create methods to fire event for given event list or method:event mapping */
+   "createFireMethods" : function ( event ) {
       var self = this;
-      _.ary( event ).forEach( function _EventManager_createFireMethods_each( evt ) {
-         if ( ! Object.hasOwnProperty( self, evt ) ) {
-            self[evt] = self.fire.bind( self, evt );
+      function _EventManager_createFireMethods_make( prop, evt ) {
+         if ( ! self.hasOwnProperty( evt ) ) {
+            self[ prop ] = self.fire.bind( self, evt );
          } else {
             _.warn( '[sparrow.EventManager.createFireMethods] Fire method "' + evt + "' cannot be created." );
          }
-      } );
+      }
+      if ( ! event || event instanceof Array || event.length ) {
+         _.forEach( event || Object.keys( this.lst ), function _EventManager_createFireMethods_each( e ){
+            _EventManager_createFireMethods_make( e, e );
+         } );
+      } else {
+         for ( var prop in event ) _EventManager_createFireMethods_make( prop, event[ prop ] );
+      }
    }
 };
 
@@ -1447,7 +1510,7 @@ _.EventManager.prototype = {
  */
 _.l = function _l ( path, defaultValue, param /*...*/ ) {
    var l = _.l;
-   var result = l.getset( path, undefined, l.currentLocale );
+   var result = l.getset( l.currentLocale, path, undefined);
    if ( result === undefined ) result = defaultValue !== undefined ? defaultValue : path;
    if ( arguments.length > 2 ) {
       if ( arguments.length === 3 ) return l.format( ""+result, param );
@@ -1476,7 +1539,7 @@ _.l.currentLocale = 'en';
 _.l.fallbackLocale = 'en';
 
 /** L10n resources. */
-_.l.data = new _.Map();
+_.l.data = Object.create( null );
 
 /**
  * Set current locale.
@@ -1530,22 +1593,21 @@ _.l.detectLocale = function _l_detectLocale ( defaultLocale ) {
  * @param {string} locale Locale to use. NO DEFAULT.
  * @returns {*} if set, return undefined.  If get, return the resource.
  */
-_.l.getset = function _l_getset ( path, set, locale ) {
-   var p = path.split( '.' ), l = _.l;
+_.l.getset = function _l_getset ( locale, path, set ) {
+   var p = [ locale ].concat( path.split( '.' ) ), l = _.l;
    var last = p.pop();
-   p.unshift( locale );
    var base = l.data;
    // Explore path
    for ( var i = 0, len = p.length ; i < len ; i++ ) {
       var node = p[i];
-      if ( base[node] === undefined ) base[node] = new _.Map();
+      if ( base[node] === undefined ) base[node] = Object.create( null );
       base = base[node];
    }
    // Set or get data
    if ( set !== undefined ) {
       base[last] = set;
    } else {
-      if ( base[last] === undefined && locale !== l.fallbackLocale ) return l.getset( path, undefined, l.fallbackLocale );
+      if ( base[last] === undefined && locale !== l.fallbackLocale ) return l.getset( l.fallbackLocale, path, undefined );
       return base[last];
    }
 };
@@ -1556,8 +1618,13 @@ _.l.getset = function _l_getset ( path, set, locale ) {
  * @param {string} path Path to set resource
  * @param {*} data Resource to set
  */
-_.l.set = function _l_set ( path, data ) {
-    _.l.getset( path, data, _.l.currentLocale );
+_.l.set = function _l_set ( locale, path, data ) {
+   if ( arguments.length == 2 ) {
+      data = path;
+      path = locale;
+      locale = _.l.currentLocale;
+   }
+    _.l.getset( locale, path, data );
     _.l.event.fire( 'set', path, data );
 };
 
@@ -1570,7 +1637,7 @@ _.l.set = function _l_set ( path, data ) {
 _.l.localise = function _l_localise ( root ) {
    if ( root === undefined ) root = document.documentElement;
    root.setAttribute( 'lang', _.l.currentLocale );
-   _.ary( _( ".i18n" ) ).forEach( function _l_localise_each ( e ) {
+   _.forEach( _( ".i18n" ), function _l_localise_each ( e ) {
       var key = e.getAttribute( "data-i18n" );
       if ( ! key ) {
          switch ( e.tagName ) {
@@ -1603,7 +1670,7 @@ _.l.localise = function _l_localise ( root ) {
    });
 };
 
-_.l.event = new _.EventManager( ['set','locale'], _.l );
+_.l.event = _.EventManager.create( ['set','locale'], _.l );
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Testing
@@ -1613,22 +1680,23 @@ _.l.event = new _.EventManager( ['set','locale'], _.l );
  * Run a test suite and write result to document, or check a specific test.
  *
  * @param {*} condition Either an assertion or a test suite object.
- * @param {string} name Name of assertion
+ * @param {string=} name Name of assertion. If absent, condition must be a test suite.
  */
 _.test = function _test ( condition, name ) {
-   var add = 'appendChild', create = _.create;
+   var add = 'appendChild', create = _.create, tr;
    if ( name !== undefined ) {
       // Single test case, append to latest test table
-      if ( ! _test.body ) _test( { test: _dummy() } ); // Create body if not exists
+      _.assert( _test.body, '[Addiah] Named test should be called as part of test suit.' );
       var tr = create( 'tr' ), td = create( td );
       if ( condition ) td.textContent = 'OK';
       else td.appendChild( 'b', { class: 'err', text: 'FAIL' } );
       tr[add]( create( 'td', _.escHtml( name ) ) );
       tr[add]( td );
       _test.body[add]( tr );
+
    } else {
       // Test suite object
-      var title = create( 'h1', 'Testing' );
+      var title = create( 'h1', 'Testing' ), result;
       var success = true;
       document.body[add]( title );
       for ( var test in condition ) {
@@ -1637,22 +1705,19 @@ _.test = function _test ( condition, name ) {
 
             var table = create( 'table', { class: 'sparrow_test', border: 1 } );
             var cap = create( 'caption', _.escHtml( test ).replace( /^test_+/, '' ) );
-            var tbody = _test.body = create( 'tbody' );
             table[add]( cap );
-            table[add]( tbody );
+            table[add]( _test.body = create( 'tbody' ) );
             document.body[add]( table );
 
             // Run test
             try {
                condition[test]();
             } catch ( e ) {
-               var tr = _.create( 'tr' );
+               _test.body[add]( tr = _.create( 'tr' ) );
                tr[add]( _.create( 'td', { colspan:2, class:'err', text: 'Exception during testing: ' + e } ) );
-               tbody[add]( tr );
             }
 
             // Update table caption
-            var result;
             if ( _( table, '.err' ).length ) {
                result = _.create( 'b', 'FAILED: ' );
                success = false;

@@ -1,33 +1,42 @@
-<!DOCTYPE html><html><head><meta charset="UTF-8"> <!-- ex: softtabstop=3 shiftwidth=3 tabstop=3 expandtab
--->
+<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Prototype</title>
+<meta http-equiv="P3P" content='CP="NID"' />
+<meta name="viewport" content="width=400,initial-scale=1" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
 <link rel="stylesheet" href="css/style.css" />
 </head><body>
-<div id="container">
-   <div id="dlg"></div>
-</div>
-<script src='js/sparrow_es6.js'></script>
+
+<div id="container"></div>
+
 <script src='js/sparrow.js'></script>
-<script src='js/sparrow_parser.js'></script>
-<script src='js/sparrow_parser_test.js'></script>
+<script src='js/sparrow.data.js'></script>
+<script src='js/sparrow.ui.js'></script>
+<script src='js/pinbun/pinbun.js'></script>
+<script src='js/pinbun/ui.js'></script>
+<script src='js/pinbun/panel/chargen.js'></script>
 <script src='js/dd5/core.js'></script>
 <script src='js/dd5/rule.js'></script>
 <script src='js/dd5/subrule.js'></script>
-<script src='js/dd5/effect.js'></script>
 <script src='js/dd5/loader.js'></script>
-<script src='js/dd5/expression.js'></script>
-<script src='js/dd5/parser.js'></script>
-<script>(function(){ 'use strict';
+<script src='js/dd5/ui/ui.js'></script>
+<script src='js/dd5/ui/general.js'></script>
+<script src='js/dd5/ui/special.js'></script>
+<script src='js/dd5/lang/en_basic.js'></script>
+<script src='js/dd5/lang/zh_basic.js'></script>
 
-if ( ! document.querySelectorAll || ! window.Storage || ! dd5 ) {
-   return alert('Please use a modern browser. 請使用最新的瀏覽器。');
-}/*
-try {
-   let harmony = true;
-} catch ( SyntaxError ) {
-   alert( 'Requires IE 11+ or Firefox, or enable "experimental JavaScript features" on Chrome.' )
-}*/
+<script>(function init ( ) { 'use strict';
 
-dd5.loader.load( 'res/sources.js' );
+if ( ! window.Proxy ) {
+   document.getElementById('container').style.textAlign = 'center';
+   document.getElementById('container').innerHTML =
+      '<a href="https://www.mozilla.org/firefox/"><img src="https://mozorg.cdn.mozilla.net/media/img/styleguide/identity/firefox/usage-standard.png?2013-06" alt="Please use Firefox" /></a>'+
+      '<br/>Your browser does not support <a href="http://kangax.github.io/compat-table/es6/">ECMAScript 6</a>. Try <a href="https://www.mozilla.org/firefox/">Firefox</a>.';
+} else {
+   pinbun.init( 'res/dd5_sources.js' );
+}
 
-})()</script>
+})();</script>
+<noscript>
+   <p class='noscript'>Please enable JavaScript</p>
+</noscript>
+
 </body></html>

@@ -1,176 +1,154 @@
-'use strict';
+var dd5; // Globals
+if ( ! dd5 || ! dd5.rule ) throw new Error( '[dd5.subrule] 5e rule module must be loaded first.' );
+else if ( ! dd5.rule.subrule ) ( function dd5_subrule_init ( ns ) { 'use strict';
 
-_.assert( dd5 && dd5.rule, '[dd5.rule.subrule] 5e rule module must be loaded first.');
-_.assert( ! dd5.rule.subrule, '5e subrule module already loaded.' );
-
-(function dd5_subrule_init ( ns ){
-
-var l10n = 'dd5.';
 var sys = ns.sys;
+var log = ns.event;
 var rule = ns.rule;
-var subrule = rule.subrule = {};
+var subrule = rule.subrule = Object.create( null );
 
 /**************************** Subrules ***********************************/
 
-subrule.Subrule = _.inherit( rule.Resource, function dd5_rule_Subrule( type, opt, def ) {
-   rule.Resource.call( this, type, opt, def );
-}, {
-   "getSource" : function dd5_Subrule_getSource ( ) {
-      return this.rule ? this.rule : this;
+var base = subrule.Subrule = {
+   '__proto__' : rule.Rule,
+   'create' ( opt ) {
+      var that = _.newIfSame( this, base );
+      rule.Rule.create.call( this, opt );
+      return that;
    },
-   "create" : function dd5_Subrule_create ( ) {
-      var result = rule.Resource.prototype.create.call( this );
-      result.query = this.query;
-      result.getSource = this.getSource;
-      return result;
-   }
-});
+};
 
-subrule.Slot = _.inherit( subrule.Subrule, function dd5_rule_Subrule_Slot ( opt ) {
-   if ( ! opt.id ) throw '[dd5.Rule.Subrule] Slot must have id.';
-   subrule.Subrule.call( this, 'slot', opt );
-   rule._parse_and_delete( this, opt, [ 'options', 'default', 'minVal', 'maxVal', 'can_duplicate' ] );
-   _.assert( this.options || ( this.minVal && this.maxVal ), '[dd5.Subrule.Slot] Slot must have options or both minVal and maxVal.' );
-},{
-   "pick" : null, // Resource.  Selected option.
-   "options" : null, // Expression.  Do not call directly; use getOptions instead.
-   "default" : null, // Expression.  Default option.
-   "minVal" : null, // Expression.  When options is set, this is the minium number of choice, otherwise the min selectable value.
-   "maxVal" : null, // Expression.  When options is set, this is the maximum number of choice, otherwise the max selectable value.
-   "can_duplicate" : false, // Expression.  True allow user to select duplicate items.
+subrule.Slot = {
+   '__proto__' : base,
+   'create' ( opt ) {
+      var that = _.newIfSame( this, subrule.Slot );
+      base.create.call( that, opt );
+      _.assert( opt.id, '[dd5.rule.Slot] Slot must have id.' );
+      _.assert( that.options || ( that.minVal && that.maxVal ), '[dd5.rule.Slot] Slot must have options or both minVal and maxVal.' );
+      return that;
+   },
+   'cid': 'subrule.slot',
+   'options' : null, // Option list.
+   'count'   : 1,    // How many picks.
+   'default' : null, // Expression.  Default option.
+   'minVal'  : null, // Expression.  When options is set, this is the minium number of choice, otherwise the min selectable value.
+   'maxVal'  : null, // Expression.  When options is set, this is the maximum number of choice, otherwise the max selectable value.
+   'can_duplicate' : ()=>false, // Expression.  True allow user to select duplicate items.
+   'compile_list' : [ 'options', 'default', 'minVal', 'maxVal', 'can_duplicate' ],
 
-   "toString" : function dd5_Slot_toString ( ) {
+   'toString' ( ) {
       if ( this.options ) {
          return "slot#" + this.id + ':' + this.options;
       } else {
-         return "slot#" + this.id + ':' + this.minVal+ '..' + this.maxVal;
+         return "slot#" + this.id + ':' + this.minVal + '..' + this.maxVal;
       }
    },
-   "_createInstance" : function dd5_Slot_createInstance () {
-      var result = new subrule.Slot.Instance( this );
-      if ( this.default ) result.setPick( this.default.value() );
+   'build' ( ) {
+      var result = base.build.call( this );
+      if ( this.default ) result.setPick( this.default() );
       return result;
-   }
-});
-subrule.Slot.Instance = _.inherit( sys.Composite, function dd5_rule_Subrule_Slot_Instance ( rule ) {
-   sys.Composite.call( this );
-   this.id = rule.id;
-}, {
-   "toString" : function dd5_SlotIns_toString ( ) {
-      return this.rule.toString();
    },
-   "getOptions" : function dd5_SlotIns_getOptions ( context ) {
-      if ( ! this.rule.options ) {
+
+   'pick' : null, // Selected option.
+   'getOptions' ( query ) {
+      var result = [];
+      if ( ! this.options ) {
          if ( this.minVal && this.maxVal ) {
-            var min = this.minVal.value( context ), max = this.maxVal.value( context ), result = [];
+            var min = this.queryChar( 'slotMin', this, this.minVal(), query );
+            var max = this.queryChar( 'slotMax', this, this.maxVal(), query );
             while ( min <= max ) result.push( min++ );
-            return result;
          }
-         return [];
+      } else {
+         result = this.queryChar( 'slotOptions', this, this.options(), query );
       }
-      return this.rule.options.value( context );
+      return result;
    },
-   "getPick" : function dd5_SlotIns_getPick ( ) { return this.pick; },
-   "setPick" : function dd5_SlotIns_pick ( pick ) {
-      if ( pick.compile ) pick.compile();
-      if ( pick.createInstance ) pick = pick.createInstance();
+   'getPick' ( ) { return this.pick; },
+   'setPick' ( pick ) {
+      if ( pick !== null && this.getOptions().indexOf( pick ) < 0 ) {
+         return log.warn( `[dd5.rule.Slot] Invalid picked option for slot ${ this.id }: ${ pick }` );
+         if ( this.getPick() === null ) return;
+         pick = null;
+      }
+      if ( pick && pick.build ) pick = pick.build();
+      this.fireAttributeChanged( this.id, pick, this.pick );
+      if ( this.pick && _.is.object( this.pick ) ) this.remove( this.pick );
       this.pick = pick;
+      if ( pick  && _.is.object( pick ) ) this.add( pick );
    },
-   "query" : function dd5_SlotIns_query ( query ) {
+   'query' ( query ) {
+      var pick = this.getPick();
       if ( this.pick ) {
          if ( query.query === this.id && query.value === undefined ) {
-            if ( typeof( this.pick ) === 'number' ) {
-               query.value = new sys.Value( new sys.Bonus( this, this.pick ) );
+            if ( typeof( pick ) === 'number' ) {
+               query.value = sys.Value.create( sys.Bonus.create( pick, this ) );
             } else {
                query.value = this.pick;
             }
-         } else if ( this.pick._query ) {
-            this.pick._query( query );
+         } else if ( pick.query ) {
+            this.pick.query( query );
          }
       }
-   }
-});
+   },
+};
 
-subrule.Include = _.inherit( subrule.Subrule, function dd5_rule_Subrule_Include ( opt ) {
-   subrule.Subrule.call( this, 'include', opt );
-   rule._parse_and_delete( this, opt, 'include' );
-   _.assert( this.include, '[dd5.Subrule.Include] Include subrule must have include property.' );
-   _.assert( ! opt.subrules, '[dd5.Subrule.Include] Include cannot have child subrules.' );
-},{
-   "includeRule" : null,
+subrule.Include = {
+   '__proto__' : base,
+   'create' ( opt ) {
+      var that = _.newIfSame( this, subrule.Include );
+      base.create.call( that, opt );
+      _.assert( that.include, '[dd5.rule.Include] Include subrule must have include property.' );
+      _.assert( ! opt.subrules, '[dd5.rule.Include] Include cannot have child subrules.' );
+      return that;
+   },
+   'cid' : 'subrule.include',
+   'include' : null, // A function returning a resource or an array of resource
+   'compile_list' : [ 'include' ],
 
-   "toString" : function dd5_Include_toString ( ) {
-      return "include." + this.include;
+   'build' ( ) {
+      this.add( this.include.build() );
    },
 
-   "getInclude" : function dd5_Include_getInclude ( ) {
-      if ( this.includeRule ) return this.includeRule;
-      var result = this.includeRule = this.include.value();
-      if ( result instanceof Array ) result = this.includeRule = result[0];
-      if ( ! result ) throw "[dd5.Subrule.Include] Include subject '" + this.include + "' not found.";
+   'getInclude' ( ) {
+      return _.ary( this.include() );
+   },
+
+   'build' ( ) {
+      var result = base.build.call( this );
+      for ( var i of this.getInclude() ) result.add( i.build() );
       return result;
-   },
-
-   "_createInstance" : function dd5_Include_createInstance () {
-      var result = subrule.Subrule.prototype._createInstance.call( this );
-      result.add( this.getInclude().create() );
-      return result;
    }
-});
+};
 
-subrule.Adj = _.inherit( subrule.Subrule, function dd5_rule_Subrule_Adj ( opt ) {
-   subrule.Subrule.call( this, 'effect', opt );
-   rule._parse_and_delete( this, opt, [ 'property', 'value', 'min', 'max' ] );
-   _.assert( this.property && this.value, '[dd5.Subrule.Adj] Adj must have property and value.' );
-   _.assert( ! opt.subrules, '[dd5.Subrule.Adj] Adj cannot have child subrules.' );
-}, {
-   "toString" : function dd5_Adj_toString ( ) {
-      var src = this.getSource();
-      var str = "adj." + src.property;
-      if ( src.min ) str += '.min' + src.min;
-      if ( src.max ) str += '.max' + src.max;
-      return str + ':' + src.value;
+subrule.Adj = {
+   '__proto__' : base,
+   'create' ( opt ) {
+      var that = _.newIfSame( this, subrule.Adj );
+      base.create.call( that, opt );
+      _.assert( that.property && that.value, '[dd5.rule.Adj] Adj must have property and value.' );
+      return that;
    },
-   "query" : function dd5_Adj_query ( query ) {
-      var src = this.getSource();
-      var prop = src.property.value( query );
+   'cid' : 'subrule.adjust',
+   'compile_list' : [ 'property', 'value', 'min', 'max' ],
+   'toString' ( ) {
+      var str = "adj." + this.property();
+      if ( this.min ) str += '.min' + this.min();
+      if ( this.max ) str += '.max' + this.max();
+      return str + ':' + this.value();
+   },
+   'query' ( query ) {
+      var prop = this.property( query );
       if ( prop === query.query ) {
-         if ( query.value === undefined ) query.value = new sys.Value();
-         var val = src.value.value( query );
-         if ( src.min ) val = Math.min( val, src.min.value( query ) );
-         if ( src.max ) val = Math.max( val, src.max.value( query ) );
-         var source = query._source[0] || this;
-         query.value.add( new sys.Bonus( source, val, src.type ) );
+         if ( query.value === undefined ) query.value = sys.Value.create();
+         var val = parseFloat( this.value( query ) );
+         if ( this.min ) val = Math.min( val, this.min( query ) );
+         if ( this.max ) val = Math.max( val, this.max( query ) );
+         var source = this.getResource() || this;
+         query.value.add( sys.Bonus.create( val, source, _.call( this.type, query ) ) );
       }
    }
-});
+};
 
-subrule.Set = _.inherit( subrule.Subrule, function dd5_rule_Subrule_Set ( opt ) {
-   subrule.Subrule.call( this, 'effect', opt );
-   rule._parse_and_delete( this, opt, [ 'property', 'value', 'min', 'max' ] );
-   _.assert( this.property && this.value, '[dd5.Subrule.Set] Set must have property and value.' );
-   _.assert( ! opt.subrules, '[dd5.Subrule.Set] Set cannot have child subrules.' );
-}, {
-   "toString" : function dd5_Set_toString ( ) {
-      var src = this.getSource();
-      var str = "set." + src.property;
-      if ( src.min ) str += '.min' + src.min;
-      if ( src.max ) str += '.max' + src.max;
-      return str + ':' + src.value;
-   },
-   "query" : function dd5_Set_query ( query ) {
-      var src = this.getSource();
-      var prop = src.property.value( query );
-      if ( prop === query.query ) {
-         if ( query.value === undefined ) query.value = new sys.Value();
-         var val = src.value.value( query );
-         if ( src.min ) val = Math.min( val, src.min.value( query ) );
-         if ( src.max ) val = Math.max( val, src.max.value( query ) );
-         var source = query._source[0] || this;
-         query.value.add( new sys.Bonus( source, val, src.type ) );
-      }
-      return query;
-   }
-});
+pinbun.event.load( 'dd5.rule.subrule' );
 
 })( dd5 );
