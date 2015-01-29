@@ -185,35 +185,26 @@ rule.Character = {
       var that = Resource.build.call( this );
       that.remap_queries();
       that.addObserver( 'structure', ( mon ) => {
-         if ( that.getCharacter() === that ) {
-            for ( var m of mon ) {
-               if ( m.oldValue !== null ) {
-                  m.oldValue.recur( null, ( val ) => {
-                     if ( val.query_hook ) {
-                        _.log( 'REMOVED: ' + val );
-                        for ( var h of val.query_hook() ) if ( h ) {
-                           var lst = that._queries[ h ];
-                           if ( ! lst || lst.indexOf( val ) < 0 ) log.warn( "Inconsistent query map: Cannot unhook " + val + " from " + h );
-                           else {
-                              lst.splice( lst.indexOf( val ), 1 );
-                              //_.log( `Unhooked ${val} from ${h}` );
-                           }
-                        }
-                     }
-                  } );
-               }
-               if ( m.newValue !== null ) {
-                  m.newValue.recur( null, ( val ) => {
-                     if ( val.query_hook ) {
-                        //_.log( 'ADDED: ' + val );
-                        for ( var h of val.query_hook() ) if ( h ) {
-                           var lst = that._queries[ h ] || ( that._queries[ h ] = [] );
-                           lst.push( val );
-                           //_.log( `Hooked ${val} to ${h}` );
-                        }
-                     }
-                  } );
-               }
+         if ( that.getCharacter() !== that ) return; // Run only if this is the root character
+         for ( var m of mon ) {
+            if ( m.oldValue !== null ) { // Element is deteched.  Unhook them from query map.
+               m.oldValue.recur( null, ( val ) => {
+                  if ( ! val.query_hook ) return;
+                  for ( var h of val.query_hook() ) if ( h ) {
+                     var lst = that._queries[ h ];
+                     if ( ! lst || lst.indexOf( val ) < 0 ) log.warn( "Inconsistent query map: Cannot unhook " + val + " from " + h );
+                     else lst.splice( lst.indexOf( val ), 1 );
+                  }
+               } );
+            }
+            if ( m.newValue !== null ) { // Element is attached.  Unhook them from query map.
+               m.newValue.recur( null, ( val ) => {
+                  if ( ! val.query_hook ) return;
+                  for ( var h of val.query_hook() ) if ( h ) {
+                     var lst = that._queries[ h ] || ( that._queries[ h ] = [] );
+                     lst.push( val );
+                  }
+               } );
             }
          }
       } );
@@ -225,26 +216,19 @@ rule.Character = {
                if ( m.newValue ) last = 'Attach';
             }
          }
-         if ( last === 'Detach' ) {
-            //_.log( 'DETACHED; remapping queries' );
-            that.remap_queries();
-         } else if ( last === 'Attach' ) {
-            //_.log( 'ATTACHED; clearing query map' );
-            that._queries = _.map();
-         }
+         if      ( last === 'Detach' ) that.remap_queries();    // This character is deteched; remap queries.
+         else if ( last === 'Attach' ) that._queries = _.map(); // This character is attached; reset query map.
       } );
       return that;
    },
    '_queries' : _.map(),
    'remap_queries' ( ) {
       this._queries = _.map();
-      //_.log( "Query map cleared due to remap" );
       this.recur( null, ( n ) => {
          if ( n === this || ! n.query_hook ) return;
          for ( var h of n.query_hook() ) {
             var lst = this._queries[ h ] || ( this._queries[ h ] = [] );
             lst.push( n );
-            //_.log( `Mapped ${n} to ${h}` );
          }
       });
    },

@@ -47,7 +47,7 @@ var ui = ns.ui = {
    },
 };
 
-pinbun.event.add( 'load', (e) => { ns.ui.openDialog( "Loaded: " + e ); } );
+pinbun.event.add( 'load', e => ns.ui.openDialog( "Loaded: " + e ) );
 pinbun.event.load( 'pinbun.ui' );
 
 })( pinbun );

@@ -30,7 +30,7 @@ ui.registerFactory( 'feature.pc_ability', {
          list.push( e );
       } );
       // Proficiencies, displayed primary for prototype purpose
-      res.entity.get({ type: 'proficiency' }).forEach( type => {
+      res.entity.get({ type: 'proficiency' }).forEach( ( type ) => {
          var profs = rule.queryChar( 'prof$'+type.id, 'ui' );
          if ( profs ) {
             html += `<tr><td colspan="99"><b>${ type.getName() }</b><br/>`;

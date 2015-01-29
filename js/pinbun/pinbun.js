@@ -32,8 +32,8 @@ ns.init = function pinbun_init ( source_url ) {
    if ( _.l.currentLocale !== 'zh-Hant' ) // Deter unwanted attention, auto detect lang only when not already set to certain value
       _.attr( document.documentElement, { 'lang': _.l.detectLocale() } ); // Detect language and set document attribute
    if ( source_url ) {
-      dd5.loader.event.add( 'progress', (e) => { ns.ui.openDialog( "Loaded: " + ( e.url || e ) ); } );
-      dd5.loader.event.add( 'load', (e) => {
+      dd5.loader.event.add( 'progress', e => ns.ui.openDialog( "Loaded: " + ( e.url || e ) ) );
+      dd5.loader.event.add( 'load', ( e ) => {
          ns.ui.closeDialog();
          _.log( 'Finished loading. Creating character.' );
          _.time();
