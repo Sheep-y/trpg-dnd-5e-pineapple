@@ -19,7 +19,7 @@ var slotEditor = {
       } );
       // Add options on focus
       input.addEventListener( 'focus', function dd5_ui_edit_slot_focus( ) { // Expand options
-         var pick = _.coalesce( e.getPick(), nullPick ), opt = [ nullPick ].concat( e.options() );
+         var pick = _.coalesce( e.getPick(), nullPick ), opt = [ nullPick ].concat( e.getOptions() );
          _.clear( input );
          opt.forEach( function dd5_ui_edit_slot_focus_each ( e, i ) {
             var o = _.create( 'option', { value: e.cid, 'text': e.getName() } );

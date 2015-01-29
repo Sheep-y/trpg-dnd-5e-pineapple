@@ -113,39 +113,44 @@ sys.Query = {
 
    'add_bonus' ( bonus, source, type ) {
       var value = parseFloat( bonus );
-      if ( isNaN( value ) ) return log.warn( `Unknown bonus ${bonus} from ${source}, cannot add bonus.` );
+      if ( isNaN( value ) ) {
+         log.warn( `Unknown bonus ${bonus} from ${source}, cannot add bonus to ${ this.query } query.` );
+         return this;
+      }
       value = sys.Bonus.create( value, source, type );
       if ( this.value === undefined )
          this.value = sys.Value.create( value );
       else if ( sys.Value.isPrototypeOf( this.value ) )
-         this.value.add( value );
+         this.value.add( value ); // Bonus should not duplicate, if duplicate it is design error
       else
          log.warn( `Unknown query result for ${ this.query }, cannot add bonus to query .` );
       return this;
    },
    'add_result' ( entity, add ) {
-      if ( add === undefined ) add = e => {
+      if ( add === undefined ) add = ( e ) => {
          if ( ! e ) return;
-         if ( this.value === undefined )
+         if ( this.value === undefined ) {
             this.value = e;
-         else if ( Array.isArray( this.value ) )
-            this.value.push( e );
-         else
+         } else if ( Array.isArray( this.value ) ) {
+            if ( this.value.indexOf( e ) < 0 ) this.value.push( e );
+         } else {
             this.value = [ this.value ].concat( e );
+         }
       }
       if ( Array.isArray( entity ) ) entity.forEach( add );
       else add( entity );
       return this;
    },
    'add_prof' ( entity ) {
-      return this.add_result( entity, e => {
+      return this.add_result( entity, ( e ) => {
          if ( ! e ) return;
-         if ( this.value === undefined )
+         if ( this.value === undefined ) {
             this.value = [ e ];
-         else if ( Array.isArray( this.value ) )
-            this.value.push( e );
-         else
+         } else if ( Array.isArray( this.value ) ) {
+            if ( this.value.indexOf( e ) < 0 ) this.value.push( e );
+         } else {
             log.warn( `Unknown query result for ${ this.query }, cannot add proficiency to query.` );
+         }
       } );
    },
 };

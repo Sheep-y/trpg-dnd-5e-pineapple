@@ -146,7 +146,7 @@ subrule.Slot = {
 
    'pick' : null, // Selected option.
    'getOptions' ( context ) {
-      return this.queryChar( 'slotOptions', this, this.options() );
+      return this.queryChar( 'slotOptions', this, this.options(), context );
    },
    'getPick' ( ) { return this.pick; },
    'setPick' ( pick ) {
@@ -188,10 +188,10 @@ subrule.NumSlot = {
    'compile_list' : subrule.Slot.compile_list.concat( [ 'min_val', 'max_val' ] ),
 
    'getMinVal' ( context ) {
-      return this.min_val ? this.queryChar( 'slotMinVal', this, this.min_val() ) : null;
+      return this.min_val ? this.queryChar( 'slotMinVal', this, this.min_val( context ), context ) : null;
    },
    'getMaxVal' ( context ) {
-      return this.max_val ? this.queryChar( 'slotMaxVal', this, this.max_val() ) : null;
+      return this.max_val ? this.queryChar( 'slotMaxVal', this, this.max_val( context ), context ) : null;
    },
 
    'toString' ( ) {
@@ -209,7 +209,7 @@ subrule.NumSlot = {
    },
    'query' ( query ) {
       if ( query.query === this.id || query.query === this.getPath() ) {
-         return query.add_bonus( this.getPick() );
+         return query.add_bonus( this.getPick( query ) );
       }
       return base.query.call( this, query );
    },
@@ -225,11 +225,22 @@ subrule.ProfSlot = {
       return that;
    },
    'cid': 'subrule.profslot',
-   'query_hook' ( ) { return [ this.id, this.prof_type ]; },
    'copy_list' : subrule.Slot.copy_list.concat( [ 'prof_type' ] ),
-   'query' ( query ) {
-      return setProficienty( this, query, this.prof_type, this.getPick() );
+
+   'getOptions' ( context ) {
+      var pick = this.getPick( context );
+      var existing = this.queryChar( this.prof_type, this, undefined, context );
+      var options = this.queryChar( 'slotOptions', this, this.options( context ), context );
+      if ( existing && options ) {
+         existing = existing.filter( e => e !== pick );
+         if ( existing.length ) options = options.filter( e => existing.indexOf( e ) < 0 );
+      }
+      return options;
    },
+   'query' ( query ) {
+      return setProficienty( this, query, this.prof_type, this.getPick( query ) );
+   },
+   'query_hook' ( ) { return [ this.id, this.prof_type ]; },
 };
 
 pinbun.event.load( 'dd5.rule.subrule' );
