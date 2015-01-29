@@ -11,7 +11,7 @@ ui.Chargen = {
       var observer = that.refresh.bind( that );
       that._character = char;
       that._dom = _.create( 'div', { id : ui.newId() } );
-      char.observers.add( 'structure', observer );
+      char.addObserver( 'structure', observer );
       log.add( 'l10n', observer );
       ui.panels.push( that );
       that.refresh();
@@ -31,7 +31,7 @@ ui.Chargen = {
       var pos = ui.panels.indexOf( this );
       if ( pos ) ui.panels.splice( pos, 1 );
       log.remove( 'l10n', this._refresh );
-      char.observers.remove( 'structure', this._refresh );
+      char.removeObserver( 'structure', this._refresh );
    }
 };
 

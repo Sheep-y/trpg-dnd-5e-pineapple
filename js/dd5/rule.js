@@ -15,7 +15,7 @@ var log = ns.event;
 
 /****************** Helpers *******************/
 
-var rule = ns.rule = Object.create( null );
+var rule = ns.rule = _.map();
 
 /** Wrap up object for easier use. */
 rule.wrapper = {
@@ -61,7 +61,10 @@ function compile_property ( subject, prop, value ) {
             if ( varlist.length ) head += `var ${ varlist.join( ',' ) };`;
             if ( ! body.match( /\breturn\b/ ) ) head += 'return ';
             body = head + body;
-            var func = create_function( body );
+            var func_name = prop + '_compiled';
+            var exp_catch = `catch(err_obj){err_obj.message+='; source: '+${func_name}.exp;throw err_obj}`;
+            // returning function expression is necessary for named function, so that the function can be referred in exception handler.
+            func = new Function(`'use strict'; return (function ${func_name}(){'use strict'; try{ ${body} } ${exp_catch} } )`)();
          }
          subject[ prop ] = func;
          func.exp = body;
@@ -69,13 +72,8 @@ function compile_property ( subject, prop, value ) {
          log.error( `Cannot compile ${ subject.cid }.${ prop }: ${ value }`, ex );
          delete subject[ prop ];
       }
-      return func.apply( this, _.ary( arguments, 3 ) ); // this may be inherited from subject and is different
+      return func.apply( this, _.ary( arguments, 3 ) ); // "this" may have inherited subject and thus different from subject
    };
-}
-
-function create_function( body ) {
-   // Evaluate a function expression at global scope. Should be much faster then new Function().bind.
-   return (0,eval)( `(function compiled_property(){'use strict';try{${body}}catch(exception){exception.message+='; source: '+compiled_property.exp;throw exception}})` );
 }
 
 /**
@@ -87,7 +85,7 @@ rule.Rule = {
       var that = _.newIfSame( this, rule.Rule );
       sys.Composite.create.call( that, opt );
       _.assert( rule.Resource.isPrototypeOf( that ) || rule.subrule.Subrule.isPrototypeOf( that ), 'Rule not resource or subrule!' );
-      if ( opt.id ) _.assert( opt.id.match( /^[0-9a-zA-Z_-]+$/ ), `Invalid id "${ opt.id }", must be alphanumeric, underscore, or hypen.` );
+      if ( opt.id ) _.assert( opt.id.match( /^[\w-]+$/ ), `Invalid id "${ opt.id }", must be alphanumeric, underscore, or hypen.` );
       for ( var prop of that.copy_list ) { var val = opt[ prop ];
          if ( val !== undefined && val !== null ) {
             _.assert( ! that.hasOwnProperty( prop ), `[dd5.Rule] Rule ${ this.cid } cannot copy property "${ prop }" to created component.` );
@@ -121,7 +119,7 @@ var Resource = rule.Resource = {
       var that = _.newIfSame( this, Resource );
       if ( ! opt.cid ) opt.cid = type + '.' + opt.id;
       rule.Rule.create.call( that, opt );
-      _.assert( type && that.id && that.cid, '[dd5.Resource] Resource must have id and compoent id.' );
+      _.assert( res[ type ] && that.id && that.cid, '[dd5.Resource] Resource must have id and compoent id.' );
       var dup = res[ type ].get( opt.id );
       if ( dup.length ) throw new Error( `Redeclaring ${ type }.${ that.id  }. (already declared by ${ dup[0].source.cid })` );
       if ( opt ) {
@@ -182,6 +180,92 @@ rule.Character = {
       var that = _.newIfSame( this, rule.Character );
       Resource.create.call( that, 'character', opt );
       return that;
+   },
+   'build' ( ) {
+      var that = Resource.build.call( this );
+      that.remap_queries();
+      that.addObserver( 'structure', ( mon ) => {
+         if ( that.getCharacter() === that ) {
+            for ( var m of mon ) {
+               if ( m.oldValue !== null ) {
+                  m.oldValue.recur( null, ( val ) => {
+                     if ( val.query_hook ) {
+                        _.log( 'REMOVED: ' + val );
+                        for ( var h of val.query_hook() ) if ( h ) {
+                           var lst = that._queries[ h ];
+                           if ( ! lst || lst.indexOf( val ) < 0 ) log.warn( "Inconsistent query map: Cannot unhook " + val + " from " + h );
+                           else {
+                              lst.splice( lst.indexOf( val ), 1 );
+                              //_.log( `Unhooked ${val} from ${h}` );
+                           }
+                        }
+                     }
+                  } );
+               }
+               if ( m.newValue !== null ) {
+                  m.newValue.recur( null, ( val ) => {
+                     if ( val.query_hook ) {
+                        //_.log( 'ADDED: ' + val );
+                        for ( var h of val.query_hook() ) if ( h ) {
+                           var lst = that._queries[ h ] || ( that._queries[ h ] = [] );
+                           lst.push( val );
+                           //_.log( `Hooked ${val} to ${h}` );
+                        }
+                     }
+                  } );
+               }
+            }
+         }
+      } );
+      that.addObserver( 'attribute', ( mon ) => {
+         var last = '';
+         for ( var m of mon ) {
+            if ( m.target === that && m.name === 'parent' ) {
+               if ( m.oldValue ) last = 'Detach';
+               if ( m.newValue ) last = 'Attach';
+            }
+         }
+         if ( last === 'Detach' ) {
+            //_.log( 'DETACHED; remapping queries' );
+            that.remap_queries();
+         } else if ( last === 'Attach' ) {
+            //_.log( 'ATTACHED; clearing query map' );
+            that._queries = _.map();
+         }
+      } );
+      return that;
+   },
+   '_queries' : _.map(),
+   'remap_queries' ( ) {
+      this._queries = _.map();
+      //_.log( "Query map cleared due to remap" );
+      this.recur( null, ( n ) => {
+         if ( n === this || ! n.query_hook ) return;
+         for ( var h of n.query_hook() ) {
+            var lst = this._queries[ h ] || ( this._queries[ h ] = [] );
+            lst.push( n );
+            //_.log( `Mapped ${n} to ${h}` );
+         }
+      });
+   },
+
+   'query' : function ( query ) {
+      if ( query.query.indexOf( '.' ) >= 0 ) {
+         // Contains dot, likely a path, use tradidional recursive query
+         //_.log( `QUERY: ${query.query} (Resursion)` );
+         return Resource.query.call( this, query );
+      } else {
+         // Normal query will go through the query map for optimal execution
+         var lst = this._queries[ query.query ];
+         //_.log( `QUERY: ${query.query} (Map, ${ lst ? lst.length : 'none' })` );
+         if ( lst ) {
+            for ( var o of lst ) {
+               //_.log( `QUERY: ${query.query} (${ o })` );
+               o.query( query );
+            }
+         }
+      }
+      return query;
    }
 };
 
@@ -191,7 +275,7 @@ rule.Feature = {
       var that = _.newIfSame( this, rule.Feature );
       Resource.create.call( that, 'feature', opt );
       return that;
-   }
+   },
 };
 
 rule.Race = {
@@ -200,9 +284,7 @@ rule.Race = {
       var that = _.newIfSame( this, rule.Race );
       Resource.create.call( that, 'race', opt );
       return that;
-   }
+   },
 };
-
-pinbun.event.load( 'dd5.rule' );
 
 })( dd5 );

@@ -5,8 +5,8 @@ else if ( ! dd5.ui ) ( function dd5_ui_slot_init ( ns ) { 'use strict';
 var sys = ns.sys;
 var log = ns.event;
 
-var registry = Object.create( null );
-var component_map = Object.create( null );
+var registry = _.map();
+var component_map = _.map();
 var component_symbol = 0;
 
 var ui = ns.ui = {
@@ -58,10 +58,10 @@ var ui = ns.ui = {
    _hook_attribute ( component, html ) {
       var char = component.getCharacter()
       var updater = ui._update_attribute.bind( null, char, html ), body = document.body;
-      char.observers.add( 'attribute', updater );
+      char.addObserver( 'attribute', updater );
       var destructor = new MutationObserver( ( mutations ) => { // If the last input is no longer attached, unhook updater.
          for ( var m of mutations ) if ( m.removedNodes && m.removedNodes.length ) {
-            if ( ! _.html.contains( body, html ) ) char.observers.remove( 'attribute', updater );
+            if ( ! _.html.contains( body, html ) ) char.removeObserver( 'attribute', updater );
             return; // Only need to check existence once
          }
       } );

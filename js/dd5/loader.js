@@ -94,7 +94,7 @@ var loader = ns.loader = {
                   break;
 
                default :
-                  log.error( "[dd5.loader] Unknown resource type: " + type );
+                  log.error( `[dd5.loader] Unknown resource type: ${type}` );
             }
 
             if ( ! proc ) continue;
@@ -105,10 +105,10 @@ var loader = ns.loader = {
                   loader.jsonp.check_unused_attr( e, ' in ' + result.cid );
                   loaded_rules.push( result );
                } catch ( ex ) {
-                  log.error( 'Cannot load ' + type + '.' ( e.id ? e.id : ( '#' + i ) ), ex );
+                  log.error( `Cannot load ${type}.${ e.id ? e.id : ( '#' + i ) }`, ex );
                }
             };
-            if ( data_entry instanceof Array ) data_entry.forEach( safeCall );
+            if ( Array.isArray( data_entry ) ) data_entry.forEach( safeCall );
             else safeCall( data_entry );
          }
          _.log.end();
@@ -122,7 +122,7 @@ var loader = ns.loader = {
             e.subrules.forEach( ( sub, i ) => { try {
                r.add( loader.jsonp.load_subrule( sub ) );
             } catch ( ex ) {
-               log.error( '[dd5.loader] Cannot create ' + i + 'th subrule of ' + r.cid + " (" + JSON.stringify( sub ) + ")", ex );
+               log.error( `[dd5.loader] Cannot create ${i}th subrule of ${ r.cid } (${ JSON.stringify( sub ) })`, ex );
             } } );
          }
          delete e.subrules;
@@ -130,18 +130,22 @@ var loader = ns.loader = {
       },
 
       'check_unused_attr' ( e, suffix ) {
-         for ( var a in e ) ns.event.warn( 'Unused attribute "' + a + '" (value "' + e[a] + '")' + suffix );
+         for ( var a in e ) ns.event.warn( `Unused attribute "${a}" (value "${e[a]}")' ${suffix}` );
       },
 
       // Convert a string into jsonp subrule
       'compile_string' : ( e ) => {
          e = e.trim();
          var pos = e.indexOf( ':' );
-         var left = ( pos >= 0 ? e.substr( 0, pos ).trim() : e ).split( /\s*\.\s* ?/g );
-         var right = pos >= 0 ? e.substr( pos+1 ).trim() : '';
+         var left = ( pos >= 0 ? e.substr( 0, pos ).trim() : e ).split( /\s*\.\s*/g );
+         var right = pos >= 0 ? e.substr( pos + 1 ).trim() : null;
          var subrule = left[0].toLowerCase();
 
          switch ( subrule ) {
+            case 'prof' :
+               var result = { 'subrule': 'prof', 'prof_type': 'prof$' + left[1], 'value': `db.entity("${ right }")` };
+               if ( left.length !== 2 || ! right ) throw `Invalid prof syntax: ${e}`;
+               return result;
 
             case 'adj' : // "adj.[prop](.min\d+)?(.max\d+)?" : "[bonus]" // Add a bonus(penalty), min/max X(-X) e.g. adj.check.dex=2
             case 'set' : // "set(min|max).[prop](.min\d+)?(.max\d+)?" : "[value]" // Set a property to given value
@@ -157,21 +161,24 @@ var loader = ns.loader = {
                   next = left.pop();
                }
                result.property = '"' + next + '"';
-               if ( left.length !== 1 || ! result.property || ! right ) throw "Invalid adjustment / set syntax: " + e;
+               if ( left.length !== 1 || ! result.property || ! right ) throw `Invalid adj/set syntax: ${e}`;
                return result;
                break;
 
             case 'slot' :
-               var result = { 'subrule': 'slot', 'id' : left.pop() };
-               var values = right.match( /^(-?\d+)?\s*\[(-?\d+)?,(-?\d+)?\]$/ );
-               if ( values ) {
+            case 'numslot' :
+            case 'profslot' :
+               var result = { 'subrule': subrule, 'id' : left.pop() };
+               if ( subrule === 'profslot' ) result.prof_type = 'prof$' + left.pop();
+               if ( subrule === 'numslot' ) {
+                  var values = right.match( /^(-?\d+)?\s*\[(-?\d+)?,(-?\d+)?\]$/ );
                   if ( values[1] ) result.default = parseInt( values[1] );
-                  if ( values[2] ) result.minVal  = parseInt( values[2] );
-                  if ( values[3] ) result.maxVal  = parseInt( values[3] );
+                  if ( values[2] ) result.min_val  = parseInt( values[2] );
+                  if ( values[3] ) result.max_val  = parseInt( values[3] );
                } else {
-                  result.options = right;
+                  result.options = right; // slot and profslot
                }
-               if ( left.length !== 1 || ! right ) throw "Invalid slot syntax: " + e;
+               if ( left.length !== 1 || ! right ) throw `Invalid slot syntax: ${e}`;
                return result;
                break;
 
@@ -207,28 +214,33 @@ var loader = ns.loader = {
          }
          _.assert( typeof( e ) === 'object' );
          switch ( e.subrule ) {
-            // Wrapper objects
+            // Wrappers
             case 'feature' :
                result = loader.jsonp.load_rule( 'feature', e );
                break;
 
-            // Slot
-            case 'slot' :
+            // Dynamic effects
+            case 'slot' : // Entity slot
                result = subrule.Slot.create( e );
+               break;
+
+            case 'numslot' : // Numeric slot
+               result = subrule.NumSlot.create( e );
+               break;
+
+            case 'profslot' : // Proficiency slot
+               result = subrule.ProfSlot.create( e );
                break;
 
             // Static effects
             case 'adj' : // Adjust a Value
                result = subrule.Adj.create( e );
                break;
-/*
-            case 'set' : // Set a value
-               result = new subrule.Set( e );
-               break;
 
             case 'prof' : // Grant proficient
+               result = subrule.Prof.create( e );
                break;
-*/
+
             case 'include' : // Include another rule
                result = subrule.Include.create( e );
                break;

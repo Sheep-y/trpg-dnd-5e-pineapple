@@ -15,7 +15,7 @@ log.add( 'fine', mainlog.fine );
 log.add( 'finer', mainlog.finer );
 log.add( 'finest', mainlog.finest );
 
-var sys = ns.sys = Object.create( null );
+var sys = ns.sys = _.map();
 
 /**
  * A bonus is part of a value, who knows its own source and type and status.
@@ -101,6 +101,7 @@ sys.Query = {
    'cause'   : null,     // Original query
    'valueOf' ( ) {
       var val = this.value;
+      if ( Array.isArray( val ) )
       while ( _.is.object( val ) && typeof( val.valueOf ) === 'function' ) {
          val = val.valueOf();
       }
@@ -109,10 +110,48 @@ sys.Query = {
    'toString' ( ) {
       return '' + this.valueOf();
    },
+
+   'add_bonus' ( bonus, source, type ) {
+      var value = parseFloat( bonus );
+      if ( isNaN( value ) ) return log.warn( `Unknown bonus ${bonus} from ${source}, cannot add bonus.` );
+      value = sys.Bonus.create( value, source, type );
+      if ( this.value === undefined )
+         this.value = sys.Value.create( value );
+      else if ( sys.Value.isPrototypeOf( this.value ) )
+         this.value.add( value );
+      else
+         log.warn( `Unknown query result for ${ this.query }, cannot add bonus to query .` );
+      return this;
+   },
+   'add_result' ( entity, add ) {
+      if ( add === undefined ) add = e => {
+         if ( ! e ) return;
+         if ( this.value === undefined )
+            this.value = e;
+         else if ( Array.isArray( this.value ) )
+            this.value.push( e );
+         else
+            this.value = [ this.value ].concat( e );
+      }
+      if ( Array.isArray( entity ) ) entity.forEach( add );
+      else add( entity );
+      return this;
+   },
+   'add_prof' ( entity ) {
+      return this.add_result( entity, e => {
+         if ( ! e ) return;
+         if ( this.value === undefined )
+            this.value = [ e ];
+         else if ( Array.isArray( this.value ) )
+            this.value.push( e );
+         else
+            log.warn( `Unknown query result for ${ this.query }, cannot add proficiency to query.` );
+      } );
+   },
 };
 
 /**
- * A composite object. It is the shared base of components and rules.
+ * A composite object. It has logic critical to the dd5 system.
  *
  * A character generator can have up to tens of thousands of composites.
  */
@@ -134,9 +173,9 @@ sys.Composite = {
    'getPath' ( root ) {
       var p = this.getParent();
       var myid = this.id;
-      if ( ! myid ) myid = p ? '#' + p.children.indexOf( this ) : '?';
+      if ( ! myid ) myid = p ? p.children.indexOf( this ) : 'headless';
       if ( ! p || this === root ) return myid;
-      return p.getPath( root ) + '/' + myid;
+      return p.getPath( root ) + '.' + myid;
    },
 
    'getName' ( ) {
@@ -146,14 +185,17 @@ sys.Composite = {
    'getDesc' ( ) {
       if ( ! this._children ) return '';
       var result = '';
-      this.recur( null, function dd5_Composite_getDesc_recur() { result += this.getDesc(); }, null );
+      this.recur( null, ( node ) => result += node.getDesc(), null );
       return result;
    },
-   'toString' () {
+   'getLabel' ( ) {
+      return this.id ? _.l( 'dd5.attribute.' + this.id ) : _.coalesce( this.cid, this.getPath() );
+   },
+   'toString' ( ) {
       return this.getName();
    },
 
-   'getCharacter' ( ) { return this.getParent( ns.rule.Character ); },
+   'getCharacter' ( ) { return this.getRoot( ns.rule.Character ); },
    'getResource' ( ) { return this.getParent( ns.rule.Resource ); },
 
    'createUI' ( type, container ) { return ns.ui.createUI( this, type, container ); },
@@ -177,7 +219,7 @@ sys.Composite = {
 
 /*************************** Resource Catalogs *******************************/
 
-ns.res = Object.create( null );
+ns.res = _.map();
 ns.res.new = function dd5_res_new ( name ) {
    return ns.res[ name ] || ( ns.res[ name ] = Catalog.create() );
 }
@@ -203,7 +245,7 @@ var Catalog = {
       if ( criteria ) {
          for ( var i in criteria ) {
             var criteron = criteria[i], filter;
-            if ( criteron instanceof Array ) {
+            if ( Array.isArray( criteron ) ) {
                // List match
                filter = ( e ) => criteron.indexOf( e[i] ) >= 0;
             } else if ( typeof( criteron ) === 'object' ) {
@@ -236,4 +278,4 @@ var Catalog = {
 
 pinbun.event.load( 'dd5' );
 
-})( dd5 = Object.create( null ) );
+})( dd5 = _.map() );

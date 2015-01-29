@@ -56,20 +56,14 @@ if ( ns ) ns._ = _;
  * @param {integer=} length If this and startpos is given, work like Array.slice( startpos, length ).
  * @returns {Array} Clone or slice of subject.
  */
-if ( Array.from )
-   _.ary = function _ary ( subject, startpos, length ) {
-      if ( typeof( subject ) === 'string' || ( subject.length === undefined && typeof( subject.next ) !== 'function' ) ) return [ subject ]; // String also has length!
+_.ary = function _ary ( subject, startpos, length ) {
+   if ( ! Array.isArray( subject ) ) {
+      if ( typeof( subject ) === 'string' || typeof( subject.next ) === 'function' || subject.length === undefined ) return [ subject ];
       if ( subject.length <= 0 ) return [];
-      if ( ! ( subject instanceof Array ) ) subject = Array.from( subject );
-      return startpos === undefined ? subject : subject.slice( startpos, length );
-   };
-else
-   _.ary = function _ary ( subject, startpos, length ) {
-      if ( typeof( subject ) === 'string' || subject.length === undefined ) return [ subject ]; // String also has length!
-      if ( subject.length <= 0 ) return [];
-      if ( startpos === undefined ) return subject instanceof Array ? subject : Array.prototype.slice.call( subject, 0 );
-      return Array.prototype.slice.call( subject, startpos, length );
-   };
+      subject =  Array.from ? Array.from( subject ) : Array.prototype.concat.call( subject );
+   }
+   return startpos === undefined ? subject : subject.slice( startpos, length );
+};
 
 /**
  * Call forEach on an array-like object.
@@ -80,17 +74,6 @@ else
 _.forEach = function _forEach ( subject, callback, thisarg ) {
    if ( subject.forEach ) return subject.forEach( callback, thisarg );
    return Array.prototype.forEach.call( subject, callback, thisarg );
-};
-
-/**
- * Wrap parameter in array if it is not already an one.
- * Array like (but non-array) subjuct will also be wrapped as if it is non-array.
- *
- * @param {(Array|*)} subject Subject to be wrapped in Array
- * @returns {Array} Array with subject as first item, or subject itself if already array.
- */
-_.toAry = function _toAry ( subject ) {
-   return subject instanceof Array ? subject : [ subject ];
 };
 
 /**
@@ -171,7 +154,7 @@ _.mapper._map = function _mapper_map( base, prop ) {
       // String
       return base[ prop ];
 
-   } else if ( prop instanceof Array ) {
+   } else if ( Array.isArray( prop ) ) {
       // Array
       for ( var i = 0, len = prop.length ; i < len ; i++ ) {
          if ( base === undefined || base === null ) return base;
@@ -181,7 +164,7 @@ _.mapper._map = function _mapper_map( base, prop ) {
 
    } else {
       // Object, assume to be property map.
-      var result = Object.create( null );
+      var result = _.map();
       for ( var p in prop ) {
          result[ p ] = _mapper_map( base, prop[ p ] );
       }
@@ -197,6 +180,7 @@ _.mapper._map = function _mapper_map( base, prop ) {
  * @returns {Array} Mapped data.
  */
 _.map = function _map ( data, field ) {
+   if ( arguments.length === 0 ) return Object.create( null );
    return _.ary( data ).map( _.mapper.apply( null, _.ary( arguments ).slice( 1 ) ) );
 };
 
@@ -532,7 +516,7 @@ _.xml = function _xml ( txt ) {
  * @returns {Object} Converted JS object.
  */
 _.xml.toObject = function _xml_toObject ( root, base ) {
-   if ( base === undefined ) base = Object.create( null );
+   if ( base === undefined ) base = _.map();
    base.tagName = root.tagName;
    _.forEach( root.attributes, function _xml_toObject_attr_each( attr ) {
       base[attr.name] = attr.value;
@@ -655,7 +639,7 @@ _.log = function _log ( type, msg ) {
    if ( ns.console ) {
       if ( ! ns.console[type] ) type = 'log';
       if ( type === 'log' ) {
-         if ( ns.console.table && msg instanceof Array ) type = 'table';
+         if ( ns.console.table && Array.isArray( msg ) ) type = 'table';
          else if ( ns.console.dir && _.is.object( msg ) ) type = 'dir';
       };
       ns.console[type]( msg );
@@ -1186,7 +1170,10 @@ _.clear = function _clear ( e ) {
    _.forEach( e = _.domlist( e ), function _clear_each ( p ) {
       var c = p.firstChild;
       if ( ! c ) return;
-      do { p.removeChild( c ); } while ( c = p.firstChild );
+      do {
+         p.removeChild( c );
+         c = p.firstChild;
+      } while ( c );
    } );
    return e;
 };
@@ -1400,21 +1387,20 @@ _.Executor.prototype = {
 _.EventManager = {
    "create" : function ( events, owner ) {
       var that = _.newIfSame( this, _.EventManager );
+      if ( events !== undefined && events !== null ) that.events = events;
       that.owner = owner;
-      var lst = that.lst = Object.create( null );
-      if ( events === undefined || events === null ) {
-         that.strict = false;
-      } else {
-         for ( var i = 0, l = events.length ; i < l ; i++ ) {
-            lst[events[i]] = null;
-         }
-      }
+      that.lst = _.map();
+      that.event_buffer = null;
+      that.timer_stack = null;
       return that;
    },
-   "lst" : Object.create( null ), // Observer list by event name
+   "lst" : _.map(), // Observer list by event name
    "owner" : null, // Owner, as context of handler calls.
-   "strict" : true, // Whether this manager allow arbitrary events.
-   "log" : false, // If true, will log event firing.
+   "events" : [], // List of events.  If empty, allow arbitrary events.
+   "deferred" : false,     // Whether this manager's event firing is deferred and consolidated.
+   "event_buffer" : null, // Buffered events.
+   "timer_stack" : null, // Timer stacks.
+   "log" : false,        // If true, will log event firing.
    /**
     * Register an event handler.  If register twice then it will be called twice.
     *
@@ -1423,16 +1409,17 @@ _.EventManager = {
     */
    "add" : function ( event, listener ) {
       var thisp = this;
-      if ( event instanceof Array ) return event.forEach( function( e ){ thisp.add( e, listener ); } );
-      if ( listener instanceof Array ) return listener.forEach( function( l ){ thisp.add( event, l ); } );
-      var lst = this.lst[event];
+      // TODO: Made compatible with iterable
+      if ( event.forEach ) return event.forEach( function ( e ){ thisp.add( e, listener ); } );
+      if ( listener.forEach ) return listener.forEach( function ( l ){ thisp.add( event, l ); } );
+      var lst = this.lst[ event ];
       if ( ! lst ) {
-         if ( this.strict && lst === undefined )
+         if ( this.events && this.events.indexOf( event ) < 0 )
             throw new Error( "[sparrow.EventManager.add] Cannot add to unknown event '" + event + "'" );
-         lst = this.lst[event] = [];
+         lst = this.lst[ event ] = [];
       }
       if ( this.log ) _.log( "Add " + event + " listener: " + listener );
-      this.lst[event].push( listener );
+      lst.push( listener );
    },
    /**
     * Un-register an event handler.
@@ -1442,11 +1429,12 @@ _.EventManager = {
     */
    "remove" : function ( event, listener ) {
       var thisp = this;
-      if ( event instanceof Array ) return event.forEach( function( e ){ thisp.remove( e, listener ); } );
-      if ( listener instanceof Array ) return listener.forEach( function( l ){ thisp.remove( event, l ); } );
-      var lst = this.lst[event];
+      // TODO: Made compatible with iterable
+      if ( event.forEach ) return event.forEach( function( e ){ thisp.remove( e, listener ); } );
+      if ( listener.forEach ) return listener.forEach( function( l ){ thisp.remove( event, l ); } );
+      var lst = this.lst[ event ];
       if ( ! lst ) {
-         if ( this.strict && lst === undefined )
+         if ( this.events && this.events.indexOf( event ) < 0 )
             throw new Error( "[sparrow.EventManager.remove] Cannot remove from unknown event '" + event + "'" );
          return;
       }
@@ -1454,8 +1442,19 @@ _.EventManager = {
       if ( i >= 0 ) {
          if ( this.log ) _.log( "Remove " + event + " listener: " + listener );
          lst.splice( i, 1 );
-         if ( lst.length < 0 ) this.lst[event] = null;
+         if ( lst.length < 0 ) delete this.lst[ event ];
       }
+   },
+   /**
+    * Check whether given event has or has no listeners.
+    *
+    * @param {string*} event Event to check. Obmit to check all events.
+    * @returns {Boolean} true if event has no listeners. false otherwise.
+    */
+   "isEmpty" : function ( event ) {
+      if ( event ) return this.lst[ event ] ? false : true;
+      else for ( var i in this.lst ) return false;
+      return true;
    },
    /**
     * Fire an event that triggers all registered handler of that type.
@@ -1465,16 +1464,38 @@ _.EventManager = {
     * @param {...*} param Parameters to pass to event handlers.
     */
    "fire" : function ( event, param ) {
-      var lst = this.lst[event];
+      var thisp = this, lst = this.lst[ event ], args = _.ary( arguments, 1 );
+      if ( event.forEach ) {
+         return event.forEach( function( e ){ thisp.fire.apply( thisp, [ e ].concat( args ) ); } );
+      }
       if ( ! lst ) {
-         if ( this.strict && lst === undefined )
+         if ( this.events && this.events.indexOf( event ) < 0 )
             throw new Error( "[sparrow.EventManager.fire] Cannot fire unknown event '" + event + "'" );
          return;
       }
-      var l = lst.length, param = _.ary( arguments, 1 );
-      if ( this.log ) _.log( "Fire " + event + " on " + l + " listeners" );
-      for ( var i = 0 ; i < l ; i++ ) {
-         lst[i].apply( this.owner, param );
+      if ( ! this.deferred ) {
+         if ( this.log ) _.log( "Fire " + event + " on " + l + " listeners" );
+         for ( var i in lst ) lst[ i ].apply( this.owner, args );
+      } else {
+         lst = null;
+         if ( arguments.length > 2 ) throw new Error( "[sparrow.EventManager.fire] Deferred event firing must have at most one parameter." );
+         if ( ! this.event_buffer ) {
+            this.event_buffer = _.map();
+            this.timer_stack = _.map();
+         }
+         var buf = this.event_buffer[ event ] || ( this.event_buffer[ event ] = [] );
+         buf.push( param );
+         if ( this.timer_stack[ event ] ) return;
+         // Deferred mode will consolidate all jobs and call all listeners.
+         this.timer_stack[ event ] = _.setImmediate( function () {
+            lst = thisp.lst[ event ]; // lst may have been recreated
+            if ( ! lst ) return;
+            if ( thisp.log ) _.log( "Fire deferred " + event + " event on " + l + " listeners" );
+            for ( var i = 0, l = lst.length ; i < l ; i++ ) {
+               lst[ i ].call( thisp.owner, buf );
+            }
+            buf.length = thisp.timer_stack[ event ] = 0;
+         } );
       }
    },
    /** Create methods to fire event for given event list or method:event mapping */
@@ -1484,13 +1505,11 @@ _.EventManager = {
          if ( ! self.hasOwnProperty( evt ) ) {
             self[ prop ] = self.fire.bind( self, evt );
          } else {
-            _.warn( '[sparrow.EventManager.createFireMethods] Fire method "' + evt + "' cannot be created." );
+            _.warn( '[sparrow.EventManager.createFireMethods] Fire method "' + prop + "' cannot be created." );
          }
       }
-      if ( ! event || event instanceof Array || event.length ) {
-         _.forEach( event || Object.keys( this.lst ), function _EventManager_createFireMethods_each( e ){
-            _EventManager_createFireMethods_make( e, e );
-         } );
+      if ( ! event || event.forEach ) {
+         _.forEach( event || this.events, function ( e ) { _EventManager_createFireMethods_make( e, e ); } );
       } else {
          for ( var prop in event ) _EventManager_createFireMethods_make( prop, event[ prop ] );
       }
@@ -1510,7 +1529,7 @@ _.EventManager = {
  */
 _.l = function _l ( path, defaultValue, param /*...*/ ) {
    var l = _.l;
-   var result = l.getset( l.currentLocale, path, undefined);
+   var result = l.getset( l.currentLocale, path, undefined );
    if ( result === undefined ) result = defaultValue !== undefined ? defaultValue : path;
    if ( arguments.length > 2 ) {
       if ( arguments.length === 3 ) return l.format( ""+result, param );
@@ -1539,7 +1558,7 @@ _.l.currentLocale = 'en';
 _.l.fallbackLocale = 'en';
 
 /** L10n resources. */
-_.l.data = Object.create( null );
+_.l.data = _.map();
 
 /**
  * Set current locale.
@@ -1569,20 +1588,28 @@ _.l.saveLocale = function _l_saveLocale ( lang ) {
 /**
  * Detect user locale.  First check local session then check language setting.
  *
- * @param {string=} defaultLocale  Default locale to use
+ * @param {string=} defaultLocale  Default locale to use.
+ * @return {string} Current locale after detection.
  */
 _.l.detectLocale = function _l_detectLocale ( defaultLocale ) {
-    var l = _.l;
-    var list = Object.keys( l.data ); // List of available languages
-    if ( defaultLocale ) l.fallbackLocale = defaultLocale;
-    // Load and check preference
-    var pref = navigator.language || navigator.userLanguage;
-    if ( window.localStorage ) pref = localStorage['_.l.locale'] || pref;
-    if ( ! pref ) return;
-    // Set locale to preference, if available. If not, try the main language.
-    if ( list.indexOf( pref ) >= 0 ) return l.setLocale( pref );
-    pref = pref.split( '-' )[0];
-    if ( list.indexOf( pref ) >= 0 ) l.setLocale( pref );
+   var l = _.l;
+   if ( defaultLocale ) l.fallbackLocale = defaultLocale;
+   // Load and check preference
+   var pref = navigator.language || navigator.userLanguage;
+   if ( window.localStorage ) pref = localStorage['_.l.locale'] || pref;
+   if ( pref ) { // Set locale to preference, if available. If not, try the main language.
+      var preferred = pref.toLowerCase();
+      var orig_list = Object.keys( l.data );
+      var full_list = orig_list.map( function( e ){ return e.toLowerCase(); } ); // List of available languages
+      if ( full_list.indexOf( preferred ) >= 0 ) { // Exact match
+         l.setLocale( pref );
+      } else {
+        preferred = preferred.split( '-' )[0]; // Language match; sorry we are skipping country/locale match for three tier codes.
+        var lang_list = full_list.map( function( e ){ return e.split('-')[0]; } );
+        if ( lang_list.indexOf( preferred ) >= 0 ) l.setLocale( orig_list[ lang_list.indexOf( preferred ) ] );
+      }
+   }
+   return l.currentLocale;
 };
 
 /**
@@ -1600,7 +1627,9 @@ _.l.getset = function _l_getset ( locale, path, set ) {
    // Explore path
    for ( var i = 0, len = p.length ; i < len ; i++ ) {
       var node = p[i];
-      if ( base[node] === undefined ) base[node] = Object.create( null );
+      if ( base[node] === undefined )
+         if ( set === undefined ) return;
+         else base[node] = _.map();
       base = base[node];
    }
    // Set or get data

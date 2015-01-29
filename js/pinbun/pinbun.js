@@ -29,14 +29,15 @@ var pnl_content = _( '#container' )[0];
 
 ns.init = function pinbun_init ( source_url ) {
    log.add( 'warn', ns.ui.openDialog );
-   _.l.detectLocale();
+   if ( _.l.currentLocale !== 'zh-Hant' ) // Deter unwanted attention, auto detect lang only when not already set to certain value
+      _.attr( document.documentElement, { 'lang': _.l.detectLocale() } ); // Detect language and set document attribute
    if ( source_url ) {
       dd5.loader.event.add( 'progress', (e) => { ns.ui.openDialog( "Loaded: " + ( e.url || e ) ); } );
       dd5.loader.event.add( 'load', (e) => {
          ns.ui.closeDialog();
          _.log( 'Finished loading. Creating character.' );
          _.time();
-         var c = dd5.res.character.get()[0].build();
+         var c = dd5.res.character.get('pc')[0].build();
          _.time( 'Character created. Building user interface.' );
          pnl_content.appendChild( ns.ui.Chargen.create( c ).dom );
          _.time( 'UI created.' );
@@ -47,4 +48,4 @@ ns.init = function pinbun_init ( source_url ) {
 
 pinbun.event.load( 'pinbun' );
 
-})( pinbun = Object.create( null ) );
+})( pinbun = _.map() );

@@ -20,8 +20,8 @@
 <script src='js/dd5/ui/ui.js'></script>
 <script src='js/dd5/ui/general.js'></script>
 <script src='js/dd5/ui/special.js'></script>
-<script src='js/dd5/lang/en_basic.js'></script>
-<script src='js/dd5/lang/zh_basic.js'></script>
+<script src='js/dd5/lang/en-us_basic.js'></script>
+<script src='js/dd5/lang/zh-hant_basic.js'></script>
 
 <script>(function init ( ) { 'use strict';
 
@@ -31,12 +31,18 @@ if ( ! window.Proxy ) {
       '<a href="https://www.mozilla.org/firefox/"><img src="https://mozorg.cdn.mozilla.net/media/img/styleguide/identity/firefox/usage-standard.png?2013-06" alt="Please use Firefox" /></a>'+
       '<br/>Your browser does not support <a href="http://kangax.github.io/compat-table/es6/">ECMAScript 6</a>. Try <a href="https://www.mozilla.org/firefox/">Firefox</a>.';
 } else {
+   _.l.setLocale( 'zh-Hant' );
    pinbun.init( 'res/dd5_sources.js' );
 }
 
 })();</script>
 <noscript>
-   <p class='noscript'>Please enable JavaScript</p>
+   <p class='noscript'>
+      <span lang='en'> Please enable JavaScript </span> <br/>
+      <span lang='fr'> S'il vous plaît activer JavaScript </span> <br/>
+      <span lang='zh'> 請啓用 JavaScript </span> <br/>
+      <span lang='jp'> JavaScript を有効にしてください </span> <br/>
+   </p>
 </noscript>
 
 </body></html>

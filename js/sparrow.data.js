@@ -23,7 +23,7 @@ var Symbol;
 _.Index = {
    "create" : function ( indices ) {
       var that = _.newIfSame( this, _.EventManager );
-      if ( indices === undefined || ! ( indices instanceof Array ) || indices.length <= 0 )
+      if ( indices === undefined || ! ( Array.isArray( indices ) ) || indices.length <= 0 )
          throw "[Sparrow] Index(): Invalid parameter, must be array of fields to index.";
       that.all = [];
       that.map = {};
@@ -43,7 +43,7 @@ _.Index = {
    "add" : function ( obj ) {
       var map = this.map;
       for ( var i in map ) {
-         var index = map[ i ], keys = _.toAry( obj[ i ] );
+         var index = map[ i ], keys = _.ary( obj[ i ] );
          keys.forEach( function _Index_add_each( key ) {
             key = "" + key;
             var list = index[ key ];
@@ -64,7 +64,7 @@ _.Index = {
       if ( pos < 0 ) return;
       this.all.splice( pos, 1 );
       for ( var i in map ) {
-         var index = map[ i ], keys = _.toAry( obj[ i ] );
+         var index = map[ i ], keys = _.ary( obj[ i ] );
          keys.forEach( function _Index_remove_each( key ) {
             key = ""+key;
             var list = index[ key ];
@@ -96,7 +96,7 @@ _.Index = {
          var index = map[i], criterion = criteria[i];
          if ( index === undefined ) throw "[Sparrow] Index.get(): Criteria not indexed: " + i;
          // Convert integer range to bounded list
-         if ( criterion instanceof Object && ( criterion['>='] || criterion['<='] ) ) {
+         if ( typeof( criterion ) === 'object' && ( criterion['>='] || criterion['<='] ) ) {
             var range = [], lo = ~~criterion['>='], hi = ~~criterion['<='];
             if ( lo <= hi ) {
                for ( var k = lo ; k <= hi ; k++ )
@@ -104,7 +104,7 @@ _.Index = {
             }
             criterion = range;
          }
-         if ( criterion instanceof Array ) {
+         if ( Array.isArray( criterion ) ) {
             // Multiple target values; regard as 'OR'
             var buffer = [], terms = [];
             for ( var j = 0, cl = criterion.length ; j < cl ; j++ ) {
@@ -149,8 +149,7 @@ _.Index = {
 _.Composite = {
    'create' : function ( ) {
       var that = _.newIfSame( this, _.Composite );
-      that._parent = that._children = null;
-      that._observers = CompositeObserverList.create( that );
+      that._parent = that._children = that._observers = null;
       return that;
    },
 
@@ -158,14 +157,29 @@ _.Composite = {
    '_children' : null, // Array, either null or non-empty.  Never empty array.
    '_observers' : null,
 
-   get observers ( ) { return this._observers; },
-
    'fireStrutureChanged' : function ( newNode, oldNode ) {
-      this.observers.fire( 'structure', { 'target': this, 'type': 'structure', 'name': '', 'newValue': newNode, 'oldValue': oldNode } );
+      this.fireObserver( 'structure', { 'target': this, 'type': 'structure', 'name': '', 'newValue': newNode, 'oldValue': oldNode } );
+   },
+   'fireAttributeChanged' : function ( name, newValue, oldValue ) {
+      this.fireObserver( 'attribute', { 'target': this, 'type': 'attribute', 'name': name, 'newValue': newValue, 'oldValue': oldValue } );
+   },
+   'fireObserver' : function ( type, event ) {
+      if ( this._observers ) this._observers.fire( type, event );
+      if ( this._parent ) this._parent.fireObserver( type, event );
    },
 
-   'fireAttributeChanged' : function ( name, newValue, oldValue ) {
-      this.observers.fire( 'attribute', { 'target': this, 'type': 'attribute', 'name': name, 'newValue': newValue, 'oldValue': oldValue } );
+   'addObserver' : function ( type, observer ) {
+      if ( ! this._observers ) {
+         this._observers = _.EventManager.create( [ 'structure', 'attribute' ], this );
+         this._observers.deferred = true;
+      }
+      this._observers.add( type, observer );
+   },
+
+   'removeObserver' : function ( type, observer ) {
+      if ( ! this._observers ) return;
+      this._observers.remove( type, observer );
+      if ( this._observers.isEmpty() ) this._observers = null;
    },
 
    'add' : function ( comp ) {
@@ -173,6 +187,7 @@ _.Composite = {
       _.assert( parent !== this, '[sparrow.Composite] Cannot re-add to parent.' );
       if ( parent ) parent.remove( comp );
       comp._parent = this;
+      comp.fireAttributeChanged( 'parent', this, parent );
       this.fireStrutureChanged( comp, null );
       if ( c ) {
          c.push( comp );
@@ -185,6 +200,7 @@ _.Composite = {
       var c = this._children, pos = c ? c.indexOf( comp ) : 0;
       _.assert( comp.getParent() === this && pos >= 0, '[sparrow.Composite] Cannot remove non-existing children' );
       comp._parent = null;
+      comp.fireAttributeChanged( 'parent', null, this );
       this.fireStrutureChanged( null, comp );
       if ( c ) {
          if ( c.length > 1 ) {
@@ -214,8 +230,14 @@ _.Composite = {
       for ( var c of this._children ) if ( child.indexOf( c ) < 0 ) this.remove( c );
       for ( var c of child ) if ( this._children.indexOf( c ) < 0 ) this.add( c );
    },
-   'getRoot' : function ( ) {
-      return this.parent ? this.parent.getRoot() : this;
+   'getRoot' : function ( type ) {
+      if ( type ) {
+         var result = this === type || type.isPrototypeOf( this ) ? this : null;
+         if ( this._parent ) result = this._parent.getRoot( type ) || result;
+         return result;
+      }
+      if ( ! this._parent ) return this;
+      return this._parent.getRoot();
    },
    'getParent' : function ( type ) {
       if ( type ) {
@@ -228,43 +250,16 @@ _.Composite = {
    'recur' : function ( pre, leaf, post, parent ) {
       var c = this._children;
       if ( c ) {
-         if ( pre ) pre.call( this, parent );
+         if ( pre ) pre.call( this, this );
          for ( var i = 0, l = c.length ; i < l ; i++ )
             c[i].recur( pre, leaf, post, this );
-         if ( post ) post.call( this, parent );
+         if ( post ) post.call( this, this );
       } else {
-         if ( leaf ) leaf.call( this, parent );
+         if ( leaf ) leaf.call( this, this );
       }
    }
 };
 
 if ( Symbol && Symbol.iterator ) _.Composite[ Symbol.iterator ] = _.Composite.prototype.iterator;
-
-var CompositeObserverList = {
-   '__proto__' : _.EventManager,
-   'create' : function _CompositeObserverList_create ( owner ) {
-      var that = _.newIfSame( this, CompositeObserverList );
-      _.EventManager.create.call( that, [ 'attribute', 'structure' ], owner );
-      that._events = Object.create( null );
-      that._timers = Object.create( null );
-      return that;
-   },
-   '_events' : {},
-   '_timers' : {},
-   'fire' : function _CompositeObserverList_fire ( type, event ) {
-      if ( this.lst[ type ] ) {
-         var e = this._events[ type ] || ( this._events[ type ] = [] );
-         var t = this._timers[ type ], that = this;
-         if ( ! event.stack ) event.stack = new Error( 'stack trace' );
-         e.push( event );
-         if ( ! t ) this._timers[ type ] = setTimeout( function _CompositeObserverList_fire_timed () {
-            _.EventManager.fire.call( that, type, e );
-            that._timers[ type ] = 0;
-            e.length = 0;
-         }, 0 );
-      }
-      if ( this.owner && this.owner.getParent() ) return this.owner.getParent().observers.fire( type, event );
-   },
-};
 
 } )( _ );

@@ -7,7 +7,7 @@
  *
  */
 
-var ui = _.ui = Object.create( null );
+var ui = _.ui = _.map();
 var dom_style; // <style> dom element
 
 var symbol_create = 'symbol_create';
@@ -42,7 +42,7 @@ ui.Component = {
       if ( opt.visible === false ) that.hide();
       return that;
    },
-   'symbol_default' : () => Object.create( null ),
+   'symbol_default' : () => _.map(),
    'symbol_create' : _.dummy,
    'symbol_style' : () => '',
    'symbol_dom' : null,
