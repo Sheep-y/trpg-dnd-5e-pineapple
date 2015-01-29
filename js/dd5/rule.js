@@ -43,38 +43,40 @@ rule.wrapper = {
 
 /*****************************************************************************/
 
-function compile_property ( subject, prop, value ) {
-   return function property_compiler ( ) {
-      try {
-         var body = String( value ), func;
-         if ( (""+value).match( /^(\d+|[^"\r\n]*"|'[^'\r\n]*'|`[^`]*`|true|false|null|undefined)$/ ) ) { // simple values
-            body = 'return ' + body;
-            func = subject[ prop ] = new Function( body );
-         } else {
-            var head = '', varlist = [];
-            if ( body.match( /\bdb\b/ ) ) varlist.push( 'db=new Proxy(dd5.res,dd5.rule.wrapper.res)' );
-            if ( body.match( /\byou\b/ ) ) varlist.push( 'you=new Proxy(this.getCharacter(),dd5.rule.wrapper.you)' );
-            if ( body.match( /\bmin\b/ ) ) varlist.push( 'min=Math.min' );
-            if ( body.match( /\bmax\b/ ) ) varlist.push( 'max=Math.max' );
-            if ( body.match( /\bfloor\b/ ) ) varlist.push( 'floor=Math.floor' );
-            if ( body.match( /\bround\b/ ) ) varlist.push( 'round=Math.round' );
-            if ( varlist.length ) head += `var ${ varlist.join( ',' ) };`;
-            if ( ! body.match( /\breturn\b/ ) ) head += 'return ';
-            body = head + body;
-            var func_name = prop + '_compiled';
-            var exp_catch = `catch(err_obj){err_obj.message+='; source: '+${func_name}.exp;throw err_obj}`;
-            // returning function expression is necessary for named function, so that the function can be referred in exception handler.
-            func = new Function(`'use strict'; return (function ${func_name}(){'use strict'; try{ ${body} } ${exp_catch} } )`)();
-         }
-         subject[ prop ] = func;
-         func.exp = body;
-      } catch ( ex ) {
-         log.error( `Cannot compile ${ subject.cid }.${ prop }: ${ value }`, ex );
-         delete subject[ prop ];
-      }
-      return func.apply( this, _.ary( arguments, 3 ) ); // "this" may have inherited subject and thus different from subject
-   };
+function compile_property ( subject, prop, value ) { // Could have inlined but this will reduce closure.
+   return function ( ) { return property_compiler.call( this, subject, prop, value, arguments ); };
 }
+
+function property_compiler ( subject, prop, value, args ) {
+   try {
+      var body = String( value ), func;
+      if ( (""+value).match( /^(\d+|[^"\r\n]*"|'[^'\r\n]*'|`[^`]*`|true|false|null|undefined)$/ ) ) { // simple values
+         body = 'return ' + body;
+         func = subject[ prop ] = new Function( body );
+      } else {
+         var head = '', varlist = [];
+         if ( body.match( /\bdb\b/ ) ) varlist.push( 'db=new Proxy(dd5.res,dd5.rule.wrapper.res)' );
+         if ( body.match( /\byou\b/ ) ) varlist.push( 'you=new Proxy(this.getCharacter(),dd5.rule.wrapper.you)' );
+         if ( body.match( /\bmin\b/ ) ) varlist.push( 'min=Math.min' );
+         if ( body.match( /\bmax\b/ ) ) varlist.push( 'max=Math.max' );
+         if ( body.match( /\bfloor\b/ ) ) varlist.push( 'floor=Math.floor' );
+         if ( body.match( /\bround\b/ ) ) varlist.push( 'round=Math.round' );
+         if ( varlist.length ) head += `var ${ varlist.join( ',' ) };`;
+         if ( ! body.match( /\breturn\b/ ) ) head += 'return ';
+         body = head + body;
+         var func_name = prop + '_compiled';
+         var exp_catch = `catch(err_obj){err_obj.message+='; source: '+${func_name}.exp;throw err_obj}`;
+         // returning function expression is necessary for named function, so that the function can be referred in exception handler.
+         func = new Function(`'use strict'; return (function ${func_name}(){'use strict'; try{ ${body} } ${exp_catch} } )`)();
+      }
+      subject[ prop ] = func;
+      func.exp = body;
+   } catch ( ex ) {
+      log.error( `Cannot compile ${ subject.cid }.${ prop }: ${ value }`, ex );
+      delete subject[ prop ];
+   }
+   return func.apply( this, args ); // "this" may have inherited subject and thus different from subject
+};
 
 /**
  * Prototype of Resource (catagorised) and Subrule (non-catagorised).
