@@ -98,8 +98,6 @@ dd5.loader.jsonp.load_rules( { 'version':'alpha',
    ] },
    {'id': 'pc', 'subrules': [ // Standard PC
       ' include : db.character( "system" ) ',
-      ' slot.alignment : db.entity({ type: "alignment" }) ',
-      ' slot.race : db.race() ',
       { 'feature': 'pc_ability', 'subrules': [
          ' numSlot.str : 10 [3,18] ',
          ' numSlot.dex : 10 [3,18] ',
@@ -108,6 +106,8 @@ dd5.loader.jsonp.load_rules( { 'version':'alpha',
          ' numSlot.wis : 10 [3,18] ',
          ' numSlot.cha : 10 [3,18] ',
       ] },
+      ' slot.alignment : db.entity({ type: "alignment" }) ',
+      ' slot.race : db.race() ',
    ] },
 ],
 'race': [
@@ -122,7 +122,7 @@ dd5.loader.jsonp.load_rules( { 'version':'alpha',
 ],
 'feature' : [
    { 'id': 'human-basic', 'type': 'subrace', 'race': 'human', 'subrules': [
-      { 'subrule': 'adj', 'property' : 'db.entity({type:"ability"})', 'value': 1 },
+      { 'subrule': 'adj', 'property' : 'db.entity({ type:"ability" })', 'value': 1 },
    ] },
    { 'id': 'human-phb', 'type': 'subrace', 'race': 'human', 'subrules': [
       { 'slot' : 'bonus_ability', 'options' : 'db.entity({"type:ability"})', 'count': 2 },
