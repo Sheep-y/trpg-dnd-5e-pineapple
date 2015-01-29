@@ -62,7 +62,7 @@ var ui = ns.ui = {
       var destructor = new MutationObserver( ( mutations ) => { // If the last input is no longer attached, unhook updater.
          for ( var m of mutations ) if ( m.removedNodes && m.removedNodes.length ) {
             if ( ! _.html.contains( body, html ) ) char.removeObserver( 'attribute', updater );
-            return; // Only need to check existence once
+            return; // Only need to check existence once, by the time the observer triggers.
          }
       } );
       destructor.observe( body, { childList: true, subtree: true } );

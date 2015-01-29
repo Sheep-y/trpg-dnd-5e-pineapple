@@ -194,6 +194,7 @@ rule.Character = {
                      var lst = that._queries[ h ];
                      if ( ! lst || lst.indexOf( val ) < 0 ) log.warn( "Inconsistent query map: Cannot unhook " + val + " from " + h );
                      else lst.splice( lst.indexOf( val ), 1 );
+                     that.fireAttributeChanged( h );
                   }
                } );
             }
@@ -203,6 +204,7 @@ rule.Character = {
                   for ( var h of val.query_hook() ) if ( h ) {
                      var lst = that._queries[ h ] || ( that._queries[ h ] = [] );
                      lst.push( val );
+                     that.fireAttributeChanged( h );
                   }
                } );
             }

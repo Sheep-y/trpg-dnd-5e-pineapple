@@ -8,12 +8,14 @@
  */
 
 var ui = _.ui = _.map();
+var symbol = ui.symbol = {
+   '__proto__' : null,
+   Create : 'symbol_create',
+   Style : 'symbol_style',
+   Default : 'symbol_default',
+   Dom : 'symbol_dom'
+};
 var dom_style; // <style> dom element
-
-var symbol_create = 'symbol_create';
-var symbol_style  = 'symbol_style';
-var symbol_default = 'symbol_default';
-var symbol_dom = 'symbol_dom';
 
 function _ui_addStyle ( id, style ) {
    if ( ! style ) return;
@@ -34,7 +36,7 @@ ui.Component = {
       _ui_addStyle( that.style_id, that.style );
       var dom = that.create_dom( opt );
       if ( dom ) {
-         this[ symbol_dom ] = dom;
+         this[ symbol.Dom ] = dom;
          if ( opt.id ) dom.id = id;
          if ( opt.parent ) opt.parent.appendChild( dom );
          if ( 'zIndex' in opt ) dom.style.zIndex = opt.zIndex;
@@ -42,11 +44,11 @@ ui.Component = {
       if ( opt.visible === false ) that.hide();
       return that;
    },
-   'symbol_default' : () => _.map(),
-   'symbol_create' : _.dummy,
-   'symbol_style' : () => '',
-   'symbol_dom' : null,
-   get dom ( ) { return this[ symbol_dom ]; },
+   [symbol.Default] : () => _.map(),
+   [symbol.Create] : _.dummy,
+   [symbol.Style] : () => '',
+   [symbol.Dom] : null,
+   get dom ( ) { return this[ symbol.Dom ]; },
    get style ( ) { return this.dom.style; },
    get visible ( ) { return this.style.display !== 'none'; },
    set visible ( visible ) {

@@ -1487,7 +1487,7 @@ _.EventManager = {
          buf.push( param );
          if ( this.timer_stack[ event ] ) return;
          // Deferred mode will consolidate all jobs and call all listeners.
-         this.timer_stack[ event ] = _.setImmediate( function () {
+         this.timer_stack[ event ] = _.setImmediate( function _EventManager_deferred_fire ( ) {
             lst = thisp.lst[ event ]; // lst may have been recreated
             if ( ! lst ) return;
             if ( thisp.log ) _.log( "Fire deferred " + event + " event on " + l + " listeners" );
@@ -1501,7 +1501,7 @@ _.EventManager = {
    /** Create methods to fire event for given event list or method:event mapping */
    "createFireMethods" : function ( event ) {
       var self = this;
-      function _EventManager_createFireMethods_make( prop, evt ) {
+      function _EventManager_makeFireMethods( prop, evt ) {
          if ( ! self.hasOwnProperty( evt ) ) {
             self[ prop ] = self.fire.bind( self, evt );
          } else {
@@ -1509,9 +1509,9 @@ _.EventManager = {
          }
       }
       if ( ! event || event.forEach ) {
-         _.forEach( event || this.events, function ( e ) { _EventManager_createFireMethods_make( e, e ); } );
+         _.forEach( event || this.events, function ( e ) { _EventManager_makeFireMethods( e, e ); } );
       } else {
-         for ( var prop in event ) _EventManager_createFireMethods_make( prop, event[ prop ] );
+         for ( var prop in event ) _EventManager_makeFireMethods( prop, event[ prop ] );
       }
    }
 };
