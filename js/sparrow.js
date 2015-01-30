@@ -1391,16 +1391,16 @@ _.EventManager = {
       that.owner = owner;
       that.lst = _.map();
       that.event_buffer = null;
-      that.timer_stack = null;
+      that.deferred_timer = 0;
       return that;
    },
-   "lst" : _.map(), // Observer list by event name
-   "owner" : null, // Owner, as context of handler calls.
-   "events" : [], // List of events.  If empty, allow arbitrary events.
-   "deferred" : false,     // Whether this manager's event firing is deferred and consolidated.
-   "event_buffer" : null, // Buffered events.
-   "timer_stack" : null, // Timer stacks.
-   "log" : false,        // If true, will log event firing.
+   "lst" : _.map(),       // Observer list by event name.
+   "owner" : null,        // Owner, as context of handler calls.
+   "events" : null,       // List of events.  If empty, allow arbitrary events.
+   "deferred" : false,    // Whether this manager's event firing is deferred and consolidated.
+   "event_buffer" : null, // Buffered events (Map).
+   "deferred_timer" : 0,  // Timer for deferred event firing.
+   "log" : false,         // If true, will log event firing.
    /**
     * Register an event handler.  If register twice then it will be called twice.
     *
@@ -1474,28 +1474,28 @@ _.EventManager = {
          return;
       }
       if ( ! this.deferred ) {
-         if ( this.log ) _.log( "Fire " + event + " on " + l + " listeners" );
+         if ( this.log ) _.log( "Fire " + event + " on " + lst.length + " listeners" );
          for ( var i in lst ) lst[ i ].apply( this.owner, args );
       } else {
-         lst = null;
+         // Deferred mode will consolidate all events and call listeners passing the event buffer.
          if ( arguments.length > 2 ) throw new Error( "[sparrow.EventManager.fire] Deferred event firing must have at most one parameter." );
-         if ( ! this.event_buffer ) {
-            this.event_buffer = _.map();
-            this.timer_stack = _.map();
-         }
+         var evt_buf = this.event_buffer || ( this.event_buffer = _.map() );
          var buf = this.event_buffer[ event ] || ( this.event_buffer[ event ] = [] );
          buf.push( param );
-         if ( this.timer_stack[ event ] ) return;
-         // Deferred mode will consolidate all jobs and call all listeners.
-         this.timer_stack[ event ] = _.setImmediate( function _EventManager_deferred_fire ( ) {
-            lst = thisp.lst[ event ]; // lst may have been recreated
-            if ( ! lst ) return;
-            if ( thisp.log ) _.log( "Fire deferred " + event + " event on " + l + " listeners" );
-            for ( var i = 0, l = lst.length ; i < l ; i++ ) {
-               lst[ i ].call( thisp.owner, buf );
-            }
-            buf.length = thisp.timer_stack[ event ] = 0;
+         if ( this.deferred_timer ) return;
+         this.deferred_timer = _.setImmediate( function _EventManager_deferred_fire ( ) {
+            ( thisp.events || Object.keys( evt_buf ) ).forEach( function _EventManager_deferred_fire_each ( event ) {
+               var lst = thisp.lst[ event ], buf = evt_buf[ event ];
+               if ( ! lst || ! buf ) return;
+               if ( thisp.log ) _.log( "Fire deferred " + event + " event on " + lst.length + " listeners" );
+               for ( var i = 0, l = lst.length ; i < l ; i++ ) {
+                  lst[ i ].call( thisp.owner, buf );
+               }
+               thisp.deferred_timer = 0;
+               delete evt_buf[ event ];
+            } );
          } );
+         lst = buf = args = undefined;
       }
    },
    /** Create methods to fire event for given event list or method:event mapping */
