@@ -8,7 +8,7 @@
  */
 
 var ui = _.ui = _.map();
-var symbol = ui.symbol = {
+var symbol = ui.symbol = { // TODO: Give up symbol because they are hard to read with few benefits
    '__proto__' : null,
    Create : 'symbol_create',
    Style : 'symbol_style',
@@ -26,20 +26,19 @@ function _ui_addStyle ( id, style ) {
 }
 
 function _ui_defaults ( that, opt ) {
-   return _.extend( opt || {}, that.default_options );
+   return _.extend( opt || {}, that[ symbol.Default ] );
 }
 
 /** The base UI component class */
 ui.Component = {
    'create' : function ( opt ) {
       var that = _.newIfSame( this, ui.Component );
-      _ui_addStyle( that.style_id, that.style );
-      var dom = that.create_dom( opt );
+      _ui_addStyle( that.style_id, that[ symbol.Style ] );
+      var dom = that[ symbol.Create ]( opt );
       if ( dom ) {
          this[ symbol.Dom ] = dom;
          if ( opt.id ) dom.id = id;
          if ( opt.parent ) opt.parent.appendChild( dom );
-         if ( 'zIndex' in opt ) dom.style.zIndex = opt.zIndex;
       }
       if ( opt.visible === false ) that.hide();
       return that;
@@ -60,6 +59,23 @@ ui.Component = {
    hide ( ) { this.visible = false; },
 };
 
+ui.Mask = {
+   '__proto__' : ui.Component,
+   'create' : function ( opt ) {
+      var that = _.newIfSame( this, ui.Mask );
+      ui.Component.create.call( that, opt = _ui_defaults( ui.Mask, opt ) );
+      if ( opt.title ) that.header.textContent = opt.title;
+      return that;
+   },
+   [symbol.Create] ( ) { return _.html( '<div class="sparrow-ui mask"></div>' ); },
+   [symbol.Default] : { 'visible': false, 'parent': document.body },
+   style_id : 'mask',
+   [symbol.Style] :
+`@media all {
+   .sparrow-ui.mask { position: absolute; top: 0; left: 0; width: 100%; height: 100%; margin: 0; padding: 0; box-sizing: border-box; /* Same size and position as parent */
+      background: #444; opacity: 0.8; z-index: 100; /* And cover everything else */ }
+}`};
+
 ui.Dialog = {
    '__proto__' : ui.Component,
    'create' : function ( opt ) {
@@ -75,23 +91,23 @@ ui.Dialog = {
    get innerHTML ( ) { return this.body.innerHTML; },
    set innerHTML ( html ) { this.body.innerHTML = html; },
    get footer ( ) { return this.dom.firstChild.lastChild; },
-   create_dom ( ) { return _.html( '<dialog class="sparrow-ui"><form><header></header><div></div><footer></footer></form></dialog>' ); },
-   default_options : { 'visible': true, 'parent': document.body },
+   [symbol.Create] ( ) { return _.html( '<dialog class="sparrow-ui"><section><header></header><div></div><footer></footer></section></dialog>' ); },
+   [symbol.Default] : { 'visible': true, 'parent': document.body },
    style_id : 'dialog',
-   style :
+   [symbol.Style] :
 `@media all {
    !* > dialog.sparrow-ui { transform-style: preserve-3d; } /* Prevent sub-pixel transform of dialog */
    dialog.sparrow-ui {
       position: fixed; top: 50%; right: 0; left: 0; margin: 0 auto; transform: translateY(-50%); /* Vertical and horizontal center on screen */
       display: table; background: #EEE; /* Shrink to content size */
       border: 2px solid #444; border-radius: 5px; box-shadow: 5px 5px 5px #888; } /* Borders and shadow */
-   dialog.sparrow-ui > form { display: flex; flex-direction: column; min-width: 300px; min-height: 300px; } /* Dynamic content with dynamic sized header and footer */
-   dialog.sparrow-ui > form > * { padding: 5px; }
-   dialog.sparrow-ui > form > header {
+   dialog.sparrow-ui > section { display: flex; flex-direction: column; min-width: 300px; min-height: 300px; } /* Dynamic content with dynamic sized header and footer */
+   dialog.sparrow-ui > section > * { padding: 5px; }
+   dialog.sparrow-ui > section > header {
       font-size: 125%; font-weight: bold; min-height: 1.5em;
       padding: 2px 5px; background: #BBB; border-bottom: 2px solid #444; } /* Header background colour */
-   dialog.sparrow-ui > form > div { flex: 1; overflow: auto; }
-   dialog.sparrow-ui > form > footer { text-align: right; }
+   dialog.sparrow-ui > section > div { flex: 1; overflow: auto; }
+   dialog.sparrow-ui > section > footer { text-align: right; }
 }`};
 
 })( _ );
