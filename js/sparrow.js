@@ -382,7 +382,7 @@ _.js = function _js ( option, onload ) {
       done = true;
       if ( log ) _.info( log );
       _.call( callback, e, url, option );
-      _.call( option.ondone, e, url, option );
+      _.call( option.ondone || null, e, url, option );
       if ( e && e.parentNode === document.body ) document.body.removeChild(e);
    }
 

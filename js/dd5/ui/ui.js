@@ -19,7 +19,7 @@ var ui = ns.ui = {
       delete registry[ cid ];
    },
    registered ( cid ) {
-      return registry[ cid ];
+      return registry[ cid ] ? true : false;
    },
 
    createUI ( component, type, container ) {
