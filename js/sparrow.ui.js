@@ -8,11 +8,8 @@
  */
 
 var ui = _.ui = _.map();
-var symbol = ui.symbol = { // TODO: Give up symbol because they are hard to read with few benefits
+var symbol = ui.symbol = {
    '__proto__' : null,
-   Create : 'symbol_create',
-   Style : 'symbol_style',
-   Default : 'symbol_default',
    Dom : 'symbol_dom'
 };
 var dom_style; // <style> dom element
@@ -26,15 +23,15 @@ function _ui_addStyle ( id, style ) {
 }
 
 function _ui_defaults ( that, opt ) {
-   return _.extend( opt || {}, that[ symbol.Default ] );
+   return _.extend( opt || {}, that.prototype.default_options );
 }
 
 /** The base UI component class */
 ui.Component = {
    'create' : function ( opt ) {
       var that = _.newIfSame( this, ui.Component );
-      _ui_addStyle( that.style_id, that[ symbol.Style ] );
-      var dom = that[ symbol.Create ]( opt );
+      _ui_addStyle( that.style_id, that.prototype.style );
+      var dom = that.prototype.create_dom( opt );
       if ( dom ) {
          this[ symbol.Dom ] = dom;
          if ( opt.id ) dom.id = id;
@@ -43,9 +40,12 @@ ui.Component = {
       if ( opt.visible === false ) that.hide();
       return that;
    },
-   [symbol.Default] : () => _.map(),
-   [symbol.Create] : _.dummy,
-   [symbol.Style] : () => '',
+   prototype : {
+      'create_dom' : _.dummy,
+      'default_options' : _.map(),
+      'id' : '',
+      'style' : ''
+   },
    [symbol.Dom] : null,
    get dom ( ) { return this[ symbol.Dom ]; },
    get style ( ) { return this.dom.style; },
@@ -67,14 +67,16 @@ ui.Mask = {
       if ( opt.title ) that.header.textContent = opt.title;
       return that;
    },
-   [symbol.Create] ( ) { return _.html( '<div class="sparrow-ui mask"></div>' ); },
-   [symbol.Default] : { 'visible': false, 'parent': document.body },
-   style_id : 'mask',
-   [symbol.Style] :
+   prototype : {
+      'create_dom' ( ) { return _.html( '<div class="sparrow-ui mask"></div>' ); },
+      'default_options' : { 'visible': false, 'parent': document.body },
+      'id' : 'mask',
+      'style' :
 `@media all {
    .sparrow-ui.mask { position: absolute; top: 0; left: 0; width: 100%; height: 100%; margin: 0; padding: 0; box-sizing: border-box; /* Same size and position as parent */
       background: #444; opacity: 0.8; z-index: 100; /* And cover everything else */ }
-}`};
+}` }
+};
 
 ui.Dialog = {
    '__proto__' : ui.Component,
@@ -91,10 +93,11 @@ ui.Dialog = {
    get innerHTML ( ) { return this.body.innerHTML; },
    set innerHTML ( html ) { this.body.innerHTML = html; },
    get footer ( ) { return this.dom.firstChild.lastChild; },
-   [symbol.Create] ( ) { return _.html( '<dialog class="sparrow-ui"><section><header></header><div></div><footer></footer></section></dialog>' ); },
-   [symbol.Default] : { 'visible': true, 'parent': document.body },
-   style_id : 'dialog',
-   [symbol.Style] :
+   prototype : {
+      'create_dom' ( ) { return _.html( '<dialog class="sparrow-ui"><section><header></header><div></div><footer></footer></section></dialog>' ); },
+      'default_options' : { 'visible': true, 'parent': document.body },
+      'id' : 'dialog',
+      'style' :
 `@media all {
    !* > dialog.sparrow-ui { transform-style: preserve-3d; } /* Prevent sub-pixel transform of dialog */
    dialog.sparrow-ui {
@@ -108,6 +111,7 @@ ui.Dialog = {
       padding: 2px 5px; background: #BBB; border-bottom: 2px solid #444; } /* Header background colour */
    dialog.sparrow-ui > section > div { flex: 1; overflow: auto; }
    dialog.sparrow-ui > section > footer { text-align: right; }
-}`};
+}` }
+};
 
 })( _ );
