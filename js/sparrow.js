@@ -1670,14 +1670,11 @@ _.l.localise = function _l_localise ( root ) {
       var key = e.getAttribute( "data-i18n" );
       if ( ! key ) {
          switch ( e.tagName ) {
-            case 'INPUT':
-               key = e.value;
-               break;
-            case 'MENUITEM':
-               key = e.getAttribute( 'label' );
-               break;
-            default:
-               key = e.textContent;
+            case 'INPUT':    key = e.value;
+                             break;
+            case 'MENUITEM': key = e.getAttribute( 'label' );
+                             break;
+            default:         key = e.textContent;
          }
          if ( ! key ) {
             return _.warn( 'i18 class without l10n key: ' + e.tagName.toLowerCase() + (e.id ? '#' + e.id : '' ) + ' / ' + e.textContext );
@@ -1687,14 +1684,11 @@ _.l.localise = function _l_localise ( root ) {
       }
       var val = _.l( key, key.split('.').pop() );
       switch ( e.tagName ) {
-         case 'INPUT':
-            e.value = val;
-            break;
-         case 'MENUITEM':
-            e.setAttribute( 'label', val );
-            break;
-         default:
-            e.innerHTML = val;
+         case 'INPUT':    e.value = val;
+                          break;
+         case 'MENUITEM': e.setAttribute( 'label', val );
+                          break;
+         default:         e.innerHTML = val;
       }
    });
 };

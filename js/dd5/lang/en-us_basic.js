@@ -1,5 +1,5 @@
 var _; // Globals
-if ( ! _ ) throw new Error( '[dd5.l10n.en] Sparrow library must be loaded first.' );
+if ( ! _ ) throw new Error( '[dd5.l10n.en-us] Sparrow library must be loaded first.' );
 
 _.l.set( 'en-US', 'dd5.feature.pc_ability', {
    'caption'  : 'Abilities',

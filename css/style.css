@@ -1,6 +1,25 @@
 * { box-sizing: border-box; }
+.f_left  { float: left; }
+.f_right { float: right; }
+.clear_float:after { content: " "; display: table; clear: both; }
+.negative_order { order: -10; }
+
 html { font-family: Arial; }
 html, body { margin: 0; width: 100%; background: black; color: white; }
 div { padding: 0; margin: 0; }
 a, a:visited { color: #F88; text-decoration: none; }
-a:hover { text-decoration: underline; }
+a:hover { color: #F44; text-decoration: underline; }
+
+nav#top 
+{
+   display: flex;
+   justify-content: space-between;
+   border-bottom: 2px solid #888;
+}
+nav#top h1
+   {
+      flex-grow: 1;
+      margin: 0;
+      text-align: center;
+      font-size: 100%;
+   }
