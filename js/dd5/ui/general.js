@@ -7,7 +7,7 @@ var ui = ns.ui;
 var slotEditor = {
    'edit' ( e, container ) {
       var uid = container.id;
-      var html = `<div><label class="dd5 slot">${ e.getLabel() }`;
+      var html = `<div><label class="dd5 slot"><span>${ e.getLabel() }</span>`;
       var nullPick = { 'cid': '', 'toString': ()=>'', 'getName': ()=>'' }, pick = _.coalesce( e.getPick(), nullPick );
       html = _.html( html + `<select><option value="${ pick.cid }">${ pick.getName() }</option></select></label></div>` );
 
@@ -48,7 +48,7 @@ ui.registerFactory( 'subrule.profslot', slotEditor );
 ui.registerFactory( 'subrule.numslot', {
    'edit' ( e, container ) {
       var uid = container.id;
-      var html = `<div><label class="dd5 slot"> ${ e.getLabel() }`;
+      var html = `<div><label class="dd5 slot"><span>${ e.getLabel() }</span>`;
       html = _.html( html + `<input type="number" min="${ e.getMinVal() }" max="${ e.getMaxVal() }" value="${ e.getPick() }" data-attr="${ e.id }" /></label></div>` );
 
       // Update slot on change
@@ -66,8 +66,8 @@ ui.registerFactory( 'subrule.numslot', {
 ui.registerFactory( 'subrule.prof', {
    'edit' ( e, container ) {
       var val = '';
-      e.value().forEach( (v) => val += `<div>${ v.getName() }</div>` );
-      return _.html( `<div><label class="dd5 prof"> ${ e.getLabel() } ${val} </label></div>` )
+      e.value().forEach( (v) => val += `<span>${ v.getName() }</span>` );
+      return _.html( `<div><label class="dd5 prof"><span> ${ e.getLabel() }</span> ${val} </label></div>` )
    }
 } );
 

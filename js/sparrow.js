@@ -1621,7 +1621,8 @@ _.l.detectLocale = function _l_detectLocale ( defaultLocale ) {
  * @returns {*} if set, return undefined.  If get, return the resource.
  */
 _.l.getset = function _l_getset ( locale, path, set ) {
-   var p = [ locale ].concat( path.split( '.' ) ), l = _.l;
+   var p = [ locale ], l = _.l;
+   if ( path ) p = p.concat( path.split( '.' ) );
    var last = p.pop();
    var base = l.data;
    // Explore path

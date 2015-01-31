@@ -10,6 +10,18 @@ div { padding: 0; margin: 0; }
 a, a:visited { color: #F88; text-decoration: none; }
 a:hover { color: #F44; text-decoration: underline; }
 
+input[type="number"] {
+   max-width: 50px;
+}
+
+label > span:first-child {
+   display: inline-block;
+   min-width: 100px;
+}
+select {
+   min-width: 100px;
+}
+
 nav#top 
 {
    display: flex;

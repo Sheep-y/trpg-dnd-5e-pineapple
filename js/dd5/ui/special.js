@@ -34,7 +34,7 @@ ui.registerFactory( 'feature.pc_ability', {
          var profs = rule.queryChar( 'prof$'+type.id, 'ui' );
          if ( profs ) {
             html += `<tr><td colspan="99"><b>${ type.getName() }</b><br/>`;
-            _.ary( profs ).forEach( e => html += e.getName() + '<br/>' );
+            html += _.ary( profs ).map( e =>  e.getName() ).join( _.l( 'glue' ) );
             html += '</td></tr>';
          }
       } );
