@@ -1664,7 +1664,10 @@ _.l.set = function _l_set ( locale, path, data ) {
  * @param {Node=} root Root element to localise, default to whole document
  */
 _.l.localise = function _l_localise ( root ) {
-   if ( root === undefined ) root = document.documentElement;
+   if ( root === undefined ) {
+      root = document.documentElement;
+      if ( typeof( _.l( 'title', null ) === 'string' ) ) document.title = _.l( 'title', null );
+   }
    root.setAttribute( 'lang', _.l.currentLocale );
    _.forEach( _( ".i18n" ), function _l_localise_each ( e ) {
       var key = e.getAttribute( "data-i18n" );

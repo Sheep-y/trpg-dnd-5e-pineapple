@@ -68,12 +68,12 @@ ui.Mask = {
       return that;
    },
    prototype : {
-      'create_dom' ( ) { return _.html( '<div class="sparrow-ui mask"></div>' ); },
+      'create_dom' ( ) { return _.html( '<div class="ui mask"></div>' ); },
       'default_options' : { 'visible': false, 'parent': document.body },
       'id' : 'mask',
       'style' :
 `@media all {
-   .sparrow-ui.mask { position: absolute; top: 0; left: 0; width: 100%; height: 100%; margin: 0; padding: 0; box-sizing: border-box; /* Same size and position as parent */
+   .ui.mask { position: absolute; top: 0; left: 0; width: 100%; height: 100%; margin: 0; padding: 0; box-sizing: border-box; /* Same size and position as parent */
       background: #444; opacity: 0.8; z-index: 100; /* And cover everything else */ }
 }` }
 };
@@ -94,23 +94,23 @@ ui.Dialog = {
    set innerHTML ( html ) { this.body.innerHTML = html; },
    get footer ( ) { return this.dom.firstChild.lastChild; },
    prototype : {
-      'create_dom' ( ) { return _.html( '<dialog class="sparrow-ui"><section><header></header><div></div><footer></footer></section></dialog>' ); },
+      'create_dom' ( ) { return _.html( '<dialog class="ui"><section><header></header><div></div><footer></footer></section></dialog>' ); },
       'default_options' : { 'visible': true, 'parent': document.body },
       'id' : 'dialog',
       'style' :
 `@media all {
-   !* > dialog.sparrow-ui { transform-style: preserve-3d; } /* Prevent sub-pixel transform of dialog */
-   dialog.sparrow-ui {
+   !* > dialog.ui { transform-style: preserve-3d; } /* Prevent sub-pixel transform of dialog */
+   dialog.ui {
       position: fixed; top: 50%; right: 0; left: 0; margin: 0 auto; transform: translateY(-50%); /* Vertical and horizontal center on screen */
       display: table; background: #EEE; /* Shrink to content size */
       border: 2px solid #444; border-radius: 5px; box-shadow: 5px 5px 5px #888; } /* Borders and shadow */
-   dialog.sparrow-ui > section { display: flex; flex-direction: column; min-width: 300px; min-height: 300px; } /* Dynamic content with dynamic sized header and footer */
-   dialog.sparrow-ui > section > * { padding: 5px; }
-   dialog.sparrow-ui > section > header {
+   dialog.ui > section { display: flex; flex-direction: column; min-width: 300px; min-height: 300px; } /* Dynamic content with dynamic sized header and footer */
+   dialog.ui > section > * { padding: 5px; }
+   dialog.ui > section > header {
       font-size: 125%; font-weight: bold; min-height: 1.5em;
       padding: 2px 5px; background: #BBB; border-bottom: 2px solid #444; } /* Header background colour */
-   dialog.sparrow-ui > section > div { flex: 1; overflow: auto; }
-   dialog.sparrow-ui > section > footer { text-align: right; }
+   dialog.ui > section > div { flex: 1; overflow: auto; }
+   dialog.ui > section > footer { text-align: right; }
 }` }
 };
 
