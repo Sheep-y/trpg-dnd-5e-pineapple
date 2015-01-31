@@ -173,7 +173,10 @@ rule.Entity = {
          }
       }
       return that;
-   }
+   },
+   'getName' ( ) {
+      return _.l( `dd5.entity.${this.type}.${this.id}`, this.id );
+   },
 };
 
 rule.Character = {
