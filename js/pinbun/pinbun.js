@@ -29,9 +29,8 @@ var pnl_content = _( '#container' )[0];
 
 ns.init = function pinbun_init ( source_url ) {
    log.add( 'warn', ns.ui.openDialog );
-   _.l.fallbackLocale = 'en-US';
    if ( _.l.currentLocale !== 'zh-Hant' ) // Deter unwanted attention, auto detect lang only when not already set to certain value
-      _.attr( document.documentElement, { 'lang': _.l.detectLocale() } ); // Detect language and set document attribute
+      _.attr( document.documentElement, { 'lang': _.l.detectLocale('en-US') } ); // Detect language and set document attribute
    _.l.localise();
    if ( source_url ) {
       dd5.loader.event.add( 'progress', e => ns.ui.openDialog( "Loaded: " + ( e.url || e ) ) );

@@ -1566,7 +1566,7 @@ _.l.data = _.map();
  * @param {string} lang  Locale to use. Pass in empty string, null, false etc. to use auto-detection
  */
 _.l.setLocale = function _l_setLocale ( lang ) {
-    if ( ! lang ) return _.l.detectLocale();
+    if ( ! lang ) return;
     if ( lang === _.l.currentLocale ) return;
     _.l.currentLocale = lang;
     _.l.event.fire( 'locale', lang );
@@ -1579,37 +1579,46 @@ _.l.setLocale = function _l_setLocale ( lang ) {
  */
 _.l.saveLocale = function _l_saveLocale ( lang ) {
     if ( window.localStorage ) {
-       if ( lang ) localStorage['_.l.locale'] = lang;
-       else delete localStorage['_.l.locale'];
+       if ( lang ) localStorage['sparrow.l.locale'] = lang;
+       else delete localStorage['sparrow.l.locale'];
     }
     _.l.setLocale( lang );
 };
 
 /**
- * Detect user locale.  First check local session then check language setting.
+ * Detect user locale.  Check saved locale if exist, otherwise check browser language setting.
  *
  * @param {string=} defaultLocale  Default locale to use.
  * @return {string} Current locale after detection.
  */
 _.l.detectLocale = function _l_detectLocale ( defaultLocale ) {
-   var l = _.l;
+   var l = _.l, pref = navigator.language || navigator.userLanguage;
    if ( defaultLocale ) l.fallbackLocale = defaultLocale;
-   // Load and check preference
-   var pref = navigator.language || navigator.userLanguage;
-   if ( window.localStorage ) pref = localStorage['_.l.locale'] || pref;
-   if ( pref ) { // Set locale to preference, if available. If not, try the main language.
-      var preferred = pref.toLowerCase();
-      var orig_list = Object.keys( l.data );
-      var full_list = orig_list.map( function( e ){ return e.toLowerCase(); } ); // List of available languages
-      if ( full_list.indexOf( preferred ) >= 0 ) { // Exact match
-         l.setLocale( pref );
-      } else {
-        preferred = preferred.split( '-' )[0]; // Language match; sorry we are skipping country/locale match for three tier codes.
-        var lang_list = full_list.map( function( e ){ return e.split('-')[0]; } );
-        if ( lang_list.indexOf( preferred ) >= 0 ) l.setLocale( orig_list[ lang_list.indexOf( preferred ) ] );
-      }
-   }
+   if ( window.localStorage ) pref = localStorage['sparrow.l.locale'] || pref;
+   if ( pref ) l.setLocale( _.l.matchLocale( pref, Object.keys( l.data ) ) );
    return l.currentLocale;
+};
+
+/**
+ * Given a target locale, return a full or partial match from candidates.
+ * Match is case-insensitive.
+ *
+ * @param {string} target Target locale to match.
+ * @param {Array} candidates Result candidates.
+ * @return {(string|null)} Matched candidate locale, must be at least a partial match, otherwise null.
+ */
+_.l.matchLocale = function _l_matchLocale ( target, candidates ) {
+   if ( candidates.indexOf( target ) >= 0 ) return target; // Exact match short circuit
+   // Try full match
+   target = target.toLowerCase();
+   var list = candidates.map( function( e ){ return e.toLowerCase(); } );
+   var pos = list.indexOf( target );
+   if ( pos >= 0 ) return candidates[ pos ];
+   // Try partial match
+   list = list.map( function( e ){ return e.split('-')[0]; } );
+   pos = list.indexOf( target.split( '-' )[ 0 ] );
+   if ( pos >= 0 ) return candidates[ pos ];
+   return null;
 };
 
 /**
