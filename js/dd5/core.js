@@ -22,11 +22,11 @@ var sys = ns.sys = _.map();
  */
 sys.Bonus = {
    'create' ( value, source, type ) {
-      var that = _.newIfSame( this, sys.Bonus );
-      that.value = value;
-      if ( source ) that.source = source;
-      if ( type ) that.type = type;
-      return that;
+      var me = _.newIfSame( this, sys.Bonus );
+      me.value = value;
+      if ( source ) me.source = source;
+      if ( type ) me.type = type;
+      return me;
    },
    'source' : null,
    'value'  : 0,
@@ -47,10 +47,10 @@ sys.formatBonus = function dd5_formatBonus ( val ) {
  */
 sys.Value = {
    'create' ( base_bonus ) {
-      var that = _.newIfSame( this, sys.Value );
-      that.boni = [];
-      if ( base_bonus ) that.add( base_bonus );
-      return that;
+      var me = _.newIfSame( this, sys.Value );
+      me.boni = [];
+      if ( base_bonus ) me.add( base_bonus );
+      return me;
    },
    'boni' : [], // Bonus stack
    'add' ( bonus ) {
@@ -88,12 +88,12 @@ sys.Value = {
  */
 sys.Query = {
    'create' ( query, whoask, value, cause ) {
-      var that = _.newIfSame( this, sys.Query );
-      that.query = query;
-      that.whoask = whoask;
-      that.value = value;
-      that.cause = cause;
-      return that;
+      var me = _.newIfSame( this, sys.Query );
+      me.query = query;
+      me.whoask = whoask;
+      me.value = value;
+      me.cause = cause;
+      return me;
    },
    'query'   : '',          // Query key
    'whoask'  : null,       // Who formed this query
@@ -163,14 +163,14 @@ sys.Query = {
 sys.Composite = {
    '__proto__' : _.Composite,
    'create' ( opt ) {
-      var that = _.newIfSame( this, sys.Composite );
-      _.Composite.create.call( that );
-      if ( ! opt ) return that;
-      if ( opt.id ) that.id = opt.id;
-      if ( opt.cid ) that.cid = opt.cid;
-      if ( opt.name ) that.name = opt.name;
-      if ( opt.parent ) opt.parent.add( that );
-      return that;
+      var me = _.newIfSame( this, sys.Composite );
+      _.Composite.create.call( me );
+      if ( ! opt ) return me;
+      if ( opt.id ) me.id = opt.id;
+      if ( opt.cid ) me.cid = opt.cid;
+      if ( opt.name ) me.name = opt.name;
+      if ( opt.parent ) opt.parent.add( me );
+      return me;
    },
    'id' : undefined, // string
    'cid' : undefined, // component id
@@ -231,9 +231,9 @@ ns.res.new = function dd5_res_new ( name ) {
 
 var Catalog = {
    'create' () {
-      var that = _.newIfSame( this, Catalog );
-      that._list = [];
-      return that;
+      var me = _.newIfSame( this, Catalog );
+      me._list = [];
+      return me;
    },
    '_list' : null,
    'add' ( item ) {

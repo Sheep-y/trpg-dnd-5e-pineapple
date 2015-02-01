@@ -9,15 +9,15 @@ var log = ns.event;
 ui.Chargen = {
    '__proto__' : _.ui.Component,
    'create' ( char ) {
-      var that = _.newIfSame( this, ui.Chargen );
-      var observer = that.refresh.bind( that );
-      that._character = char;
-      that[ symbol.Dom ] = _.create( 'div', { id : ui.newId() } );
+      var me = _.newIfSame( this, ui.Chargen );
+      var observer = me.refresh.bind( me );
+      me._character = char;
+      me[ symbol.Dom ] = _.create( 'div', { id : ui.newId() } );
       char.addObserver( 'structure', observer );
       log.add( 'l10n', observer );
-      ui.panels.push( that );
-      that.refresh();
-      return that;
+      ui.panels.push( me );
+      me.refresh();
+      return me;
    },
    '_character' : null,
 

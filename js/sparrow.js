@@ -840,13 +840,13 @@ _.proto = function _proto ( e ) {
 /**
  * If subject is null or is exactly same as prototype, create a new object from the prototype.
  *
- * @param {Object|null|undefined} that Subject to control creation.
+ * @param {Object|null|undefined} subject Subject to control creation.
  * @param {Object} prototype Prototype of result if new object need to be created.
  * @returns {Object|null|undefined} Prototype of e, or null|undefined if e is null|undefined.
  */
-_.newIfSame = function _newIfSame ( that, prototype ) {
-   if ( that === undefined || that === null ) that = prototype;
-   return that !== prototype ? that : Object.create( prototype );
+_.newIfSame = function _newIfSame ( subject, prototype ) {
+   if ( subject === undefined || subject === null ) subject = prototype;
+   return subject !== prototype ? subject : Object.create( prototype );
 };
 
 /**
@@ -1386,13 +1386,13 @@ _.Executor.prototype = {
  */
 _.EventManager = {
    "create" : function ( events, owner ) {
-      var that = _.newIfSame( this, _.EventManager );
-      if ( events !== undefined && events !== null ) that.events = events;
-      that.owner = owner;
-      that.lst = _.map();
-      that.event_buffer = null;
-      that.deferred_timer = 0;
-      return that;
+      var me = _.newIfSame( this, _.EventManager );
+      if ( events !== undefined && events !== null ) me.events = events;
+      me.owner = owner;
+      me.lst = _.map();
+      me.event_buffer = null;
+      me.deferred_timer = 0;
+      return me;
    },
    "lst" : _.map(),       // Observer list by event name.
    "owner" : null,        // Owner, as context of handler calls.

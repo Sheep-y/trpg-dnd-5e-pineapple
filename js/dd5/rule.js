@@ -21,22 +21,22 @@ var rule = ns.rule = _.map();
 rule.wrapper = {
    you : {
       // Divert unknown properties to query function
-      'get' ( that, name ) {
-         return name in that ? that[ name ] : that.query( sys.Query.create( name, that ) ).value;
+      'get' ( me, name ) {
+         return name in me ? me[ name ] : me.query( sys.Query.create( name, me ) ).value;
       }
    },
    res : {
       // Repack categories as function
-      'get' ( that, name ) {
-         return name in that
-            ? criteria => new Proxy( that[ name ].get( criteria ), rule.wrapper.first )
+      'get' ( me, name ) {
+         return name in me
+            ? criteria => new Proxy( me[ name ].get( criteria ), rule.wrapper.first )
             : null;
       }
    },
    first : {
       // if there is only one match, divert unknown properties to first result
-      'get' ( that, name ) {
-         return name in that ? that[ name ] : ( that.length == 1 ? that[0][ name ] : undefined );
+      'get' ( me, name ) {
+         return name in me ? me[ name ] : ( me.length == 1 ? me[0][ name ] : undefined );
       }
    }
 };
@@ -84,25 +84,25 @@ function property_compiler ( subject, prop, value, args ) {
 rule.Rule = {
    '__proto__' : sys.Composite,
    'create' ( opt ) {
-      var that = _.newIfSame( this, rule.Rule );
-      sys.Composite.create.call( that, opt );
-      _.assert( rule.Resource.isPrototypeOf( that ) || rule.subrule.Subrule.isPrototypeOf( that ), 'Rule not resource or subrule!' );
+      var me = _.newIfSame( this, rule.Rule );
+      sys.Composite.create.call( me, opt );
+      _.assert( rule.Resource.isPrototypeOf( me ) || rule.subrule.Subrule.isPrototypeOf( me ), 'Rule not resource or subrule!' );
       if ( opt.id ) _.assert( opt.id.match( /^[\w-]+$/ ), `Invalid id "${ opt.id }", must be alphanumeric, underscore, or hypen.` );
-      for ( var prop of that.copy_list ) { var val = opt[ prop ];
+      for ( var prop of me.copy_list ) { var val = opt[ prop ];
          if ( val !== undefined && val !== null ) {
-            _.assert( ! that.hasOwnProperty( prop ), `[dd5.Rule] Rule ${ this.cid } cannot copy property "${ prop }" to created component.` );
-            that[ prop ] = val;
+            _.assert( ! me.hasOwnProperty( prop ), `[dd5.Rule] Rule ${ this.cid } cannot copy property "${ prop }" to created component.` );
+            me[ prop ] = val;
             delete opt[ prop ];
          }
       }
-      for ( var prop of that.compile_list ) { var val = opt[ prop ];
+      for ( var prop of me.compile_list ) { var val = opt[ prop ];
          if ( val !== undefined && val !== null ) {
-            _.assert( ! that.hasOwnProperty( prop ), `[dd5.Rule] Rule ${ this.cid } cannot copy property "${ prop }" to created component.` );
-            that[ prop ] = compile_property( that, prop, val );
+            _.assert( ! me.hasOwnProperty( prop ), `[dd5.Rule] Rule ${ this.cid } cannot copy property "${ prop }" to created component.` );
+            me[ prop ] = compile_property( me, prop, val );
             delete opt[ prop ];
          }
       }
-      return that;
+      return me;
    },
    'compile_list' : [],
    'copy_list' : [],
@@ -118,23 +118,23 @@ rule.Rule = {
 var Resource = rule.Resource = {
    '__proto__' : rule.Rule,
    'create' ( type, opt ) {
-      var that = _.newIfSame( this, Resource );
+      var me = _.newIfSame( this, Resource );
       if ( ! opt.cid ) opt.cid = type + '.' + opt.id;
-      rule.Rule.create.call( that, opt );
-      _.assert( res[ type ] && that.id && that.cid, '[dd5.Resource] Resource must have id and compoent id.' );
+      rule.Rule.create.call( me, opt );
+      _.assert( res[ type ] && me.id && me.cid, '[dd5.Resource] Resource must have id and compoent id.' );
       var dup = res[ type ].get( opt.id );
-      if ( dup.length ) throw new Error( `Redeclaring ${ type }.${ that.id  }. (already declared by ${ dup[0].source.cid })` );
+      if ( dup.length ) throw new Error( `Redeclaring ${ type }.${ me.id  }. (already declared by ${ dup[0].source.cid })` );
       if ( opt ) {
          if ( opt.source ) {
             if ( typeof( opt.source ) === 'string' ) opt.source = res.source.get({ id: opt.source })[0];
-            that.source = opt.source;
+            me.source = opt.source;
          }
          _.curtail( opt, [ 'id', 'cid', 'name', 'parent', 'source' ] );
       }
-      that.res_type = type;
-      res[ type ].add( that );
-      log.fine( 'Loaded resource: ' + that.cid );
-      return that;
+      me.res_type = type;
+      res[ type ].add( me );
+      log.fine( 'Loaded resource: ' + me.cid );
+      return me;
    },
    'res_type' : undefined,
    'source'   : undefined,
@@ -143,9 +143,9 @@ var Resource = rule.Resource = {
 rule.Source = {
    '__proto__' : Resource,
    'create' ( opt ) {
-      var that = _.newIfSame( this, rule.Source );
-      Resource.create.call( that, 'source', opt );
-      return that;
+      var me = _.newIfSame( this, rule.Source );
+      Resource.create.call( me, 'source', opt );
+      return me;
    },
    'copy_list' : [
       'publisher',
@@ -159,20 +159,20 @@ rule.Source = {
 rule.Entity = {
    '__proto__' : Resource,
    'create' ( opt ) {
-      var that = _.newIfSame( this, rule.Entity );
-      Resource.create.call( that, 'entity', opt );
+      var me = _.newIfSame( this, rule.Entity );
+      Resource.create.call( me, 'entity', opt );
       // With entity, assume all properties are valid.
       for ( var prop in opt ) {
          if ( prop !== 'subrules' ) {
-            if ( prop in that ) {
-               log.warn( `Cannot set "${ prop }" of ${ that.cid }.` );
+            if ( prop in me ) {
+               log.warn( `Cannot set "${ prop }" of ${ me.cid }.` );
             } else {
-               that[ prop ] = opt[ prop ];
+               me[ prop ] = opt[ prop ];
                delete opt[ prop ];
             }
          }
       }
-      return that;
+      return me;
    },
    'getName' ( ) {
       return _.l( `dd5.entity.${this.type}.${this.id}`, this.id );
@@ -182,24 +182,24 @@ rule.Entity = {
 rule.Character = {
    '__proto__' : Resource,
    'create' ( opt ) {
-      var that = _.newIfSame( this, rule.Character );
-      Resource.create.call( that, 'character', opt );
-      return that;
+      var me = _.newIfSame( this, rule.Character );
+      Resource.create.call( me, 'character', opt );
+      return me;
    },
    'build' ( ) {
-      var that = Resource.build.call( this );
-      that.remap_queries();
-      that.addObserver( 'structure', ( mon ) => {
-         if ( that.getCharacter() !== that ) return; // Run only if this is the root character
+      var me = Resource.build.call( this );
+      me.remap_queries();
+      me.addObserver( 'structure', ( mon ) => {
+         if ( me.getCharacter() !== me ) return; // Run only if this is the root character
          for ( var m of mon ) {
             if ( m.oldValue !== null ) { // Element is deteched.  Unhook them from query map.
                m.oldValue.recur( null, ( val ) => {
                   if ( ! val.query_hook ) return;
                   for ( var h of val.query_hook() ) if ( h ) {
-                     var lst = that._queries[ h ];
+                     var lst = me._queries[ h ];
                      if ( ! lst || lst.indexOf( val ) < 0 ) log.warn( "Inconsistent query map: Cannot unhook " + val + " from " + h );
                      else lst.splice( lst.indexOf( val ), 1 );
-                     that.fireAttributeChanged( h );
+                     me.fireAttributeChanged( h );
                   }
                } );
             }
@@ -207,26 +207,26 @@ rule.Character = {
                m.newValue.recur( null, ( val ) => {
                   if ( ! val.query_hook ) return;
                   for ( var h of val.query_hook() ) if ( h ) {
-                     var lst = that._queries[ h ] || ( that._queries[ h ] = [] );
+                     var lst = me._queries[ h ] || ( me._queries[ h ] = [] );
                      lst.push( val );
-                     that.fireAttributeChanged( h );
+                     me.fireAttributeChanged( h );
                   }
                } );
             }
          }
       } );
-      that.addObserver( 'attribute', ( mon ) => {
+      me.addObserver( 'attribute', ( mon ) => {
          var last = '';
          for ( var m of mon ) {
-            if ( m.target === that && m.name === 'parent' ) {
+            if ( m.target === me && m.name === 'parent' ) {
                if ( m.oldValue ) last = 'Detach';
                if ( m.newValue ) last = 'Attach';
             }
          }
-         if      ( last === 'Detach' ) that.remap_queries();    // This character is deteched; remap queries.
-         else if ( last === 'Attach' ) that._queries = _.map(); // This character is attached; reset query map.
+         if      ( last === 'Detach' ) me.remap_queries();    // This character is deteched; remap queries.
+         else if ( last === 'Attach' ) me._queries = _.map(); // This character is attached; reset query map.
       } );
-      return that;
+      return me;
    },
    '_queries' : _.map(),
    'remap_queries' ( ) {
@@ -263,18 +263,18 @@ rule.Character = {
 rule.Feature = {
    '__proto__' : Resource,
    'create' ( opt ) {
-      var that = _.newIfSame( this, rule.Feature );
-      Resource.create.call( that, 'feature', opt );
-      return that;
+      var me = _.newIfSame( this, rule.Feature );
+      Resource.create.call( me, 'feature', opt );
+      return me;
    },
 };
 
 rule.Race = {
    '__proto__' : Resource,
    'create' ( opt ) {
-      var that = _.newIfSame( this, rule.Race );
-      Resource.create.call( that, 'race', opt );
-      return that;
+      var me = _.newIfSame( this, rule.Race );
+      Resource.create.call( me, 'race', opt );
+      return me;
    },
 };
 

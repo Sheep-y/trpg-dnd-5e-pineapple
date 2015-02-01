@@ -12,14 +12,14 @@ var subrule = rule.subrule = _.map();
 var base = subrule.Subrule = {
    '__proto__' : rule.Rule,
    'create' ( opt ) {
-      var that = _.newIfSame( this, base );
+      var me = _.newIfSame( this, base );
       rule.Rule.create.call( this, opt );
-      return that;
+      return me;
    },
    'query_hook' ( ) { return []; },
 };
 
-function setProficienty( that, query, prof_type, prof ) {
+function setProficiency ( rule, query, prof_type, prof ) {
    if ( ! prof || ( Array.isArray( prof ) && ! prof.length ) ) return;
    if ( query.query.startsWith( prof_type ) ) {
       var prof_ary = _.ary( prof );
@@ -28,25 +28,25 @@ function setProficienty( that, query, prof_type, prof ) {
       } else {
          var prof_id = prof_ary.map( v => v.id );
          if ( ! query.value && prof_id.indexOf( query.substr( prof_type.length + 1 ) ) >= 0 ) {
-            query.value = that;
+            query.value = rule;
          }
       }
       return query;
    }
-   if ( query.query === that.id || query.query === that.getPath() ) {
+   if ( query.query === rule.id || query.query === rule.getPath() ) {
       return query.add_result( prof );
    }
-   return base.query.call( that, query );
+   return base.query.call( rule, query );
 }
 
 subrule.Include = {
    '__proto__' : base,
    'create' ( opt ) {
-      var that = _.newIfSame( this, subrule.Include );
-      base.create.call( that, opt );
-      _.assert( that.include, '[dd5.rule.Include] Include must have include property.' );
+      var me = _.newIfSame( this, subrule.Include );
+      base.create.call( me, opt );
+      _.assert( me.include, '[dd5.rule.Include] Include must have include property.' );
       _.assert( ! opt.subrules, '[dd5.rule.Include] Include cannot have child subrules.' );
-      return that;
+      return me;
    },
    'cid' : 'subrule.include',
    'include' : null, // A function returning a resource or an array of resource
@@ -66,10 +66,10 @@ subrule.Include = {
 subrule.Adj = {
    '__proto__' : base,
    'create' ( opt ) {
-      var that = _.newIfSame( this, subrule.Adj );
-      base.create.call( that, opt );
-      _.assert( that.property && that.value, '[dd5.rule.Adj] Adj must have property and value.' );
-      return that;
+      var me = _.newIfSame( this, subrule.Adj );
+      base.create.call( me, opt );
+      _.assert( me.property && me.value, '[dd5.rule.Adj] Adj must have property and value.' );
+      return me;
    },
    'cid' : 'subrule.adjust',
    'compile_list' : [ 'property', 'value', 'min', 'max' ],
@@ -92,10 +92,10 @@ subrule.Adj = {
 subrule.Prof = {
    '__proto__' : base,
    'create' ( opt ) {
-      var that = _.newIfSame( this, subrule.Prof );
-      base.create.call( that, opt );
-      _.assert( that.prof_type, that.value, '[dd5.rule.Prof] Prof must have prof_type and value.' );
-      return that;
+      var me = _.newIfSame( this, subrule.Prof );
+      base.create.call( me, opt );
+      _.assert( me.prof_type, me.value, '[dd5.rule.Prof] Prof must have prof_type and value.' );
+      return me;
    },
    'cid' : 'subrule.prof',
 
@@ -114,7 +114,7 @@ subrule.Prof = {
 
    'getValue' ( ) { return this.value(); },
    'query' ( query ) {
-      return setProficienty( this, query, this.prof_type, this.getValue() );
+      return setProficiency( this, query, this.prof_type, this.getValue() );
    },
    'query_hook' ( ) { return [ this.prof_type ]; },
 };
@@ -122,11 +122,11 @@ subrule.Prof = {
 subrule.Slot = {
    '__proto__' : base,
    'create' ( opt ) {
-      var that = _.newIfSame( this, subrule.Slot );
-      base.create.call( that, opt );
+      var me = _.newIfSame( this, subrule.Slot );
+      base.create.call( me, opt );
       // Please also update subrule.Number, since subrule.Number is bypassing this constructor because of the assertion
-      _.assert( opt.id && that.options, '[dd5.rule.Slot] Slot must have id and options set.' );
-      return that;
+      _.assert( opt.id && me.options, '[dd5.rule.Slot] Slot must have id and options set.' );
+      return me;
    },
    'cid': 'subrule.slot',
    'options' : null, // Option list.
@@ -176,11 +176,11 @@ subrule.Slot = {
 subrule.NumSlot = {
    '__proto__' : subrule.Slot,
    'create' ( opt ) {
-      var that = _.newIfSame( this, subrule.NumSlot );
+      var me = _.newIfSame( this, subrule.NumSlot );
       // Bypassing Slot's constructor assertion, because option may not be available
-      Object.getPrototypeOf( subrule.Slot ).create.call( that, opt );
-      _.assert( that.id && ( that.min_val || that.max_val ), '[dd5.rule.NumSlot] NumSlot must have id and min or max.' );
-      return that;
+      Object.getPrototypeOf( subrule.Slot ).create.call( me, opt );
+      _.assert( me.id && ( me.min_val || me.max_val ), '[dd5.rule.NumSlot] NumSlot must have id and min or max.' );
+      return me;
    },
    'cid': 'subrule.numslot',
    'min_val'  : null,
@@ -219,10 +219,10 @@ subrule.NumSlot = {
 subrule.ProfSlot = {
    '__proto__' : subrule.Slot,
    'create' ( opt ) {
-      var that = _.newIfSame( this, subrule.NumSlot );
-      subrule.Slot.create.call( that, opt );
-      _.assert( that.prof_type, '[dd5.rule.ProfSlot] ProfSlot must have prof_type.' );
-      return that;
+      var me = _.newIfSame( this, subrule.NumSlot );
+      subrule.Slot.create.call( me, opt );
+      _.assert( me.prof_type, '[dd5.rule.ProfSlot] ProfSlot must have prof_type.' );
+      return me;
    },
    'cid': 'subrule.profslot',
    'copy_list' : subrule.Slot.copy_list.concat( [ 'prof_type' ] ),
@@ -238,7 +238,7 @@ subrule.ProfSlot = {
       return options;
    },
    'query' ( query ) {
-      return setProficienty( this, query, this.prof_type, this.getPick( query ) );
+      return setProficiency( this, query, this.prof_type, this.getPick( query ) );
    },
    'query_hook' ( ) { return [ this.id, this.prof_type ]; },
 };

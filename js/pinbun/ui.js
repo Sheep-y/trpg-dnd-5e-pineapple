@@ -34,7 +34,7 @@ var ui = ns.ui = {
 
    saveFocus ( ) {
       savedFocus = document.activeElement ? document.activeElement.id : null;
-      [ savedScrollX, savedScrollY ] = [ window.pageXOffset, window.pageYOffset ];
+      [ savedScrollX, savedScrollY ] = [ window.scrollX, window.scrollY ];
    },
 
    loadFocus ( ) {

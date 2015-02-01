@@ -22,15 +22,15 @@ var Symbol;
  */
 _.Index = {
    "create" : function ( indices ) {
-      var that = _.newIfSame( this, _.EventManager );
+      var me = _.newIfSame( this, _.EventManager );
       if ( indices === undefined || ! ( Array.isArray( indices ) ) || indices.length <= 0 )
          throw "[Sparrow] Index(): Invalid parameter, must be array of fields to index.";
-      that.all = [];
-      that.map = {};
+      me.all = [];
+      me.map = {};
       for ( var i = 0, l = indices.length ; i < l ; i++ ) {
-         that.map[ indices[ i ] ] = {};
+         me.map[ indices[ i ] ] = {};
       }
-      return that;
+      return me;
    },
    "all" : [],
    "map" : {},
@@ -148,9 +148,9 @@ _.Index = {
  */
 _.Composite = {
    'create' : function ( ) {
-      var that = _.newIfSame( this, _.Composite );
-      that._parent = that._children = that._observers = null;
-      return that;
+      var me = _.newIfSame( this, _.Composite );
+      me._parent = me._children = me._observers = null;
+      return me;
    },
 
    '_parent' : null,

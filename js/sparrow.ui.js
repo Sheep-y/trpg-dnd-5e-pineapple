@@ -22,23 +22,23 @@ function _ui_addStyle ( id, style ) {
    _ui_addStyle[ id ] = true;
 }
 
-function _ui_defaults ( that, opt ) {
-   return _.extend( opt || {}, that.prototype.default_options );
+function _ui_defaults ( component, opt ) {
+   return _.extend( opt || {}, component.prototype.default_options );
 }
 
 /** The base UI component class */
 ui.Component = {
    'create' : function ( opt ) {
-      var that = _.newIfSame( this, ui.Component );
-      _ui_addStyle( that.style_id, that.prototype.style );
-      var dom = that.prototype.create_dom( opt );
+      var me = _.newIfSame( this, ui.Component );
+      _ui_addStyle( me.style_id, me.prototype.style );
+      var dom = me.prototype.create_dom( opt );
       if ( dom ) {
          this[ symbol.Dom ] = dom;
          if ( opt.id ) dom.id = id;
          if ( opt.parent ) opt.parent.appendChild( dom );
       }
-      if ( opt.visible === false ) that.hide();
-      return that;
+      if ( opt.visible === false ) me.hide();
+      return me;
    },
    prototype : {
       'create_dom' : _.dummy,
@@ -62,10 +62,10 @@ ui.Component = {
 ui.Mask = {
    '__proto__' : ui.Component,
    'create' : function ( opt ) {
-      var that = _.newIfSame( this, ui.Mask );
-      ui.Component.create.call( that, opt = _ui_defaults( ui.Mask, opt ) );
-      if ( opt.title ) that.header.textContent = opt.title;
-      return that;
+      var me = _.newIfSame( this, ui.Mask );
+      ui.Component.create.call( me, opt = _ui_defaults( ui.Mask, opt ) );
+      if ( opt.title ) me.header.textContent = opt.title;
+      return me;
    },
    prototype : {
       'create_dom' ( ) { return _.html( '<div class="ui mask"></div>' ); },
@@ -81,10 +81,10 @@ ui.Mask = {
 ui.Dialog = {
    '__proto__' : ui.Component,
    'create' : function ( opt ) {
-      var that = _.newIfSame( this, ui.Dialog );
-      ui.Component.create.call( that, opt = _ui_defaults( ui.Dialog, opt ) );
-      if ( opt.title ) that.header.textContent = opt.title;
-      return that;
+      var me = _.newIfSame( this, ui.Dialog );
+      ui.Component.create.call( me, opt = _ui_defaults( ui.Dialog, opt ) );
+      if ( opt.title ) me.header.textContent = opt.title;
+      return me;
    },
    get title ( ) { return this.header.textContent; },
    set title ( title ) { this.header.textContent = title; },
