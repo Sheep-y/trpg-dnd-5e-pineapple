@@ -8,6 +8,8 @@ _.l.set( 'zh-Hant', null, {
 
 _.l.set( 'zh-Hant', 'pinbun', {
    'title'     : '菠蘿包',
+   'lnk_ellesime' : '純美蘋果園',
    'lnk_home'  : '首頁',
+   'lnk_commit': '進展',
    'lnk_issue' : '報錯',
 } );
