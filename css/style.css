@@ -4,24 +4,78 @@
 .clear_float:after { content: " "; display: table; clear: both; }
 .negative_order { order: -10; }
 
-html { font-family: Arial; }
-html, body { margin: 0; width: 100%; background: black; color: white; }
-div { padding: 0; margin: 0; }
-a, a:visited { color: #F88; text-decoration: none; }
-a:hover { color: #F44; text-decoration: underline; }
-
-input[type="number"] {
-   max-width: 50px;
+html
+{
+   font-family: Arial; 
+   text-rendering: optimizeLegibility;
+   background: var( --main-bkgd );
+   color: var( --main-text );
+}
+html, body
+{
+   margin: 0;
+   width: 100%;
+}
+div
+{
+   padding: 0;
+   margin: 0;
+}
+a, a:visited
+{
+   color: var( --cmpl-t2 );
+   text-decoration: none;
+}
+a:hover
+{
+   color: var( --cmpl-t1 );
+   text-decoration: underline;
 }
 
-label > span:first-child {
+/* Input fields */
+label > span:first-child
+{
    display: inline-block;
    min-width: 100px;
 }
-select {
+input, select, textarea
+{
+   background-color: transparent;
+   color: var( --main-text );
+   border: 1px solid var( --main );
+   border-radius: 4px;
+   transition: background-color 1s;
+}
+@-moz-keyframes hover_border_cycle { from { border-color: var( --main ); } to { border-color: var( --main-t2 ); }  }
+input:hover, select:hover, textarea:hover
+   {
+      background-color: var( --main-b2 );
+      -moz-animation: hover_border_cycle 2s linear 0s infinite alternate;
+   }
+@-moz-keyframes focus_border_cycle { from { border-color: var( --cmpl ); } to { border-color: var( --cmpl-t2 ); }  }
+input:focus, select:focus, textarea:focus
+   {
+      background-color: var( --cmpl-b2 );
+      color: var( --cmpl-t2 );
+      -moz-animation: focus_border_cycle 2s linear 0s infinite alternate;
+   }
+input[type="number"]
+{
+   max-width: 50px;
+}
+select
+{
    min-width: 100px;
 }
+/********* Non-standard override of select style *************/
+select
+{
+   -webkit-appearance: none;
+   -moz-appearance: none;
+}
+/**************** End non-standard override ******************/
 
+/* Top navigation */
 nav#top 
 {
    display: flex;

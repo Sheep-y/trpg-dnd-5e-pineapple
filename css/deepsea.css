@@ -1,0 +1,18 @@
+/** Dark theme, cyan with complement over black. */
+
+html {
+   --main-bkgd : #000;
+   --main-text : var( --main-t2 );
+
+   --main-t2 : #A9E3EB;
+   --main-t1 : #40AEBE;
+   --main    : #0395AA;
+   --main-b1 : #025F6C;
+   --main-b2 : #001E22;
+
+   --cmpl-t2 : #FFD9B6;
+   --cmpl-t1 : #FFA552;
+   --cmpl    : #FF7A00;
+   --cmpl-b1 : #B05400;
+   --cmpl-b2 : #381B00;
+}
