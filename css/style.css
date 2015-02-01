@@ -6,15 +6,16 @@
 
 html
 {
-   font-family: Arial; 
+   font-family: Arial;
    text-rendering: optimizeLegibility;
-   background: var( --main-bkgd );
+   background: url("../img/letter-d.svg") center / contain no-repeat, var( --main-bkgd );
    color: var( --main-text );
 }
 html, body
 {
    margin: 0;
-   width: 100%;
+   min-width: 100%;
+   min-height: 100%;
 }
 div
 {
