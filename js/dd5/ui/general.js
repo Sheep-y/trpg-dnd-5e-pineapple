@@ -6,10 +6,10 @@ var ui = ns.ui;
 
 var slotEditor = {
    'edit' ( e, container ) {
-      var uid = container.id;
-      var html = `<div><label class="dd5 slot"><span>${ e.getLabel() }</span>`;
+      var uid = container.id, uid = container.id, id = `${uid}/edit/${_.escHtml(e.getPath())}`;
+      var html = `<div><label class='dd5 slot'><span>${ e.getLabel() }</span>`;
       var nullPick = { 'cid': '', 'toString': ()=>'', 'getName': ()=>'' }, pick = _.coalesce( e.getPick(), nullPick );
-      html = _.html( html + `<select><option value="${ pick.cid }">${ pick.getName() }</option></select></label></div>` );
+      html = _.html( html + `<select id='${id}'><option value='${ pick.cid }'>${ pick.getName() }</option></select></label></div>` );
 
       var input = _( html, 'select' )[ 0 ];
       // Update slot on change
@@ -20,18 +20,18 @@ var slotEditor = {
       // Add options on focus
       input.addEventListener( 'focus', function dd5_ui_edit_slot_focus( ) { // Expand options
          var pick = _.coalesce( e.getPick(), nullPick ), opt = [ nullPick ].concat( e.getOptions() );
-         _.clear( input );
+         var selected = input.firstChild;
          opt.forEach( function dd5_ui_edit_slot_focus_each ( e, i ) {
             var o = _.create( 'option', { value: e.cid, 'text': e.getName() } );
-            if ( e.cid === pick.cid ) o.selected = true;
-            input.appendChild( o );
+            if ( e.cid !== pick.cid ) input.insertBefore( o, selected );
+            else selected = null;
          } );
       } );
       // Delete options on blur
       input.addEventListener( 'blur' , function dd5_ui_edit_slot_blur ( ) {
-         for ( var c of input.childNodes ) {
+         for ( var c of _.ary( input.childNodes ) ) {
             if ( ! c.selected ) input.removeChild( c );
-         };
+         }
       } );
 
       for ( var c of e.children ) {
@@ -47,9 +47,9 @@ ui.registerFactory( 'subrule.profslot', slotEditor );
 
 ui.registerFactory( 'subrule.numslot', {
    'edit' ( e, container ) {
-      var uid = container.id;
-      var html = `<div><label class="dd5 slot"><span>${ e.getLabel() }</span>`;
-      html = _.html( html + `<input type="number" min="${ e.getMinVal() }" max="${ e.getMaxVal() }" value="${ e.getPick() }" data-attr="${ e.id }" /></label></div>` );
+      var uid = container.id, uid = container.id, id = `${uid}/edit/${_.escHtml(e.getPath())}`;
+      var html = `<div><label class='dd5 slot'><span>${ e.getLabel() }</span>`;
+      html = _.html( html + `<input id='${id}' type='number' min='${ e.getMinVal() }' max='${ e.getMaxVal() }' value='${ e.getPick() }' data-attr='${ e.id }' /></label></div>` );
 
       // Update slot on change
       _( html, 'input' )[ 0 ].addEventListener( 'change', function dd5_ui_edit_numslot_onchange ( ) { rule.setPick( +e.value ); } );
@@ -67,7 +67,7 @@ ui.registerFactory( 'subrule.prof', {
    'edit' ( e, container ) {
       var val = '';
       e.value().forEach( (v) => val += `<span>${ v.getName() }</span>` );
-      return _.html( `<div><label class="dd5 prof"><span> ${ e.getLabel() }</span> ${val} </label></div>` )
+      return _.html( `<div><label class='dd5 prof'><span> ${ e.getLabel() }</span> ${val} </label></div>` )
    }
 } );
 

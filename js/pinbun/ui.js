@@ -2,8 +2,9 @@ var pinbun; // Globals
 if ( ! pinbun ) throw new Error( '[dd5] Pineapplebun core must be loaded first.' );
 else if ( ! pinbun.ui ) ( function pinbun_ui_init ( ns ) { 'use strict';
 
-var panels = [], savedFocus, next_unique_id = 0;
+var panels = [], next_unique_id = 0;
 var dlg_main = _.ui.Dialog.create( { title: 'Message', visible: false } ); // Main dialog
+var savedFocus, savedScrollX, savedScrollY;
 
 var ui = ns.ui = {
    '__proto__' : null,
@@ -33,13 +34,17 @@ var ui = ns.ui = {
 
    saveFocus ( ) {
       savedFocus = document.activeElement ? document.activeElement.id : null;
+      [ savedScrollX, savedScrollY ] = [ window.pageXOffset, window.pageYOffset ];
    },
 
    loadFocus ( ) {
       if ( ! savedFocus ) return;
       if ( document.activeElement && document.activeElement.id === savedFocus ) return;
-      var e = _( '#' + savedFocus );
-      if ( e.length ) e[0].focus();
+      var e = document.getElementById( savedFocus );
+      if ( e ) {
+         e.focus();
+         window.moveTo( savedScrollX, savedScrollY );
+      }
    },
 
    newId ( ) {

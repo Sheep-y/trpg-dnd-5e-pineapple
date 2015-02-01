@@ -1495,7 +1495,7 @@ _.EventManager = {
                delete evt_buf[ event ];
             } );
          } );
-         lst = buf = args = undefined;
+         lst = buf = args = event = param = undefined;
       }
    },
    /** Create methods to fire event for given event list or method:event mapping */
