@@ -1,6 +1,10 @@
 var _; // Globals
 if ( ! _ ) throw new Error( '[dd5.l10n.zh-hant] Sparrow library must be loaded first.' );
 
+_.l.set( 'zh-Hant', 'dd5.system', {
+   'you_have_this_proficiency' : '你已經熟練 %1。'
+} );
+
 _.l.set( 'zh-Hant', 'dd5.feature.pc_ability', {
    'caption'  : '能力值',
    'final'    : '最終',

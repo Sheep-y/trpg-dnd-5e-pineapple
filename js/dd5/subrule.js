@@ -146,24 +146,26 @@ subrule.Slot = {
 
    'pick' : null, // Selected option.
    'getOptions' ( context ) {
-      return this.queryChar( 'slotOptions', this, this.options(), context );
+      return this.queryChar( 'slotOptions', this, this.options(), context )
+                 .map( e => sys.Option.create( e ) );
    },
    'getPick' ( ) { return this.pick; },
    'setPick' ( pick ) {
+      /* validPick need rework to work with sys.Option
       if ( ! this.validPick( pick ) ) {
          return log.warn( `[dd5.rule.Slot] Invalid picked option for slot ${ this.id }: ${ pick }` );
          if ( this.getPick() === null ) return;
          pick = null;
       }
+      */
+      if ( pick === this.getPick() ) return;
       if ( pick && pick.build ) pick = pick.build();
       this.fireAttributeChanged( this.id, pick, this.pick );
       if ( this.pick && _.is.object( this.pick ) ) this.remove( this.pick );
       this.pick = pick;
       if ( pick  && _.is.object( pick ) ) this.add( pick );
    },
-   'validPick' ( pick ) {
-      return pick == null || this.getOptions().indexOf( pick ) >= 0;
-   },
+   //'validPick' ( pick ) { return pick == null || this.getOptions().indexOf( pick ) >= 0; },
    'query' ( query ) {
       if ( query.query === this.id || query.query === this.getPath() ) {
          return query.add_result( this.getPick() );
@@ -231,11 +233,16 @@ subrule.ProfSlot = {
       var pick = this.getPick( context );
       var existing = this.queryChar( this.prof_type, this, undefined, context );
       var options = this.queryChar( 'slotOptions', this, this.options( context ), context );
-      if ( existing && options ) {
-         existing = existing.filter( e => e !== pick );
-         if ( existing.length ) options = options.filter( e => existing.indexOf( e ) < 0 );
-      }
-      return options;
+      if ( ! options ) return options;
+      if ( ! existing ) existing = [];
+      return options.map( e => {
+         var opt = sys.Option.create( e )
+         if ( e !== pick && existing.indexOf( e ) >= 0 ) {
+            opt.valid = false;
+            opt.note = _.l( 'dd5.system.you_have_this_proficiency', null, e.getName() );
+         }
+         return opt;
+      });
    },
    'query' ( query ) {
       return setProficiency( this, query, this.prof_type, this.getPick( query ) );

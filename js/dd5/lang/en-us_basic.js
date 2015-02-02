@@ -1,6 +1,10 @@
 var _; // Globals
 if ( ! _ ) throw new Error( '[dd5.l10n.en-us] Sparrow library must be loaded first.' );
 
+_.l.set( 'en-US', 'dd5.system', {
+   'you_have_this_proficiency' : 'You are already proficient in %1.'
+} );
+
 _.l.set( 'en-US', 'dd5.feature.pc_ability', {
    'caption'  : 'Abilities',
    'final'    : 'Fin.',

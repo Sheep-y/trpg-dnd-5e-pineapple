@@ -35,12 +35,12 @@ sys.Bonus = {
    'toString' () {
       var str = sys.formatBonus( this.value );// + ' ' + ( this.source || '' );
       return str + this.inactive ? '[Inactive]' : '';
-   }
+   },
 };
 
 sys.formatBonus = function dd5_formatBonus ( val ) {
    return ( val < 0 ? '' : '+' ) + val;
-}
+};
 
 /**
  * A value composed of bonus. Call value() to resolve and get value.
@@ -154,6 +154,24 @@ sys.Query = {
       } );
    },
 };
+
+/**
+ * An option may be compatible with a slot, but is otherwise invalid because of additional rules.
+ */
+sys.Option = {
+   'create' ( value ) {
+      var me = _.newIfSame( this, sys.Option );
+      me.value = value;
+      return me;
+   },
+   'valid' : true, // Is this a valid option, rule-wise?
+   'group' : null, // Option group
+   'note' : '',    // Any additional notes, such as suggested reason or invalid reason
+   'toString' () {
+      return value.toString();
+   },
+};
+
 
 /**
  * A composite object. It has logic critical to the dd5 system.
