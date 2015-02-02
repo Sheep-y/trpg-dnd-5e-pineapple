@@ -47,18 +47,18 @@ input, select, textarea
    border-radius: 4px;
    transition: background-color 1s;
 }
-@-moz-keyframes hover_border_cycle { from { border-color: var( --main ); } to { border-color: var( --main-t2 ); }  }
+@keyframes hover_border_cycle { from { border-color: var( --main ); } to { border-color: var( --main-t2 ); }  }
 input:hover, select:hover, textarea:hover
    {
       background-color: var( --main-b2 );
-      -moz-animation: hover_border_cycle 2s linear 0s infinite alternate;
+      animation: hover_border_cycle 2s linear 0s infinite alternate;
    }
-@-moz-keyframes focus_border_cycle { from { border-color: var( --cmpl ); } to { border-color: var( --cmpl-t2 ); }  }
+@keyframes focus_border_cycle { from { border-color: var( --cmpl ); } to { border-color: var( --cmpl-t2 ); }  }
 input:focus, select:focus, textarea:focus
    {
       background-color: var( --cmpl-b2 );
       color: var( --cmpl-t2 );
-      -moz-animation: focus_border_cycle 2s linear 0s infinite alternate;
+      animation: focus_border_cycle 2s linear 0s infinite alternate;
    }
 input[type="number"]
 {
@@ -68,20 +68,19 @@ select
 {
    min-width: 100px;
 }
-/********* Non-standard override of select style *************/
 select
 {
+   /** Non-standard override of select style **/
    -webkit-appearance: none;
    -moz-appearance: none;
 }
-/**************** End non-standard override ******************/
 
 /* Top navigation */
 nav#top 
 {
    display: flex;
    justify-content: space-between;
-   border-bottom: 2px solid #888;
+   border-bottom: 2px solid var( --main );
 }
 nav#top a
    {
