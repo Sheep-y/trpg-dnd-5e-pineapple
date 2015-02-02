@@ -19,10 +19,7 @@ var slotEditor = {
          var pick = _.coalesce( e.getPick(), nullPick.value );
          if ( input.value === pick.cid ) return;
          if ( input.value === '' ) e.setPick( null );
-         else {
-            pick = e.getOptions().find( o => o.value.cid === input.value );
-            e.setPick( pick ? pick.value : null );
-         }
+         else e.setPick( e.getCompatibleOptions().find( e => e.cid === input.value ) || null );
       } );
       // Add options on focus
       input.addEventListener( 'focus', function dd5_ui_edit_slot_focus( ) { // Expand options
