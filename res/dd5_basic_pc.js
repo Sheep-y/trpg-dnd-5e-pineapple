@@ -1,12 +1,12 @@
 dd5.loader.jsonp.load_rules( { 'version':'alpha',
 'source' : 'basic_pc',
 'entity': [
-   { 'type':'attribute', 'id':'str', 'physical':1 },
-   { 'type':'attribute', 'id':'dex', 'physical':1 },
-   { 'type':'attribute', 'id':'con', 'physical':1 },
-   { 'type':'attribute', 'id':'int', 'mental':1   },
-   { 'type':'attribute', 'id':'wis', 'mental':1   },
-   { 'type':'attribute', 'id':'cha', 'mental':1   },
+   { 'type':'ability', 'id':'str', 'physical':1 },
+   { 'type':'ability', 'id':'dex', 'physical':1 },
+   { 'type':'ability', 'id':'con', 'physical':1 },
+   { 'type':'ability', 'id':'int', 'mental':1   },
+   { 'type':'ability', 'id':'wis', 'mental':1   },
+   { 'type':'ability', 'id':'cha', 'mental':1   },
 
    { 'type':'proficiency', 'id':'language' },
    { 'type':'proficiency', 'id':'skill'    },

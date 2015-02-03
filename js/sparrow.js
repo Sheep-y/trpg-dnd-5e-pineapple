@@ -58,6 +58,7 @@ if ( ns ) ns._ = _;
  */
 _.ary = function _ary ( subject, startpos, length ) {
    if ( ! Array.isArray( subject ) ) {
+      if ( subject === null || subject === undefined ) return subject;
       if ( typeof( subject ) === 'string' || typeof( subject.next ) === 'function' || subject.length === undefined ) return [ subject ];
       if ( subject.length <= 0 ) return [];
       subject =  Array.from ? Array.from( subject ) : Array.prototype.concat.call( subject );

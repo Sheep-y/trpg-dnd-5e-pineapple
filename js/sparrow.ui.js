@@ -30,7 +30,7 @@ function _ui_defaults ( component, opt ) {
 ui.Component = {
    'create' : function ( opt ) {
       var me = _.newIfSame( this, ui.Component );
-      _ui_addStyle( me.style_id, me.prototype.style );
+      _ui_addStyle( me.prototype.id, me.prototype.style );
       var dom = me.prototype.create_dom( opt );
       if ( dom ) {
          this[ symbol.Dom ] = dom;
