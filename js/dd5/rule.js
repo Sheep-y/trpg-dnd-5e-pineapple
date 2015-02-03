@@ -267,6 +267,7 @@ rule.Feature = {
       Resource.create.call( me, 'feature', opt );
       return me;
    },
+   'copy_list' : [ 'type', 'of' ]
 };
 
 rule.Race = {

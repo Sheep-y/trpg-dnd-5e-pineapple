@@ -5,14 +5,6 @@ _.l.set( 'en-US', 'dd5.system', {
    'you_have_this_proficiency' : 'You are already proficient in %1.'
 } );
 
-_.l.set( 'en-US', 'dd5.feature.pc_ability', {
-   'caption'  : 'Abilities',
-   'final'    : 'Fin.',
-   'modifier' : 'Mod.',
-   'check'    : 'Chk.',
-   'save'     : 'Save',
-} );
-
 _.l.set( 'en-US', 'dd5.attribute', {
    'str' : 'STR',
    'dex' : 'DEX',
@@ -26,7 +18,9 @@ _.l.set( 'en-US', 'dd5.attribute', {
    'language' : 'Language',
    'prof$language' : 'Known Language',
    'bonus_language' : 'Bonus Language',
+   'bonus_ability' : 'Bonus Ability',
    'subrace' : 'Subrace',
+   'feat' : 'Feat',
 } );
 
 _.l.set( 'en-US', 'dd5.entity', {
@@ -109,4 +103,15 @@ _.l.set( 'en-US', 'dd5.race', {
    'elf'     : 'Elf',
    'halfing' : 'Halfing',
    'human'   : 'Human',
+} );
+
+_.l.set( 'en-US', 'dd5.feature.human-basic', 'Basic' );
+_.l.set( 'en-US', 'dd5.feature.human-phb'  , 'PHB' );
+
+_.l.set( 'en-US', 'dd5.feature.pc_ability', {
+   'caption'  : 'Abilities',
+   'final'    : 'Fin.',
+   'modifier' : 'Mod.',
+   'check'    : 'Chk.',
+   'save'     : 'Save',
 } );

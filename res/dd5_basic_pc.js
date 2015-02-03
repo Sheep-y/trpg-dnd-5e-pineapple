@@ -120,17 +120,17 @@ dd5.loader.jsonp.load_rules( { 'version':'alpha',
       ' adj.size : 3 ',
       ' prof.language : common ',
       ' profSlot.language.bonus_language : db.entity({ type: "language", rarity: "standard" }) ',
-      ' slot.subrace : db.feature({ type: "subrace", race: "human" }) '
+      ' slot.subrace : db.feature({ type: "subrace", of: "human" }) '
    ] },
 ],
 'feature' : [
-   { 'id': 'human-basic', 'type': 'subrace', 'race': 'human', 'subrules': [
-      { 'subrule': 'adj', 'property' : 'db.entity({ type:"ability" })', 'value': 1 },
+   { 'id': 'human-basic', 'type': 'subrace', 'of': 'human', 'subrules': [
+      { 'subrule': 'adj', 'property' : 'db.entity({ type: "ability" })', 'value': 1 },
    ] },
-   { 'id': 'human-phb', 'type': 'subrace', 'race': 'human', 'subrules': [
-      { 'slot' : 'bonus_ability', 'options' : 'db.entity({"type:ability"})', 'count': 2 },
-      { 'subrule': 'adj', 'property' : 'feature.bonus_ability[0]', 'value': 1 },
-      { 'subrule': 'adj', 'property' : 'feature.bonus_ability[1]', 'value': 1 },
+   { 'id': 'human-phb', 'type': 'subrace', 'of': 'human', 'subrules': [
+      { 'slot' : 'bonus_ability', 'options' : 'db.entity({ type: "ability" })', 'count': 2 },
+      /*{ 'subrule': 'adj', 'property' : 'you[bonus_ability][0]', 'value': 1 },
+      { 'subrule': 'adj', 'property' : 'you[bonus_ability][1]', 'value': 1 },*/
       'slot.feat : db.feat() ',
    ] },
 ]

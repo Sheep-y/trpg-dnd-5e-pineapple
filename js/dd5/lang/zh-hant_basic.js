@@ -5,14 +5,6 @@ _.l.set( 'zh-Hant', 'dd5.system', {
    'you_have_this_proficiency' : '你已經熟練 %1。'
 } );
 
-_.l.set( 'zh-Hant', 'dd5.feature.pc_ability', {
-   'caption'  : '能力值',
-   'final'    : '最終',
-   'modifier' : '調整',
-   'check'    : '檢定',
-   'save'     : '豁免',
-} );
-
 _.l.set( 'zh-Hant', 'dd5.attribute', {
    'str' : '力',
    'dex' : '敏',
@@ -26,7 +18,9 @@ _.l.set( 'zh-Hant', 'dd5.attribute', {
    'language' : '語言',
    'prof$language' : '通曉語言',
    'bonus_language' : '額外語言',
+   'bonus_ability' : '能力值加值',
    'subrace' : '亞種',
+   'feat' : '專長',
 } );
 
 _.l.set( 'zh-Hant', 'dd5.entity', {
@@ -109,4 +103,15 @@ _.l.set( 'zh-Hant', 'dd5.race', {
    'elf'     : '精靈',
    'halfing' : '半身人',
    'human'   : '人類',
+} );
+
+_.l.set( 'zh-Hant', 'dd5.feature.human-basic', '基礎版' );
+_.l.set( 'zh-Hant', 'dd5.feature.human-phb'  , '玩家手冊變體' );
+
+_.l.set( 'zh-Hant', 'dd5.feature.pc_ability', {
+   'caption'  : '能力值',
+   'final'    : '最終',
+   'modifier' : '調整',
+   'check'    : '檢定',
+   'save'     : '豁免',
 } );
