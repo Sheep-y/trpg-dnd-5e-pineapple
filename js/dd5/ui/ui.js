@@ -68,6 +68,14 @@ var ui = ns.ui = {
       destructor.observe( body, { childList: true, subtree: true } );
       return html;
    },
+
+   _getId( component, container ) {
+      var path = component.getPath();
+      return {
+         path,
+         id : `${container.id}/edit/${_.escHtml(path)}`,
+      };
+   },
 };
 
 pinbun.event.load( 'dd5.ui' );

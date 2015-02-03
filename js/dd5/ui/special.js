@@ -10,7 +10,7 @@ var subrule = rule.subrule;
 
 ui.registerFactory( 'feature.pc_ability', {
    'edit' ( rule, container ) {
-      var list = [], uid = container.id;
+      var list = [];
       var l10n = 'dd5.feature.pc_ability.';
 
       // Ability table captions
@@ -20,7 +20,7 @@ ui.registerFactory( 'feature.pc_ability', {
       // Abilities - there may be more then six! (ex: certain v3.0 expansion)
       rule.children.forEach( e => {
          if ( ! subrule.Slot.isPrototypeOf( e ) ) return;
-         var path = e.getPath(), attr = e.id, id = `${uid}/edit/${_.escHtml(path)}`;
+         var attr = e.id, { path, id } = ui._getId( e, container );
          html += `<tr><th><label for="${id}">${ _.l( 'dd5.attribute.' + attr, e.id.toUpperCase() ) }</label></th>
             <td><input type="number" id="${id}" data-attr="${path}" step="1" min="${ e.getMinVal() }" max="${ e.getMaxVal() }" /></td>
             <td data-attr="${attr}"></td>

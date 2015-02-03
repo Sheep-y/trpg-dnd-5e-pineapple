@@ -7,10 +7,11 @@ var ui = ns.ui;
 
 var slotEditor = {
    'edit' ( e, container ) {
-      var uid = container.id, uid = container.id, id = `${uid}/edit/${_.escHtml(e.getPath())}`;
-      var html = `<div><label class='dd5 slot'><span>${ e.getLabel() }</span>`;
+      var { id } = ui._getId( e, container );
       var nullPick = sys.Option.create({ 'cid': '', 'toString': ()=>'', 'getName': ()=>'' });
       var pick = _.coalesce( e.getPick(), nullPick.value );
+
+      var html = `<div><label class='dd5 slot'><span>${ e.getLabel() }</span>`;
       html = _.html( html + `<select id='${id}'><option value='${ pick.cid }'>${ pick.getName() }</option></select></label></div>` );
 
       var input = _( html, 'select' )[ 0 ];
@@ -56,7 +57,7 @@ ui.registerFactory( 'subrule.profslot', slotEditor );
 
 ui.registerFactory( 'subrule.numslot', {
    'edit' ( e, container ) {
-      var uid = container.id, uid = container.id, id = `${uid}/edit/${_.escHtml(e.getPath())}`;
+      var { id } = ui._getId( e, container );
       var html = `<div><label class='dd5 slot'><span>${ e.getLabel() }</span>`;
       html = _.html( html + `<input id='${id}' type='number' min='${ e.getMinVal() }' max='${ e.getMaxVal() }' value='${ e.getPick() }' data-attr='${ e.id }' /></label></div>` );
 
