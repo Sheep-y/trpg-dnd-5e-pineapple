@@ -37,7 +37,7 @@ a:hover
 label > span:first-child
 {
    display: inline-block;
-   min-width: 100px;
+   min-width: 130px;
 }
 input, select, textarea
 {

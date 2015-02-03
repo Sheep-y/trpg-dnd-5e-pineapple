@@ -24,7 +24,7 @@ _.l.set( 'en-US', 'dd5.attribute', {
 } );
 
 _.l.set( 'en-US', 'dd5.entity', {
-   'abililty' : {
+   'ability' : {
       'str' : 'Strength',
       'dex' : 'Dexterity',
       'con' : 'Constitution',
