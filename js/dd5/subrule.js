@@ -130,9 +130,9 @@ subrule.Slot = {
    },
    'cid': 'subrule.slot',
    'options' : null, // Option list.
-   'count'   : 1,    // How many picks.
-   'default' : null, // Expression.  Default option.
-   'can_duplicate' : ()=>false, // Expression.  True allow user to select duplicate items.
+   'count'   : null, // How many picks.  null means always single choice, otherwise may be multiple.
+   'default' : null, // Default option.
+   'can_duplicate' : ()=>false, // True allow user to select duplicate items.
    'compile_list' : [ 'options', 'count', 'default', 'can_duplicate' ],
 
    'toString' ( ) {
@@ -153,17 +153,27 @@ subrule.Slot = {
    },
    'getPick' ( ) { return this.pick; },
    'setPick' ( pick ) {
-      if ( ! this.validPick( pick ) ) {
-         return log.warn( `[dd5.rule.Slot] Invalid picked option for slot ${ this.id }: ${ pick }` );
-         if ( this.getPick() === null ) return;
-         pick = null;
-      }
-      if ( pick === this.getPick() ) return;
-      if ( pick && pick.build ) pick = pick.build();
-      this.fireAttributeChanged( this.id, pick, this.pick );
-      if ( this.pick && _.is.object( this.pick ) ) this.remove( this.pick );
-      this.pick = pick;
-      if ( pick  && _.is.object( pick ) ) this.add( pick );
+      var orig = this.getPick();
+      // Remove old and add new
+      if ( orig ) _.ary( orig ).forEach( e => {
+         if ( rule.Rule.isPrototypeOf( e ) ) this.remove( e );
+      } );
+      var transformed = pick !== null ? _.ary( pick ).map( p => {
+         if ( ! this.validPick( p ) ) {
+            return log.warn( `[dd5.rule.Slot] Invalid picked option for slot ${ this.id }: ${ pick }` );
+            return null;
+         }
+         if ( _.is.object( p ) ) {
+            if ( p.build ) p = p.build();
+            if ( rule.Rule.isPrototypeOf( p ) ) this.add( p );
+         }
+         return p;
+      } ) : null;
+      // Update and fire.
+      if ( Array.isArray( pick ) ) this.pick = transformed;
+      else if ( transformed && transformed.length )this.pick = transformed[0];
+      else this.pick = null;
+      this.fireAttributeChanged( this.id, transformed, orig );
    },
    'validPick' ( pick ) {
       return pick == null || this.getCompatibleOptions().indexOf( pick ) >= 0;
@@ -213,7 +223,7 @@ subrule.NumSlot = {
    },
    'query' ( query ) {
       if ( query.query === this.id || query.query === this.getPath() ) {
-         return query.add_bonus( this.getPick( query ) );
+         return query.add_bonus( this.getPick( query ), this );
       }
       return base.query.call( this, query );
    },

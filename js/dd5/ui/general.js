@@ -7,26 +7,37 @@ var ui = ns.ui;
 
 var slotEditor = {
    'edit' ( e, container ) {
-      var { id } = ui._getId( e, container );
-      var nullPick = sys.Option.create({ 'cid': '', 'toString': ()=>'', 'getName': ()=>'' });
-      var pick = _.coalesce( e.getPick(), nullPick.value );
+      if ( e.count === null || e.can_duplicate() === true ) return dd5_ui_edit_slot_selectbox( e, container );
+      else return dd5_ui_edit_slot_multiple( e, container );
+   }
+};
+ui.registerFactory( 'subrule.slot', slotEditor );
+ui.registerFactory( 'subrule.profslot', slotEditor );
 
+function dd5_ui_edit_slot_selectbox ( e, container ) {
+   var { id } = ui._getId( e, container );
+   var nullPick = sys.Option.create({ 'cid': '', 'toString': ()=>'', 'getName': ()=>'' });
+   var picks = _.ary( e.getPick() ) || [];
+   var count = e.count ? e.count( 'ui' ) : 1;
+
+   for ( var i = 0 ; i < count ; i++ ) {
+      var pick = picks[ i ] || nullPick.value;
       var html = `<div><label class='dd5 slot'><span>${ e.getLabel() }</span>`;
       html = _.html( html + `<select id='${id}'><option value='${ pick.cid }'>${ pick.getName() }</option></select></label></div>` );
 
       var input = _( html, 'select' )[ 0 ];
       // Update slot on change
-      input.addEventListener( 'change', function dd5_ui_edit_slot_change( ) {
+      input.addEventListener( 'change', function slot_change ( ) {
          var pick = _.coalesce( e.getPick(), nullPick.value );
          if ( input.value === pick.cid ) return;
          if ( input.value === '' ) e.setPick( null );
          else e.setPick( e.getCompatibleOptions().find( e => e.cid === input.value ) || null );
       } );
       // Add options on focus
-      input.addEventListener( 'focus', function dd5_ui_edit_slot_focus( ) { // Expand options
-         var pick = _.coalesce( e.getPick(), nullPick.value ), opt = [ nullPick ].concat( e.getOptions() );
+      input.addEventListener( 'focus', function slot_focus ( ) { // Expand options
+         var pick = e.getPick() || nullPick.value, opt = [ nullPick ].concat( e.getOptions() );
          var selected = input.firstChild;
-         opt.forEach( function dd5_ui_edit_slot_focus_each ( e, i ) {
+         opt.forEach( function slot_focus_each_option ( e, i ) {
             if ( e.value.cid !== pick.cid ) {
                var o = _.create( 'option', { value: e.value.cid, 'text': e.value.getName() } );
                if ( ! e.valid ) o.disabled = 'disabled';
@@ -38,12 +49,11 @@ var slotEditor = {
          } );
       } );
       // Delete options on blur
-      input.addEventListener( 'blur' , function dd5_ui_edit_slot_blur ( ) {
+      input.addEventListener( 'blur' , function slot_blur ( ) {
          for ( var c of _.ary( input.childNodes ) ) {
             if ( ! c.selected ) input.removeChild( c );
          }
       } );
-
       for ( var c of e.children ) {
          var child = ui.createUI( c, 'edit', container );
          if ( child ) html.appendChild( child );
@@ -51,9 +61,11 @@ var slotEditor = {
       pick = container = null; // minimise closure reference
       return html;
    }
-};
-ui.registerFactory( 'subrule.slot', slotEditor );
-ui.registerFactory( 'subrule.profslot', slotEditor );
+}
+
+function dd5_ui_edit_slot_multiple ( e, container ) {
+   return dd5_ui_edit_slot_selectbox( e, container );
+}
 
 ui.registerFactory( 'subrule.numslot', {
    'edit' ( e, container ) {

@@ -112,19 +112,19 @@ sys.Query = {
    },
 
    'add_bonus' ( bonus, source, type ) {
-      var value = parseFloat( bonus );
-      if ( isNaN( value ) ) {
-         log.warn( `Unknown bonus ${bonus} from ${source}, cannot add bonus to ${ this.query } query.` );
-         return this;
-      }
-      value = sys.Bonus.create( value, source, type );
-      if ( this.value === undefined )
-         this.value = sys.Value.create( value );
-      else if ( sys.Value.isPrototypeOf( this.value ) )
-         this.value.add( value ); // Bonus should not duplicate, if duplicate it is design error
-      else
-         log.warn( `Unknown query result for ${ this.query }, cannot add bonus to query .` );
-      return this;
+      return this.add_result( bonus, ( e ) => {
+         var value = parseFloat( e );
+         if ( isNaN( value ) ) {
+            return log.warn( `Unknown bonus ${bonus} from ${source}, cannot add bonus to ${ this.query } query.` );
+         }
+         value = sys.Bonus.create( value, source, type );
+         if ( this.value === undefined )
+            this.value = sys.Value.create( value );
+         else if ( sys.Value.isPrototypeOf( this.value ) )
+            this.value.add( value ); // Bonus should not duplicate, if duplicate it is design error
+         else
+            log.warn( `Unknown query result for ${ this.query }, cannot add bonus to query .` );
+      } );
    },
    'add_result' ( entity, add ) {
       if ( add === undefined ) add = ( e ) => {
