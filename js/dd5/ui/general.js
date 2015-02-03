@@ -17,7 +17,7 @@ ui.registerFactory( 'subrule.profslot', slotEditor );
 function dd5_ui_edit_slot_selectbox ( e, container ) {
    // For single choice or duplicatable Slots. Create one select boxes for each choice.
    var { id } = ui._getId( e, container );
-   var nullPick = sys.Option.create({ 'cid': '', 'toString': ()=>'', 'getName': ()=>'' });
+   var nullPick = sys.Option.create({ 'cid': '', 'getName': ()=>'\u00A0' });
    var picks = _.ary( e.getPick() ) || [];
    var count = e.count ? e.count( 'ui' ) : 1;
    var frag = document.createDocumentFragment();

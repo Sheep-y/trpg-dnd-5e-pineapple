@@ -6,7 +6,7 @@
 
 html
 {
-   font-family: Arial;
+   font: 14px Arial;
    text-rendering: optimizeLegibility;
    background: url("../img/letter-d.svg") center / contain no-repeat, var( --main-bkgd );
    color: var( --main-text );
@@ -21,6 +21,10 @@ div
 {
    padding: 0;
    margin: 0;
+}
+table
+{
+   border-spacing: 0;
 }
 a, a:visited
 {
@@ -37,24 +41,26 @@ a:hover
 label > span:first-child
 {
    display: inline-block;
-   min-width: 130px;
+   min-width: 120px;
 }
-input, select, textarea
+input, select, textarea, input[type="checkbox"] + span
 {
    background-color: transparent;
    color: var( --main-text );
    border: 1px solid var( --main );
    border-radius: 4px;
+   margin: 2px 4px;
+   font: 14px Arial;
    transition: background-color 1s;
 }
 @keyframes hover_border_cycle { from { border-color: var( --main ); } to { border-color: var( --main-t2 ); }  }
-input:hover, select:hover, textarea:hover
+input:hover, select:hover, textarea:hover, input + span:hover
    {
       background-color: var( --main-b2 );
       animation: hover_border_cycle 2s linear 0s infinite alternate;
    }
 @keyframes focus_border_cycle { from { border-color: var( --cmpl ); } to { border-color: var( --cmpl-t2 ); }  }
-input:focus, select:focus, textarea:focus
+input:focus, select:focus, textarea:focus, input:focus + span
    {
       background-color: var( --cmpl-b2 );
       color: var( --cmpl-t2 );
@@ -74,6 +80,32 @@ select
    -webkit-appearance: none;
    -moz-appearance: none;
 }
+/* Checkboxes should be followed by a span, both wrapped by a label */
+input[type="checkbox"]
+{
+   position: absolute;
+   top: -8000px;
+   opacity: 0;
+   z-index: -1000;
+}
+input[type="checkbox"] + span
+   {
+      padding: 0 4px;
+      border: 1px solid transparent;
+   }
+   input[type="checkbox"]:checked + span
+      {
+         border: 1px solid var( --main );
+      }
+      input[type="checkbox"]:checked:focus + span
+         {
+            color: var( --main-t2 );
+            animation: hover_border_cycle 2s linear 0s infinite alternate;
+         }
+label:not(:last-child) > input[type="checkbox"] + span
+   {
+      margin-right: 0;
+   }
 
 /* Top navigation */
 nav#top 
