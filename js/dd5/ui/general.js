@@ -19,23 +19,30 @@ function dd5_ui_edit_slot_selectbox ( e, container ) {
    var nullPick = sys.Option.create({ 'cid': '', 'toString': ()=>'', 'getName': ()=>'' });
    var picks = _.ary( e.getPick() ) || [];
    var count = e.count ? e.count( 'ui' ) : 1;
+   var frag = document.createDocumentFragment();
 
-   for ( var i = 0 ; i < count ; i++ ) {
+   function getPick ( i ) {
+      var pick = _.ary( e.getPick() );
+      if ( ! pick ) return nullPick.value;
+      return pick.length > i ? pick[ i ] : null;
+   }
+
+   for ( var i = 0 ; i < count ; i++ ) ( function slot_each ( i ) {
       var pick = picks[ i ] || nullPick.value;
       var html = `<div><label class='dd5 slot'><span>${ e.getLabel() }</span>`;
-      html = _.html( html + `<select id='${id}'><option value='${ pick.cid }'>${ pick.getName() }</option></select></label></div>` );
+      html = _.html( html + `<select id='${id}/${i}'><option value='${ pick.cid }'>${ pick.getName() }</option></select></label></div>` );
 
       var input = _( html, 'select' )[ 0 ];
       // Update slot on change
       input.addEventListener( 'change', function slot_change ( ) {
-         var pick = _.coalesce( e.getPick(), nullPick.value );
+         var pick = getPick( i );
          if ( input.value === pick.cid ) return;
          if ( input.value === '' ) e.setPick( null );
          else e.setPick( e.getCompatibleOptions().find( e => e.cid === input.value ) || null );
       } );
       // Add options on focus
       input.addEventListener( 'focus', function slot_focus ( ) { // Expand options
-         var pick = e.getPick() || nullPick.value, opt = [ nullPick ].concat( e.getOptions() );
+         var pick = getPick( i ), opt = [ nullPick ].concat( e.getOptions() );
          var selected = input.firstChild;
          opt.forEach( function slot_focus_each_option ( e, i ) {
             if ( e.value.cid !== pick.cid ) {
@@ -54,13 +61,16 @@ function dd5_ui_edit_slot_selectbox ( e, container ) {
             if ( ! c.selected ) input.removeChild( c );
          }
       } );
-      for ( var c of e.children ) {
-         var child = ui.createUI( c, 'edit', container );
+      if ( pick.cid ) {
+         var child = ui.createUI( pick, 'edit', container );
          if ( child ) html.appendChild( child );
       }
       pick = container = null; // minimise closure reference
-      return html;
-   }
+      frag.appendChild( html );
+   } )( i );
+   if ( ! frag.children.length ) return null;
+   if ( frag.children.length === 1 ) return frag.firstChild;
+   return _.create( 'div' , { 'children' : frag } );
 }
 
 function dd5_ui_edit_slot_multiple ( e, container ) {

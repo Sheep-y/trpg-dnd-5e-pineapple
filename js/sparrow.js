@@ -1087,6 +1087,22 @@ _.attr = function _attr( ary, obj, value ) {
                }
                // Else fall through as set/remove style attribute
 
+            case 'parent' :
+            case 'parentNode' :
+               if ( attr[ name ] && attr[ name ].appendChild )
+                  attr[ name ].appendChild( e );
+               else if ( e.parentNode )
+                  e.parentNode.removeChild( e );
+               break;
+
+            case 'child' :
+            case 'children' :
+               // TODO: more comprehensive operasion, e.g. existing children, remove children, etc.
+               if ( attr[ name ] ) _.ary( attr[ name ] ).forEach( function _attr_each_child ( child ) {
+                  if ( child ) e.appendChild( child );
+               } );
+               break;
+
             default:
                if ( name.substr( 0, 2 ) === 'on' ) {
                   e.addEventListener( name.substr( 2 ), attr[ name ] );
