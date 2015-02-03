@@ -217,6 +217,7 @@ subrule.NumSlot = {
       // Bypassing Slot's constructor assertion, because option may not be available
       Object.getPrototypeOf( subrule.Slot ).create.call( me, opt );
       _.assert( me.id && ( me.min_val || me.max_val ), '[dd5.rule.NumSlot] NumSlot must have id and min or max.' );
+      _.assert( me.count === null, '[dd5.rule.NumSlot] NumSlot does not support multiple choice.' )
       return me;
    },
    'cid': 'subrule.numslot',

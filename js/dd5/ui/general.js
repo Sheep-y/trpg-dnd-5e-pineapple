@@ -15,6 +15,7 @@ ui.registerFactory( 'subrule.slot', slotEditor );
 ui.registerFactory( 'subrule.profslot', slotEditor );
 
 function dd5_ui_edit_slot_selectbox ( e, container ) {
+   // For single choice or duplicatable Slots. Create one select boxes for each choice.
    var { id } = ui._getId( e, container );
    var nullPick = sys.Option.create({ 'cid': '', 'toString': ()=>'', 'getName': ()=>'' });
    var picks = _.ary( e.getPick() ) || [];
@@ -73,8 +74,37 @@ function dd5_ui_edit_slot_selectbox ( e, container ) {
    return _.create( 'div' , { 'children' : frag } );
 }
 
-function dd5_ui_edit_slot_multiple ( e, container ) {
-   return dd5_ui_edit_slot_selectbox( e, container );
+function dd5_ui_edit_slot_multiple ( rule, container ) {
+   // For multiple choice (non-duplicatable) Slots.  Create one checkbox for each option.
+   var options = rule.getOptions();
+   if ( ! options || ! options.length ) return;
+   var { id } = ui._getId( rule, container ), count = rule.count( 'ui' );
+   var picks = _.ary( rule.getPick() ) || [];
+   if ( picks.length ) picks = picks.filter( e => e );
+   var html = _.html( `<div><label class='dd5 slot'><span>${ rule.getLabel() }</span></label></div>` );
+   options.forEach( ( opt, i ) => {
+      var picked = picks.find( p => p && p.cid === opt.value.cid );
+      if ( picks.length !== count || picked ) {
+         var e = opt.value;
+         var attr = opt.valid ? '' : ' disabled="disabled"';
+         if ( opt.note ) attr += ` title="${_.escHtml( opt.note )}"`;
+         if ( picked ) attr += ' checked="checked"';
+         var label = _.html( `<label><input id='${id}/${e.cid}' type='checkbox' ${attr}><span>${ e.getName() }</span></label>` );
+         _( label, 'input' )[0].addEventListener( 'change', function slot_multiple_change ( evt ) {
+            var picks = _.ary( rule.getPick() ) || [];
+            if ( evt.target.checked ) { // Add choice
+               for ( var i = 0 ; i < picks.length ; i++ )
+                  if ( ! picks[ i ] ) break;
+               rule.setPick( i, e );
+            } else {
+               var pos = picks.findIndex( p => p && p.cid === e.cid );
+               if ( pos >= 0 ) rule.setPick( pos, null );
+            }
+         } );
+         html.appendChild( label );
+      }
+   } );
+   return html;
 }
 
 ui.registerFactory( 'subrule.numslot', {
