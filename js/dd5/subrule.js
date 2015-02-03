@@ -177,10 +177,12 @@ subrule.Slot = {
          } else {
             // Replace individual picks
             index = ~~index;
-            if ( index < 0 || index >= this.count() )
+            var count = this.count();
+            if ( index < 0 || index >= count )
                return log.warn( `[dd5.rule.Slot] Invalid picked index ${ index } for slot ${ this.id }: ${ pick }` );
             if ( orig && orig.length > index ) remover( orig[ index ] );
-            result = _.ary( orig ) || [];
+            result = _.ary( orig );
+            if ( ! result ) result = new Array( count ).fill( null );
             result[ index ] = adder( pick );
          }
       } else { // Single choice slot

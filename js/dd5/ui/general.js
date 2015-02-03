@@ -23,8 +23,8 @@ function dd5_ui_edit_slot_selectbox ( e, container ) {
 
    function getPick ( i ) {
       var pick = _.ary( e.getPick() );
-      if ( ! pick ) return nullPick.value;
-      return pick.length > i ? pick[ i ] : nullPick.value;
+      if ( ! pick || pick.length <= i ) return nullPick.value;
+      return _.coalesce( pick[ i ], nullPick.value );
    }
 
    for ( var i = 0 ; i < count ; i++ ) ( function slot_each ( i ) {
@@ -44,7 +44,7 @@ function dd5_ui_edit_slot_selectbox ( e, container ) {
       input.addEventListener( 'focus', function slot_focus ( ) { // Expand options
          var pick = getPick( i ), opt = [ nullPick ].concat( e.getOptions() );
          var selected = input.firstChild;
-         opt.forEach( function slot_focus_each_option ( e, i ) {
+         opt.forEach( function slot_focus_each_option ( e ) {
             if ( e.value.cid !== pick.cid ) {
                var o = _.create( 'option', { value: e.value.cid, 'text': e.value.getName() } );
                if ( ! e.valid ) o.disabled = 'disabled';
