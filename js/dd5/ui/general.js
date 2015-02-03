@@ -24,7 +24,7 @@ function dd5_ui_edit_slot_selectbox ( e, container ) {
    function getPick ( i ) {
       var pick = _.ary( e.getPick() );
       if ( ! pick ) return nullPick.value;
-      return pick.length > i ? pick[ i ] : null;
+      return pick.length > i ? pick[ i ] : nullPick.value;
    }
 
    for ( var i = 0 ; i < count ; i++ ) ( function slot_each ( i ) {
@@ -38,7 +38,7 @@ function dd5_ui_edit_slot_selectbox ( e, container ) {
          var pick = getPick( i );
          if ( input.value === pick.cid ) return;
          if ( input.value === '' ) e.setPick( null );
-         else e.setPick( e.getCompatibleOptions().find( e => e.cid === input.value ) || null );
+         else e.setPick( i, e.getCompatibleOptions().find( e => e.cid === input.value ) || null );
       } );
       // Add options on focus
       input.addEventListener( 'focus', function slot_focus ( ) { // Expand options

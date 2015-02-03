@@ -152,28 +152,49 @@ subrule.Slot = {
       return this.getCompatibleOptions( context ).map( e => sys.Option.create( e ) );
    },
    'getPick' ( ) { return this.pick; },
-   'setPick' ( pick ) {
-      var orig = this.getPick();
-      // Remove old and add new
-      if ( orig ) _.ary( orig ).forEach( e => {
-         if ( rule.Rule.isPrototypeOf( e ) ) this.remove( e );
-      } );
-      var transformed = pick !== null ? _.ary( pick ).map( p => {
-         if ( ! this.validPick( p ) ) {
-            return log.warn( `[dd5.rule.Slot] Invalid picked option for slot ${ this.id }: ${ pick }` );
+   'setPick' ( index, pick ) {
+      var orig = this.getPick(), result = null;
+      var remover = ( e ) => {
+         if ( e && rule.Rule.isPrototypeOf( e ) ) this.remove( e );
+      };
+      var adder = ( e ) => {
+         if ( ! this.validPick( e ) ) {
+            log.warn( `[dd5.rule.Slot] Invalid picked option for slot ${ this.id }: ${ e }` );
             return null;
+         } else if ( _.is.object( e ) ) {
+            if ( e.build ) e = e.build();
+            if ( rule.Rule.isPrototypeOf( e ) ) this.add( e );
          }
-         if ( _.is.object( p ) ) {
-            if ( p.build ) p = p.build();
-            if ( rule.Rule.isPrototypeOf( p ) ) this.add( p );
+         return e;
+      };
+
+      if ( this.count !== null ) { // Multiple choice slot
+         if ( arguments.length <= 1 ) {
+            // Mass replace multiple picks
+            pick = _.coalesce( _.ary( index ), null );
+            if ( orig ) _.ary( orig ).forEach( remover );
+            if ( pick !== null ) result = _.ary( pick ).map( builder );
+         } else {
+            // Replace individual picks
+            index = ~~index;
+            if ( index < 0 || index >= this.count() )
+               return log.warn( `[dd5.rule.Slot] Invalid picked index ${ index } for slot ${ this.id }: ${ pick }` );
+            if ( orig && orig.length > index ) remover( orig[ index ] );
+            result = _.ary( orig ) || [];
+            result[ index ] = adder( pick );
          }
-         return p;
-      } ) : null;
-      // Update and fire.
-      if ( Array.isArray( pick ) ) this.pick = transformed;
-      else if ( transformed && transformed.length )this.pick = transformed[0];
-      else this.pick = null;
-      this.fireAttributeChanged( this.id, transformed, orig );
+      } else { // Single choice slot
+         if ( arguments.length >= 2 && index !== 0 )
+            return log.warn( `[dd5.rule.Slot] Invalid picked index ${ index } for slot ${ this.id }: ${ pick }` );
+         else if ( arguments.length === 1 )
+            pick = index;
+         remover( orig );
+         result = adder( pick );
+      }
+
+      // Update and fire event.
+      this.pick = result;
+      this.fireAttributeChanged( this.id, result, orig );
    },
    'validPick' ( pick ) {
       return pick == null || this.getCompatibleOptions().indexOf( pick ) >= 0;
