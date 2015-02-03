@@ -369,7 +369,7 @@ _.js = function _js ( option, onload ) {
    var url = option.url;
    if ( option.harmony && ! option.type && _.is.firefox() ) option.type = "application/javascript;version=1.8";
 
-   var attr = { 'src' : url };
+   var attr = { 'src' : url, 'parent': document.body || document.head };
    if ( option.charset ) attr.charset = option.charset;
    if ( option.type ) attr.type = option.type;
    if ( option.async ) attr.async = option.async;
@@ -399,12 +399,6 @@ _.js = function _js ( option, onload ) {
    e.addEventListener( 'error', function _js_error ( e ) {
       _js_done( option.onerror, "[JS] Script error or not found: " + url );
    } );
-
-   if ( document.body ) {
-      document.body.appendChild( e );
-   } else {
-      document.head.appendChild( e );
-   }
    return e;
 };
 
@@ -1736,46 +1730,39 @@ _.l.event = _.EventManager.create( ['set','locale'], _.l );
  * @param {string=} name Name of assertion. If absent, condition must be a test suite.
  */
 _.test = function _test ( condition, name ) {
-   var add = 'appendChild', create = _.create, tr;
+   var create = _.create, td;
    if ( name !== undefined ) {
       // Single test case, append to latest test table
       _.assert( _test.body, '[Addiah] Named test should be called as part of test suit.' );
-      var tr = create( 'tr' ), td = create( td );
+      _test.body.appendChild( create( 'tr', { child: [ create( 'td', name ), td = create( td ) ] } ) );
       if ( condition ) td.textContent = 'OK';
       else td.appendChild( 'b', { class: 'err', text: 'FAIL' } );
-      tr[add]( create( 'td', _.escHtml( name ) ) );
-      tr[add]( td );
-      _test.body[add]( tr );
-
    } else {
       // Test suite object
-      var title = create( 'h1', 'Testing' ), result;
-      var success = true;
-      document.body[add]( title );
+      var title = create( 'h1', { parent: document.body, text : 'Testing' } );
+      var result, success = true;
       for ( var test in condition ) {
          if ( ! test.match( /^test/ ) ) continue;
          if ( typeof( condition[test] ) === 'function' ) {
 
-            var table = create( 'table', { class: 'sparrow_test', border: 1 } );
             var cap = create( 'caption', _.escHtml( test ).replace( /^test_+/, '' ) );
-            table[add]( cap );
-            table[add]( _test.body = create( 'tbody' ) );
-            document.body[add]( table );
+            var table = create( 'table', { class: 'sparrow_test', border: 1, parent: document.body, child: cap } );
+            table.appendChild( _test.body = create( 'tbody' ) );
 
             // Run test
             try {
                condition[test]();
             } catch ( e ) {
-               _test.body[add]( tr = _.create( 'tr' ) );
-               tr[add]( _.create( 'td', { colspan:2, class:'err', text: 'Exception during testing: ' + e } ) );
+               create( 'tr', { parent: _test.body, child:
+                  create( 'td', { colspan:2, class:'err', text: 'Exception during testing: ' + e } ) } );
             }
 
             // Update table caption
             if ( _( table, '.err' ).length ) {
-               result = _.create( 'b', 'FAILED: ' );
+               result = create( 'b', 'FAILED: ' );
                success = false;
             } else {
-               result = _.create( 'span', 'OK: ' );
+               result = create( 'span', 'OK: ' );
             }
             cap.insertBefore( result, cap.firstChild );
          }

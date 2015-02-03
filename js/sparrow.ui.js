@@ -16,7 +16,7 @@ var dom_style; // <style> dom element
 
 function _ui_addStyle ( id, style ) {
    if ( ! style ) return;
-   if ( ! dom_style ) document.head.appendChild( dom_style = _.create( 'style' ) );
+   if ( ! dom_style ) dom_style = _.create( 'style', { parent: document.head } );
    else if ( _ui_addStyle[ id ] ) return;
    _.ary( style ).forEach( dom_style.sheet.insertRule.bind( dom_style.sheet ) );
    _ui_addStyle[ id ] = true;
