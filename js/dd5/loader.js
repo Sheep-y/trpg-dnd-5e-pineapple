@@ -143,7 +143,8 @@ var loader = ns.loader = {
 
          switch ( subrule ) {
             case 'prof' :
-               var result = { 'subrule': 'prof', 'prof_type': 'prof$' + left[1], 'value': `db.entity("${ right }")` };
+               right = right.replace( /\s*,\s*/g, '","' );
+               var result = { 'subrule': 'prof', 'prof_type': 'prof$' + left[1], 'value': `db.entity({id:["${ right }"]})` };
                if ( left.length !== 2 || ! right ) throw `Invalid prof syntax: ${e}`;
                return result;
 

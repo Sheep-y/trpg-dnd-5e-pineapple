@@ -127,8 +127,7 @@ ui.registerFactory( 'subrule.numslot', {
 
 ui.registerFactory( 'subrule.prof', {
    'edit' ( e, container ) {
-      var val = '';
-      e.value().forEach( (v) => val += `<span>${ v.getName() }</span>` );
+      var val = e.value().map( v => `<span>${ v.getName() }</span>` ).join( _.l( 'glue' ) );
       return _.html( `<div><label class='dd5 prof'><span> ${ e.getLabel() }</span> ${val} </label></div>` )
    }
 } );

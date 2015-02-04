@@ -265,7 +265,7 @@ var Catalog = {
       var result = this._list.concat();
       if ( criteria ) {
          for ( var i in criteria ) {
-            var criteron = criteria[i], filter;
+            var criteron = criteria[ i ], filter;
             if ( Array.isArray( criteron ) ) {
                // List match
                filter = ( e ) => criteron.includes( e[ i ] );
