@@ -10,11 +10,11 @@ ui.Chargen = {
    '__proto__' : _.ui.Component,
    'create' ( char ) {
       var me = _.newIfSame( this, ui.Chargen );
-      var observer = me.refresh.bind( me );
+      me.refresh = me.refresh.bind( me );
       me._character = char;
       me[ symbol.Dom ] = _.create( 'div', { id : ui.newId() } );
-      char.addObserver( 'structure', observer );
-      log.add( 'l10n', observer );
+      char.addObserver( 'structure', me.refresh );
+      log.add( 'l10n', me.refresh );
       ui.panels.push( me );
       me.refresh();
       return me;
@@ -26,11 +26,12 @@ ui.Chargen = {
       _.clear( this.dom )[0].appendChild( this._character.createUI( 'edit', this.dom ) );
       ui.loadFocus();
    },
+
    'destroy' ( ) {
       var pos = ui.panels.indexOf( this );
       if ( pos ) ui.panels.splice( pos, 1 );
-      log.remove( 'l10n', this._refresh );
-      char.removeObserver( 'structure', this._refresh );
+      log.remove( 'l10n', this.refresh );
+      char.removeObserver( 'structure', this.refresh );
    }
 };
 

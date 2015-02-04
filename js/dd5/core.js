@@ -284,7 +284,7 @@ var Catalog = {
             } else {
                // Plain value match
                criteron += "";
-               filter = ( e ) => { return criteron === ""+e[i]; };
+               filter = ( e ) => { return criteron === "" + ( e[i] !== undefined ? e[i] : undefined ); };
             }
             result = result.filter( filter );
             if ( result.length <= 0 ) break;
