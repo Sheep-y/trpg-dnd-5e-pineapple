@@ -101,10 +101,16 @@ _.l.set( 'zh-Hant', 'dd5.entity', {
 _.l.set( 'zh-Hant', 'dd5.race', {
    'dwarf'   : '矮人',
    'elf'     : '精靈',
-   'halfing' : '半身人',
+   'halfling' : '半身人',
    'human'   : '人類',
 } );
 
+_.l.set( 'zh-Hant', 'dd5.feature.dwarf-hill', '丘陵' );
+_.l.set( 'zh-Hant', 'dd5.feature.dwarf-mountain', '高山' );
+_.l.set( 'zh-Hant', 'dd5.feature.elf-high', '高等' );
+_.l.set( 'zh-Hant', 'dd5.feature.elf-wood', '木' );
+_.l.set( 'zh-Hant', 'dd5.feature.halfling-lightfoot', '輕足' );
+_.l.set( 'zh-Hant', 'dd5.feature.halfling-stout', '健壯' );
 _.l.set( 'zh-Hant', 'dd5.feature.human-basic', '基礎版' );
 _.l.set( 'zh-Hant', 'dd5.feature.human-phb'  , '玩家手冊變體' );
 

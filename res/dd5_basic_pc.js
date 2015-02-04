@@ -114,6 +114,30 @@ dd5.loader.jsonp.load_rules( { 'version':'alpha',
    ] },
 ],
 'race': [
+   { id: 'dwarf', subrules: [
+      ' slot.gender : db.entity({ type: "gender" }) ',
+      ' adj.speed : 25 ',
+      ' adj.size : 3 ',
+      ' adj.con : 2 ',
+      ' prof.language : common, dwarvish ',
+      ' slot.subrace : db.feature({ type: "subrace", of: "dwarf" }) '
+   ] },
+   { id: 'elf', subrules: [
+      ' slot.gender : db.entity({ type: "gender" }) ',
+      ' adj.speed : 30 ',
+      ' adj.size : 3 ',
+      ' adj.dex : 2 ',
+      ' prof.language : common, elvish ',
+      ' slot.subrace : db.feature({ type: "subrace", of: "elf" }) '
+   ] },
+   { id: 'halfling', subrules: [
+      ' slot.gender : db.entity({ type: "gender" }) ',
+      ' adj.speed : 25 ',
+      ' adj.size : 2 ',
+      ' adj.dex : 2 ',
+      ' prof.language : common, halfing ',
+      ' slot.subrace : db.feature({ type: "subrace", of: "halfling" }) '
+   ] },
    { id: 'human', subrules: [
       ' slot.gender : db.entity({ type: "gender" }) ',
       ' adj.speed : 30 ',
@@ -124,6 +148,26 @@ dd5.loader.jsonp.load_rules( { 'version':'alpha',
    ] },
 ],
 'feature' : [
+   { id: 'dwarf-hill', type: 'subrace', of: 'dwarf', subrules: [
+      ' adj.wis : 1 ',
+   ] },
+   { id: 'dwarf-mountain', type: 'subrace', of: 'dwarf', subrules: [
+      ' adj.str : 2 ',
+   ] },
+   { id: 'elf-high', type: 'subrace', of: 'elf', subrules: [
+      ' adj.int : 1 ',
+      ' profSlot.language.bonus_language : db.entity({ type: "language", rarity: "standard" }) ',
+   ] },
+   { id: 'elf-wood', type: 'subrace', of: 'elf', subrules: [
+      ' adj.wis : 1 ',
+      ' adj.speed : 5 ',
+   ] },
+   { id: 'halfling-lightfoot', type: 'subrace', of: 'halfling', subrules: [
+      ' adj.cha : 1 ',
+   ] },
+   { id: 'halfling-stout', type: 'subrace', of: 'halfling', subrules: [
+      ' adj.con : 1 ',
+   ] },
    { id: 'human-basic', type: 'subrace', of: 'human', subrules: [
       { adj: 'toCId( db.entity({ type: "ability" }) )', value: 1 }, // Increase ALL abilities by one
    ] },

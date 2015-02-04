@@ -101,10 +101,16 @@ _.l.set( 'en-US', 'dd5.entity', {
 _.l.set( 'en-US', 'dd5.race', {
    'dwarf'   : 'Dwarf',
    'elf'     : 'Elf',
-   'halfing' : 'Halfing',
+   'halfling' : 'Halfling',
    'human'   : 'Human',
 } );
 
+_.l.set( 'en-US', 'dd5.feature.dwarf-hill', 'Hill' );
+_.l.set( 'en-US', 'dd5.feature.dwarf-mountain', 'Mountain' );
+_.l.set( 'en-US', 'dd5.feature.elf-high', 'High' );
+_.l.set( 'en-US', 'dd5.feature.elf-wood', 'Wood' );
+_.l.set( 'en-US', 'dd5.feature.halfling-lightfoot', 'Lightfoot' );
+_.l.set( 'en-US', 'dd5.feature.halfling-stout', 'Stout' );
 _.l.set( 'en-US', 'dd5.feature.human-basic', 'Basic' );
 _.l.set( 'en-US', 'dd5.feature.human-phb'  , 'PHB' );
 
