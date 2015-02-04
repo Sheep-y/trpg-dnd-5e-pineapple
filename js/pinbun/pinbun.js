@@ -25,6 +25,8 @@ log.add( 'fine', _.info );
 //log.add( 'finer', _.info );
 //log.add( 'finest', _.info );
 
+_.EventManager.onerror = ( err, evt ) => log.error( `Error when processing ${evt} event`, err );
+
 var pnl_content = _( '#container' )[0];
 
 ns.init = function pinbun_init ( source_url ) {

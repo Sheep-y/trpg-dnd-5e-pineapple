@@ -1464,6 +1464,7 @@ _.EventManager = {
    "deferred" : false,    // Whether this manager's event firing is deferred and consolidated.
    "event_buffer" : null, // Buffered events (Map).
    "deferred_timer" : 0,  // Timer for deferred event firing.
+   "onerror" : null,      // Error handler (error, event, parameter). If null, simply rethrow error.
    "log" : false,         // If true, will log event firing.
    /**
     * Register an event handler.  If register twice then it will be called twice.
@@ -1528,9 +1529,9 @@ _.EventManager = {
     * @param {...*} param Parameters to pass to event handlers.
     */
    "fire" : function ( event, param ) {
-      var thisp = this, lst = this.lst[ event ], args = _.ary( arguments, 1 );
+      var me = this, lst = this.lst[ event ], args = _.ary( arguments, 1 );
       if ( event.forEach ) {
-         return event.forEach( function( e ){ thisp.fire.apply( thisp, [ e ].concat( args ) ); } );
+         return event.forEach( function( e ){ me.fire.apply( me, [ e ].concat( args ) ); } );
       }
       if ( ! lst ) {
          if ( this.events && this.events.indexOf( event ) < 0 )
@@ -1539,7 +1540,12 @@ _.EventManager = {
       }
       if ( ! this.deferred ) {
          if ( this.log ) _.log( "Fire " + event + " on " + lst.length + " listeners" );
-         for ( var i in lst ) lst[ i ].apply( this.owner, args );
+         for ( var i in lst ) try {
+            lst[ i ].apply( this.owner, args );
+         } catch ( err ) {
+            if ( this.onerror ) this.onerror( err, event, args );
+            else throw err;
+         }
       } else {
          // Deferred mode will consolidate all events and call listeners passing the event buffer.
          if ( arguments.length > 2 ) throw new Error( "[sparrow.EventManager.fire] Deferred event firing must have at most one parameter." );
@@ -1548,15 +1554,18 @@ _.EventManager = {
          buf.push( param );
          if ( this.deferred_timer ) return;
          this.deferred_timer = _.setImmediate( function _EventManager_deferred_fire ( ) {
-            ( thisp.events || Object.keys( evt_buf ) ).forEach( function _EventManager_deferred_fire_each ( event ) {
-               var lst = thisp.lst[ event ], buf = evt_buf[ event ];
+            ( me.events || Object.keys( evt_buf ) ).forEach( function _EventManager_deferred_fire_each ( event ) {
+               me.deferred_timer = 0;
+               var lst = me.lst[ event ], buf = evt_buf[ event ];
                if ( ! lst || ! buf ) return;
-               if ( thisp.log ) _.log( "Fire deferred " + event + " event on " + lst.length + " listeners" );
-               for ( var i = 0, l = lst.length ; i < l ; i++ ) {
-                  lst[ i ].call( thisp.owner, buf );
-               }
-               thisp.deferred_timer = 0;
                delete evt_buf[ event ];
+               if ( me.log ) _.log( "Fire deferred " + event + " event on " + lst.length + " listeners" );
+               for ( var i = 0, l = lst.length ; i < l ; i++ ) try {
+                  lst[ i ].call( me.owner, buf );
+               } catch ( err ) {
+                  if ( me.onerror ) me.onerror( err, event, buf );
+                  else throw err;
+               }
             } );
          } );
          lst = buf = args = event = param = undefined;
