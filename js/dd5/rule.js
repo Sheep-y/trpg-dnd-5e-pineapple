@@ -59,6 +59,7 @@ function property_compiler ( subject, prop, value, args ) {
          if ( body.match( /\byou\b/ ) ) varlist.push( 'you=new Proxy(this.getCharacter(),dd5.rule.wrapper.you)' );
          if ( body.match( /\bmin\b/ ) ) varlist.push( 'min=Math.min' );
          if ( body.match( /\bmax\b/ ) ) varlist.push( 'max=Math.max' );
+         if ( body.match( /\btoCId\b/ ) ) varlist.push( 'toCId=dd5.sys.toCId' );
          if ( body.match( /\bfloor\b/ ) ) varlist.push( 'floor=Math.floor' );
          if ( body.match( /\bround\b/ ) ) varlist.push( 'round=Math.round' );
          if ( varlist.length ) head += `var ${ varlist.join( ',' ) };`;
@@ -191,6 +192,7 @@ rule.Character = {
       me.remap_queries();
       me.addObserver( 'structure', ( mon ) => {
          if ( me.getCharacter() !== me ) return; // Run only if this is the root character
+         // Can further optimise by consolidating 'addlist' and 'removelist' first
          for ( var m of mon ) {
             for ( var node of _.array( m.oldNodes ) ) { // Element is deteched.  Unhook them from query map.
                node.recur( null, ( val ) => {
@@ -241,20 +243,14 @@ rule.Character = {
    },
 
    'query' : function ( query ) {
-      if ( query.query.indexOf( '.' ) >= 0 ) {
-         // Contains dot, likely a path, use tradidional recursive query
-         //_.log( `QUERY: ${query.query} (Resursion)` );
+      if ( query.query.indexOf( '.' ) >= 0 ) { // Query contains dot, likely a path, do not use query map.
          return Resource.query.call( this, query );
-      } else {
-         // Normal query will go through the query map for optimal execution
-         var lst = this._queries[ query.query ];
-         //_.log( `QUERY: ${query.query} (Map, ${ lst ? lst.length : 'none' })` );
-         if ( lst ) {
-            for ( var o of lst ) {
-               //_.log( `QUERY: ${query.query} (${ o })` );
-               o.query( query );
-            }
-         }
+      } else { // Non-path query will go through observer map for optimal execution.
+         var map = this._queries;
+         if ( map[ query.query ] )
+            for ( var o of _.ary( this._queries[ query.query ] ) ) o.query( query );
+         if ( map[ '*' ] )
+            for ( var o of _.ary( this._queries[ '*' ] ) ) o.query( query );
       }
       return query;
    }

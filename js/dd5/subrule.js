@@ -77,8 +77,8 @@ subrule.Adj = {
       return "Adj." + this.property();
    },
    'query' ( query ) {
-      var prop = this.property( query );
-      if ( prop === query.query || query.query === this.getPath() ) {
+      var prop = _.array( this.property( query ) );
+      if ( prop.indexOf( query.query ) >= 0 || query.query === this.getPath() ) {
          var val = parseFloat( this.value( query ) );
          if ( this.min ) val = Math.min( val, this.min( query ) );
          if ( this.max ) val = Math.max( val, this.max( query ) );
@@ -86,7 +86,7 @@ subrule.Adj = {
       }
       return base.query.call( this, query );
    },
-   'query_hook' ( ) { return [ this.property() ]; },
+   'query_hook' ( ) { return _.array( this.property() ); },
 };
 
 subrule.Prof = {
@@ -175,7 +175,7 @@ subrule.Slot = {
             if ( orig ) _.ary( orig ).forEach( remover );
             if ( pick !== null ) result = _.ary( pick ).map( builder );
          } else {
-            // Replace individual picks
+            // Replace individual pick
             index = ~~index;
             var count = this.count();
             if ( index < 0 || index >= count )

@@ -125,7 +125,7 @@ dd5.loader.jsonp.load_rules( { 'version':'alpha',
 ],
 'feature' : [
    { 'id': 'human-basic', 'type': 'subrace', 'of': 'human', 'subrules': [
-      { 'subrule': 'adj', 'property' : 'db.entity({ type: "ability" })', 'value': 1 },
+      { 'subrule': 'adj', 'property' : 'toCId( db.entity({ type: "ability" }) )', 'value': 1 },
    ] },
    { 'id': 'human-phb', 'type': 'subrace', 'of': 'human', 'subrules': [
       { 'slot' : 'bonus_ability', 'options' : 'db.entity({ type: "ability" })', 'count': 2 },
@@ -133,8 +133,7 @@ dd5.loader.jsonp.load_rules( { 'version':'alpha',
       { 'subrule': 'adj', 'property' : 'you[bonus_ability][1]', 'value': 1 },*/
       'slot.feat : db.feat() ',
    ] },
-]
-
+],
 /*
 //      ' set.prof_mod : [ 2,2,2,2,3,3,3,3,4,4,4,4,5,5,5,5,6,6,6,6 ][ you.level ] ',
 //      ' adj.str_sv   : you.prof_str_sv ? you.prof_mod : 0 ',
