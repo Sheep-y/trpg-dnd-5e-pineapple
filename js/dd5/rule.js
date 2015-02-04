@@ -189,10 +189,10 @@ rule.Character = {
    },
    'build' ( ) {
       var me = Resource.build.call( this );
-      me.remap_queries();
+      me.remap_query();
       me.addObserver( 'structure', ( mon ) => {
          if ( me.getCharacter() !== me ) return; // Run only if this is the root character
-         var oldNodes = [], newNodes = [], updatedHooks = [];
+         var oldNodes = [], newNodes = [], updatedHooks = [], map = me._query_map;
          for ( var m of mon ) {
             if ( m.oldNodes ) for ( var c of m.oldNodes ) c.recur( e => oldNodes.push( e ) );
             if ( m.newNodes ) for ( var c of m.newNodes ) c.recur( e => newNodes.push( e ) );
@@ -200,12 +200,12 @@ rule.Character = {
          oldNodes = _.unique( oldNodes );
          newNodes = _.unique( newNodes );
          if ( oldNodes.length && newNodes.length ) { // If the lists intersect, the state is uncertain and should just remap.
-            for ( var c of oldNodes ) if ( newNodes.includes( c ) ) return this.remap_queries();
-            for ( var c of newNodes ) if ( oldNodes.includes( c ) ) return this.remap_queries();
+            for ( var c of oldNodes ) if ( newNodes.includes( c ) ) return this.remap_query();
+            for ( var c of newNodes ) if ( oldNodes.includes( c ) ) return this.remap_query();
          }
          for ( var val of oldNodes ) if ( val.query_hook ) { // Unhook removed component from query map
             for ( var h of val.query_hook() ) if ( h ) {
-               var lst = me._queries[ h ];
+               var lst = map[ h ];
                if ( ! lst || ! lst.includes( val ) ) log.warn( "Inconsistent query map: Cannot unhook " + val + " from " + h );
                else lst.splice( lst.indexOf( val ), 1 );
                if ( ! updatedHooks.includes( h ) ) updatedHooks.push( h );
@@ -213,7 +213,7 @@ rule.Character = {
          }
          for ( var val of newNodes ) if ( val.query_hook ) { // Hook new component to query map
             for ( var h of val.query_hook() ) if ( h ) {
-               var lst = me._queries[ h ] || ( me._queries[ h ] = [] );
+               var lst = map[ h ] || ( map[ h ] = [] );
                if ( lst.includes( h ) ) log.warn( "Inconsistent query map: Cannot hook " + val + " to " + h );
                else lst.push( val );
                if ( ! updatedHooks.includes( h ) ) updatedHooks.push( h );
@@ -229,30 +229,53 @@ rule.Character = {
                if ( m.newValue ) last = 'Attach';
             }
          }
-         if      ( last === 'Detach' ) me.remap_queries(); // This character is deteched; remap queries.
-         else if ( last === 'Attach' ) me._queries = null; // This character is attached; clear query map.
+         if      ( last === 'Detach' ) me.remap_query();        // This character is deteched; remap query.
+         else if ( last === 'Attach' ) me._query_map = _.map(); // This character is attached; clear query map.
       } );
       return me;
    },
-   '_queries' : null,
-   'remap_queries' ( ) {
-      this._queries = _.map();
-      this.recur( ( n ) => {
-         if ( n === this || ! n.query_hook ) return;
-         for ( var h of n.query_hook() ) if ( h ) {
-            var lst = this._queries[ h ] || ( this._queries[ h ] = [] );
-            lst.push( n );
+   '_query_map' : null,
+   'remap_query' ( component ) {
+      var updatedHooks, map = this._query_map;
+      if ( component ) {
+         // A component's query hook has changed. We need to find and remove all old reference and add new reference.
+         // Please note that this usage is NOT recursive.
+         _.assert( component.getCharacter() === this, 'remap_query cannot be called on non-top or non-owning character' );
+         for ( var hook in this._query_map || {} ) {
+            var pos = this._query_map[ hook ].indexOf( component );
+            if ( pos ) {
+               this._query_map[ hook ].splice( pos, 1 );
+               updatedHooks.push( hook );
+            }
          }
-      } );
-      this.fireAttributeChanged( Object.keys( this._queries ) );
+         if ( component.query_hook ) { // Done remove part. Now try to add.
+            for ( var hook of _.array( component.query_hook() ) ) {
+               var lst = map[ hook ] || ( map[ hook ] = [] );
+               lst.push( component );
+               if ( ! updatedHooks.includes( hook ) ) updatedHooks.push( hook );
+            }
+         }
+      } else {
+         // Update all maps
+         map = this._query_map = _.map();
+         this.recur( ( n ) => {
+            if ( n === this || ! n.query_hook ) return;
+            for ( var h of n.query_hook() ) if ( h ) {
+               var lst = map[ h ] || ( map[ h ] = [] );
+               lst.push( n );
+            }
+         } );
+         updatedHooks = Object.keys( this._query_map );
+      }
+      this.fireAttributeChanged( updatedHooks );
    },
 
    'query' : function ( query ) {
-      if ( query.query.indexOf( '.' ) >= 0 || this._queries === null ) { // If query contains dot, it is likely a path, do not use query map.
+      if ( query.query.indexOf( '.' ) >= 0 || this._query_map === null ) { // If query contains dot, it is likely a path, do not use query map.
          return Resource.query.call( this, query );
       } else { // Non-path query will go through observer map for optimal execution.
-         if ( this._queries[ query.query ] )
-            for ( var comp of _.ary( this._queries[ query.query ] ) )
+         if ( this._query_map[ query.query ] )
+            for ( var comp of _.ary( this._query_map[ query.query ] ) )
                comp.query( query );
       }
       return query;
