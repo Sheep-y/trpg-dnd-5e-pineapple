@@ -28,10 +28,6 @@ var ui = ns.ui = {
       dlg_main.innerHTML = '';
    },
 
-   get activeCharacter ( ) {
-      return ui.panels[0]._character; // Dummy support for singleton chargen panel
-   },
-
    saveFocus ( ) {
       savedFocus = document.activeElement ? document.activeElement.id : null;
       [ savedScrollX, savedScrollY ] = [ window.scrollX, window.scrollY ];

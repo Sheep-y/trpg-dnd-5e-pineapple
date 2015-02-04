@@ -48,6 +48,10 @@ ns.init = function pinbun_init ( source_url ) {
    }
 };
 
+Object.defineProperty( ns, 'activeCharacter',  { // Dummy support for singleton chargen panel
+   get ( ) { return ns.ui.panels[0]._character; }
+} );
+
 pinbun.event.load( 'pinbun' );
 
 })( pinbun = _.map() );
