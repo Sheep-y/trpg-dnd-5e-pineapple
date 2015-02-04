@@ -18,7 +18,7 @@ function dd5_ui_edit_slot_selectbox ( e, container ) {
    // For single choice or duplicatable Slots. Create one select boxes for each choice.
    var { id } = ui._getId( e, container );
    var nullPick = sys.Option.create({ 'cid': '', 'getName': ()=>'\u00A0' });
-   var picks = _.ary( e.getPick() ) || [];
+   var picks = _.array( e.getPick() );
    var count = e.count ? e.count( 'ui' ) : 1;
    var frag = document.createDocumentFragment();
 
@@ -58,7 +58,7 @@ function dd5_ui_edit_slot_selectbox ( e, container ) {
       } );
       // Delete options on blur
       input.addEventListener( 'blur' , function slot_blur ( ) {
-         for ( var c of _.ary( input.childNodes ) ) {
+         for ( var c of input.childNodes ) {
             if ( ! c.selected ) input.removeChild( c );
          }
       } );
@@ -79,7 +79,7 @@ function dd5_ui_edit_slot_multiple ( rule, container ) {
    var options = rule.getOptions();
    if ( ! options || ! options.length ) return;
    var { id } = ui._getId( rule, container ), count = rule.count( 'ui' );
-   var picks = _.ary( rule.getPick() ) || [];
+   var picks = _.array( rule.getPick() );
    if ( picks.length ) picks = picks.filter( e => e );
    var html = _.html( `<div><label class='dd5 slot'><span>${ rule.getLabel() }</span></label></div>` );
    options.forEach( ( opt, i ) => {
@@ -91,7 +91,7 @@ function dd5_ui_edit_slot_multiple ( rule, container ) {
          if ( picked ) attr += ' checked="checked"';
          var label = _.html( `<label><input id='${id}/${e.cid}' type='checkbox' ${attr}><span>${ e.getName() }</span></label>` );
          _( label, 'input' )[0].addEventListener( 'change', function slot_multiple_change ( evt ) {
-            var picks = _.ary( rule.getPick() ) || [];
+            var picks = _.array( rule.getPick() );
             if ( evt.target.checked ) { // Add choice
                for ( var i = 0 ; i < picks.length ; i++ )
                   if ( ! picks[ i ] ) break;

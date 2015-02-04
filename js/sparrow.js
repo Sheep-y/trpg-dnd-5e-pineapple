@@ -54,7 +54,7 @@ if ( ns ) ns._ = _;
  * @param {(Array|NodeList|*)} subject Subject to be converted.
  * @param {integer=} startpos If given, work like Array.slice( startpos ).
  * @param {integer=} length If this and startpos is given, work like Array.slice( startpos, length ).
- * @returns {Array} Clone or slice of subject.
+ * @returns {(Array|null|undefined)} Clone or slice of subject.  Or subject, if subject is null or undefined.
  */
 _.ary = function _ary ( subject, startpos, length ) {
    if ( ! Array.isArray( subject ) ) {
@@ -64,6 +64,19 @@ _.ary = function _ary ( subject, startpos, length ) {
       subject =  Array.from ? Array.from( subject ) : Array.prototype.concat.call( subject );
    }
    return startpos === undefined ? subject : subject.slice( startpos, length );
+};
+
+/**
+ * Convert an array-like object to be an array.  Will always return an array.
+ *
+ * @param {(Array|NodeList|*)} subject Subject to be converted.
+ * @param {integer=} startpos If given, work like Array.slice( startpos ).
+ * @param {integer=} length If this and startpos is given, work like Array.slice( startpos, length ).
+ * @returns {Array} Clone or slice of subject.
+ */
+_.array = function _array ( subject, startpos, length ) {
+   if ( subject === null || subject === undefined ) return [];
+   return _.ary( subject, startpos, length );
 };
 
 /**
@@ -1085,13 +1098,13 @@ _.attr = function _attr( ary, obj, value ) {
             case 'parentNode' :
                if ( attr[ name ] && attr[ name ].appendChild )
                   attr[ name ].appendChild( e );
-               else if ( e.parentNode )
+               else if ( ! attr[ name ] && e.parentNode )
                   e.parentNode.removeChild( e );
                break;
 
             case 'child' :
             case 'children' :
-               // TODO: more comprehensive operasion, e.g. existing children, remove children, etc.
+               while ( e.firstChild ) e.removeChild( e.firstChild );
                if ( attr[ name ] ) _.ary( attr[ name ] ).forEach( function _attr_each_child ( child ) {
                   if ( child ) e.appendChild( child );
                } );
