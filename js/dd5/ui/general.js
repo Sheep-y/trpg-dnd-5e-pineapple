@@ -58,7 +58,7 @@ function dd5_ui_edit_slot_selectbox ( e, container ) {
       } );
       // Delete options on blur
       input.addEventListener( 'blur' , function slot_blur ( ) {
-         for ( var c of input.childNodes ) {
+         for ( var c of _.ary( input.childNodes ) ) { // ary is used to clone the nodelist
             if ( ! c.selected ) input.removeChild( c );
          }
       } );

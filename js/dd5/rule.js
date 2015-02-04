@@ -219,7 +219,7 @@ rule.Character = {
                if ( ! updatedHooks.includes( h ) ) updatedHooks.push( h );
             }
          }
-         this.fireAttributeChanged( updatedHooks );
+         me.fireAttributeChanged( updatedHooks );
       } );
       me.addObserver( 'attribute', ( mon ) => {
          var last = '';
@@ -257,6 +257,7 @@ rule.Character = {
          }
       } else {
          // Update all maps
+         _.assert( this.getCharacter() === this, 'remap_query cannot be called on non-top character' );
          map = this._query_map = _.map();
          this.recur( ( n ) => {
             if ( n === this || ! n.query_hook ) return;

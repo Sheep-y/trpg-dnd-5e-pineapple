@@ -297,7 +297,12 @@ var Catalog = {
   "race", "skill", "background", "class", "equipment",
   "feat", "spell_list", "spell" ].forEach( ns.res.new );
 
-sys.toCId = ( data ) => _.flatten( _.array( data ).map( e => [ e.cid, e.cid.split('.').pop() ] ) );
+sys.toCId = function dd5_sys_toCId ( data ) {
+   return _.flatten( _.array( data )
+                      .filter( e => e )
+                      .map( e => [ e.cid, e.cid.split('.').pop() ] )
+                   );
+};
 
 pinbun.event.load( 'dd5' );
 
