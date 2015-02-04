@@ -129,7 +129,7 @@ dd5.loader.jsonp.load_rules( { 'version':'alpha',
    ] },
    { id: 'human-phb', type: 'subrace', of: 'human', subrules: [
       { slot : 'bonus_ability', options : 'db.entity({ type: "ability" })', count: 2 },
-      /*{ adj : 'toCId( you.bonus_ability )', value: 1 },*/
+      { adj : 'toCId( you.bonus_ability )', value: 1, dependent_attribute: 'bonus_ability' },
       'slot.feat : db.feat() ',
    ] },
 ],

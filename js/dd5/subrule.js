@@ -16,6 +16,8 @@ var base = subrule.Subrule = {
       rule.Rule.create.call( this, opt );
       return me;
    },
+   'copy_list' : [ 'dependent_attribute' ],
+   'dependent_attribute' : null,
    'query_hook' ( ) { return []; },
 };
 
@@ -50,7 +52,7 @@ subrule.Include = {
    },
    'cid' : 'subrule.include',
    'include' : null, // A function returning a resource or an array of resource
-   'compile_list' : [ 'include' ],
+   'compile_list' : base.compile_list.concat( 'include' ),
 
    'getInclude' ( ) {
       return _.ary( this.include() );
@@ -72,7 +74,7 @@ subrule.Adj = {
       return me;
    },
    'cid' : 'subrule.adjust',
-   'compile_list' : [ 'property', 'value', 'min', 'max' ],
+   'compile_list' : base.compile_list.concat([ 'property', 'value', 'min', 'max' ]),
    'toString' ( ) {
       return "Adj." + this.property();
    },
@@ -105,8 +107,8 @@ subrule.Prof = {
 
    'value' : null,
 
-   'copy_list' : [ 'prof_type' ],
-   'compile_list' : [ 'value', 'type' ],
+   'copy_list' : base.copy_list.concat( 'prof_type' ),
+   'compile_list' : base.compile_list.concat([ 'value', 'type' ]),
 
    'toString' ( ) {
       return "Prof: " + this.value();
@@ -133,7 +135,7 @@ subrule.Slot = {
    'count'   : null, // How many picks.  null means always single choice, otherwise may be multiple.
    'default' : null, // Default option.
    'can_duplicate' : ()=>false, // True allow user to select duplicate items.
-   'compile_list' : [ 'options', 'count', 'default', 'can_duplicate' ],
+   'compile_list' : base.compile_list.concat([ 'options', 'count', 'default', 'can_duplicate' ]),
 
    'toString' ( ) {
       return "Slot#" + this.id;
