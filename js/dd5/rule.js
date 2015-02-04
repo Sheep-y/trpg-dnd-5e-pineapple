@@ -203,15 +203,19 @@ rule.Character = {
          oldNodes = _.unique( oldNodes );
          newNodes = _.unique( newNodes );
          if ( oldNodes.length && newNodes.length ) { // If the lists intersect, the state is uncertain and should just remap.
-            for ( var c of oldNodes ) if ( newNodes.includes( c ) ) return this.remap_query();
-            for ( var c of newNodes ) if ( oldNodes.includes( c ) ) return this.remap_query();
+            for ( var c of oldNodes ) if ( newNodes.includes( c ) ) return me.remap_query();
+            for ( var c of newNodes ) if ( oldNodes.includes( c ) ) return me.remap_query();
          }
-         for ( var val of oldNodes ) if ( val.query_hook ) { // Unhook removed component from query map
-            for ( var h of val.query_hook() ) if ( h ) {
-               var lst = map[ h ];
-               if ( ! lst || ! lst.includes( val ) ) log.warn( "Inconsistent query map: Cannot unhook " + val + " from " + h );
-               else lst.splice( lst.indexOf( val ), 1 );
-               if ( ! updatedHooks.includes( h ) ) updatedHooks.push( h );
+         for ( var val of oldNodes ) { // Unhook removed component from query map
+            if ( val.dependent_attribute ) {
+               me.remap_query( val ); // Total cleanup required for dynamic rules
+            } else if ( val.query_hook ) {
+               for ( var h of val.query_hook() ) if ( h ) {
+                  var lst = map[ h ];
+                  if ( ! lst || ! lst.includes( val ) ) log.warn( "Inconsistent query map: Cannot unhook " + val + " from " + h );
+                  else lst.splice( lst.indexOf( val ), 1 );
+                  if ( ! updatedHooks.includes( h ) ) updatedHooks.push( h );
+               }
             }
          }
          for ( var val of newNodes ) if ( val.query_hook ) { // Hook new component to query map
@@ -239,13 +243,13 @@ rule.Character = {
    },
    '_query_map' : null,
    'remap_query' ( component ) {
-      var updatedHooks, map = this._query_map;
+      var updatedHooks = [], map = this._query_map;
       if ( component ) {
          // A component's query hook has changed. We need to find and remove all old reference and add new reference.
          // Please note that this usage is NOT recursive.
          for ( var hook in this._query_map || {} ) {
             var pos = this._query_map[ hook ].indexOf( component );
-            if ( pos ) {
+            if ( pos >= 0 ) {
                this._query_map[ hook ].splice( pos, 1 );
                updatedHooks.push( hook );
             }

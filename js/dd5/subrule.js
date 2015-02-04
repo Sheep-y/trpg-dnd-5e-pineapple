@@ -23,21 +23,16 @@ var base = subrule.Subrule = {
       var me = rule.Rule.build.call( this );
       if ( me.dependent_attribute ) {
          var obs = ( mods ) => {
-            for ( var m in mods ) if ( me.dependent_attribute.includes( m.name ) ) {
-               log.fine( `Dynamic subrule's dependency ${m.name} changed.` );
-               var c = this.getCharacter();
+            for ( var m of mods ) if ( _.ary( me.dependent_attribute ).includes( m.name ) ) {
+               var c = me.getCharacter();
                if ( c ) c.remap_query( me );
                break;
             }
          };
          me.addObserver( 'attribute', ( mods ) => {
-            for ( var m in mods ) if ( m.name === 'root' ) {
-               log.fine( `Dynamic subrule's root changed.` );
-               if ( m.oldValue !== this ) {
-                  m.oldValue.removeObserver( 'attribute', obs );
-                  c.remap_query( me ); // Cleanup
-               }
-               if ( m.newValue !== this ) m.newValue.addObserver( 'attribute', obs );
+            for ( var m of mods ) if ( m.name === 'root' ) {
+               if ( m.oldValue !== me ) m.oldValue.removeObserver( 'attribute', obs );
+               if ( m.newValue !== me ) m.newValue.addObserver( 'attribute', obs );
             }
          } );
       }
@@ -46,7 +41,7 @@ var base = subrule.Subrule = {
    'characterAttributeChanged' ( name, newValue, oldValue ) {
       log.fine( `Character ${name} changed from ${oldValue} to ${newValue}.` );
       var char = this.getCharacter();
-      if ( char ) char.fireAttributeChanged.call( name, newValue, oldValue );
+      if ( char ) char.fireAttributeChanged( name, newValue, oldValue );
    },
 };
 
@@ -214,6 +209,7 @@ subrule.Slot = {
             if ( orig && orig.length > index ) remover( orig[ index ] );
             result = _.ary( orig );
             if ( ! result ) result = new Array( count ).fill( null );
+            else result = result.concat(); // We need to keep orig for the events
             result[ index ] = adder( pick );
          }
       } else { // Single choice slot
