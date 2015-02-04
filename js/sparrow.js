@@ -211,6 +211,46 @@ _.coalesce = function _coalesce ( a ) {
    return a;
 };
 
+/**
+ * Flatten and returns a new array.
+ *
+ * Self-referencing array will be referencd in the new array,
+ * but the reference will stay the same and no longer self-referencing.
+ *
+ * @param {*} elem Source array, will not be modified.
+ * @returns {*} Flattened array, or elem if it is not an Array
+ */
+_.flatten = function _flatten ( stack, ary ) {
+   if ( arguments.length <= 1 ) {
+      ary = stack;
+      if ( ! Array.isArray( ary ) ) return ary;
+      stack = [];
+   }
+   stack.push( ary );
+   var result = [];
+   ary.forEach( function _flatten_each ( e ) {
+      if ( Array.isArray( e ) ) {
+         if ( stack.indexOf( e ) >= 0 ) result.push( e );
+         else result = result.concat( _flatten( stack, e ) );
+      } else result.push( e );
+   } );
+   stack.pop();
+   return result;
+};
+
+/**
+ * Remove duplicates from an array.
+ *
+ * @param {Array} Source array, will not be modified.
+ * @returns {Array} A new array without duplicates.
+ */
+_.unique = function _unique ( ary ) {
+   if ( ! Array.isArray( ary ) ) return ary;
+   return ary.filter( function _unique_each ( e, i ) {
+      return ary.indexOf( e ) === i;
+   } );
+};
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Text Helpers
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
