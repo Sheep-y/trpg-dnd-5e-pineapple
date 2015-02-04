@@ -6,9 +6,8 @@
 
 html
    {
-      font: 14px Arial;
+      font: 16px Arial;
       text-rendering: optimizeLegibility;
-      background: url("../img/letter-d.svg") center / contain no-repeat, var( --main-bkgd );
       color: var( --main-text );
    }
 html, body
@@ -50,7 +49,7 @@ input, select, textarea, input[type="checkbox"] + span
       border: 1px solid var( --main );
       border-radius: 4px;
       margin: 2px 4px;
-      font: 14px Arial;
+      font: 16px Arial;
       transition: background-color 1s;
    }
    @keyframes hover_border_cycle { from { border-color: var( --main ); } to { border-color: var( --main-t2 ); }  }

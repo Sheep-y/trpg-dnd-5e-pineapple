@@ -15,4 +15,6 @@ html {
    --cmpl    : #FF7A00;
    --cmpl-b1 : #B05400;
    --cmpl-b2 : #381B00;
+
+   background: url("../img/deepsea/letter-d.svg") center / contain no-repeat, var( --main-bkgd );
 }
