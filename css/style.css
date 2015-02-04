@@ -35,6 +35,20 @@ a:hover
       color: var( --cmpl-t1 );
       text-decoration: underline;
    }
+   
+html dialog.ui
+   {
+      color: var( --main-text );
+      background-color: var( --main-b2-o7 );
+      border-color: var( --cmpl );
+      box-shadow: none;
+   }
+   html dialog.ui section header
+      {
+         color: var( --cmpl-t1 );
+         background-color: var( --cmpl-b2 );
+         border-bottom-color: var( --cmpl );
+      }
 
 /* Input fields */
 label > span:first-child
@@ -50,20 +64,22 @@ input, select, textarea, input[type="checkbox"] + span
       border-radius: 4px;
       margin: 2px 4px;
       font: 16px Arial;
-      transition: background-color 1s;
+      transition: background-color 1s ease, border 1s ease;
    }
-   @keyframes hover_border_cycle { from { border-color: var( --main ); } to { border-color: var( --main-t2 ); }  }
+   @keyframes hover_border_cycle { from { border-color: var( --main-t2 ); } to { border-color: var( --main ); }  }
    input:hover, select:hover, textarea:hover, input[type="checkbox"] + span:hover
       {
-         background-color: var( --main-b2 );
-         animation: hover_border_cycle 2s linear 0s infinite alternate;
+         border-color: var( --main-t2 );
+         background-color: var( --main-b2-o7 );
+         animation: hover_border_cycle 2s linear 1s infinite alternate;
       }
-   @keyframes focus_border_cycle { from { border-color: var( --cmpl ); } to { border-color: var( --cmpl-t2 ); }  }
+   @keyframes focus_border_cycle { from { border-color: var( --cmpl-t2 ); } to { border-color: var( --cmpl ); }  }
    input:focus, select:focus, textarea:focus, input[type="checkbox"]:focus + span
       {
-         background-color: var( --cmpl-b2 );
+         border-color: var( --cmpl-t2 );
+         background-color: var( --cmpl-b2-o7 );
          color: var( --cmpl-t2 );
-         animation: focus_border_cycle 2s linear 0s infinite alternate;
+         animation: focus_border_cycle 2s linear 1s infinite alternate;
       }
 input[type="number"]
    {
@@ -91,12 +107,13 @@ input[type="checkbox"]
       }
       input[type="checkbox"]:checked + span
          {
-            border: 1px solid var( --main );
+            border-color: var( --main );
          }
          input[type="checkbox"]:checked:focus + span
             {
+               border-color: var( --main-t2 );
                color: var( --main-t2 );
-               animation: hover_border_cycle 2s linear 0s infinite alternate;
+               animation: hover_border_cycle 2s linear 1s infinite alternate;
             }
    label:not(:last-child) > input[type="checkbox"] + span
    {

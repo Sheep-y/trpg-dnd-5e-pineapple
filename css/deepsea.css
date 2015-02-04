@@ -16,5 +16,10 @@ html {
    --cmpl-b1 : #B05400;
    --cmpl-b2 : #381B00;
 
+   --main-b2-o7 : rgba(   0,  30,  34, 0.7 );
+
+   /*--cmpl-b1-o7 : rgba( 176,  84,   0, 0.7 );*/
+   --cmpl-b2-o7 : rgba(  56,  27,   0, 0.7 );
+
    background: url("../img/deepsea/letter-d.svg") center / contain no-repeat, var( --main-bkgd );
 }
