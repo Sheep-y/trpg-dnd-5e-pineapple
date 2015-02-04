@@ -246,11 +246,9 @@ rule.Character = {
       if ( query.query.indexOf( '.' ) >= 0 ) { // Query contains dot, likely a path, do not use query map.
          return Resource.query.call( this, query );
       } else { // Non-path query will go through observer map for optimal execution.
-         var map = this._queries;
-         if ( map[ query.query ] )
-            for ( var o of _.ary( this._queries[ query.query ] ) ) o.query( query );
-         if ( map[ '*' ] )
-            for ( var o of _.ary( this._queries[ '*' ] ) ) o.query( query );
+         if ( this._queries[ query.query ] )
+            for ( var comp of _.ary( this._queries[ query.query ] ) )
+               comp.query( query );
       }
       return query;
    }

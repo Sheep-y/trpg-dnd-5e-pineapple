@@ -193,12 +193,18 @@ var loader = ns.loader = {
 
       // Convert a simplified jsonp subrule into full jsonp subrule
       'compile_object' ( e ) {
-         for ( var p of [ 'feature', 'slot' ] ) {
-            if ( e[ p ] ) {
-               e.subrule = p;
-               e.id = e[ p ];
-               delete e[ p ];
-               break;
+         if ( e.adj ) {
+            e.subrule = 'adj';
+            e.property = e.adj;
+            delete e.adj;
+         } else {
+            for ( var p of [ 'feature', 'slot' ] ) {
+               if ( e[ p ] ) {
+                  e.subrule = p;
+                  e.id = e[ p ];
+                  delete e[ p ];
+                  break;
+               }
             }
          }
          return e;
