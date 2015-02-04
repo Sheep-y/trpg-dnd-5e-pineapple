@@ -119,11 +119,11 @@ var loader = ns.loader = {
          var uftype = _.ucfirst( type );
          var r = rule[ uftype ].create( e );
          if ( e.subrules && e.subrules.length ) {
-            e.subrules.forEach( ( sub, i ) => { try {
-               r.add( loader.jsonp.load_subrule( sub ) );
+            r.add( e.subrules.map( ( sub, i ) => { try {
+               return loader.jsonp.load_subrule( sub );
             } catch ( ex ) {
-               log.error( `[dd5.loader] Cannot create ${i}th subrule of ${ r.cid } (${ JSON.stringify( sub ) })`, ex );
-            } } );
+               return log.error( `[dd5.loader] Cannot create ${i}th subrule of ${ r.cid } (${ JSON.stringify( sub ) })`, ex );
+            } } ).filter( e => e ) );
          }
          delete e.subrules;
          return r;

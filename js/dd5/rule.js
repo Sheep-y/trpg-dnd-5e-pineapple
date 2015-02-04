@@ -192,8 +192,8 @@ rule.Character = {
       me.addObserver( 'structure', ( mon ) => {
          if ( me.getCharacter() !== me ) return; // Run only if this is the root character
          for ( var m of mon ) {
-            if ( m.oldValue !== null ) { // Element is deteched.  Unhook them from query map.
-               m.oldValue.recur( null, ( val ) => {
+            for ( var node of _.array( m.oldNodes ) ) { // Element is deteched.  Unhook them from query map.
+               node.recur( null, ( val ) => {
                   if ( ! val.query_hook ) return;
                   for ( var h of val.query_hook() ) if ( h ) {
                      var lst = me._queries[ h ];
@@ -203,8 +203,8 @@ rule.Character = {
                   }
                } );
             }
-            if ( m.newValue !== null ) { // Element is attached.  Unhook them from query map.
-               m.newValue.recur( null, ( val ) => {
+            for ( var node of _.array( m.newNodes ) ) { // Element is attached.  Unhook them from query map.
+               node.recur( null, ( val ) => {
                   if ( ! val.query_hook ) return;
                   for ( var h of val.query_hook() ) if ( h ) {
                      var lst = me._queries[ h ] || ( me._queries[ h ] = [] );

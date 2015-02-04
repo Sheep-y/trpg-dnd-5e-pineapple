@@ -43,7 +43,7 @@ _.Index = {
    "add" : function ( obj ) {
       var map = this.map;
       for ( var i in map ) {
-         var index = map[ i ], keys = _.ary( obj[ i ] );
+         var index = map[ i ], keys = _.array( obj[ i ] );
          keys.forEach( function _Index_add_each( key ) {
             key = "" + key;
             var list = index[ key ];
@@ -64,9 +64,9 @@ _.Index = {
       if ( pos < 0 ) return;
       this.all.splice( pos, 1 );
       for ( var i in map ) {
-         var index = map[ i ], keys = _.ary( obj[ i ] );
+         var index = map[ i ], keys = _.array( obj[ i ] );
          keys.forEach( function _Index_remove_each( key ) {
-            key = ""+key;
+            key = "" + key;
             var list = index[ key ];
             if ( list.length === 1 ) {
                delete index[ key ];
@@ -157,8 +157,8 @@ _.Composite = {
    '_children' : null, // Array, either null or non-empty.  Never empty array.
    '_observers' : null,
 
-   'fireStrutureChanged' : function ( newNode, oldNode ) {
-      this.fireObserver( 'structure', { 'target': this, 'type': 'structure', 'name': '', 'newValue': newNode, 'oldValue': oldNode } );
+   'fireStrutureChanged' : function ( newNodes, oldNodes ) {
+      this.fireObserver( 'structure', { 'target': this, 'type': 'structure', 'newNodes': _.ary( newNodes ), 'oldNodes': _.ary( oldNodes ) } );
    },
    'fireAttributeChanged' : function ( name, newValue, oldValue ) {
       this.fireObserver( 'attribute', { 'target': this, 'type': 'attribute', 'name': name, 'newValue': newValue, 'oldValue': oldValue } );
@@ -182,33 +182,34 @@ _.Composite = {
       if ( this._observers.isEmpty() ) this._observers = null;
    },
 
-   'add' : function ( comp ) {
-      var parent = comp.getParent(), c = this._children; // Don't use getChildren, we need to know if it is null
-      _.assert( parent !== this, '[sparrow.Composite] Cannot re-add to parent.' );
-      if ( parent ) parent.remove( comp );
-      comp._parent = this;
-      comp.fireAttributeChanged( 'parent', this, parent );
+   'add' : function ( components ) {
+      var comp = _.array( components ), me = this;
+      if ( comp.length <= 0 ) return;
+      var c = this._children || ( this._children = [] );
+      comp.forEach( function _Composite_add ( e ) {
+         var parent = e.getParent();
+         _.assert( parent !== me, '[sparrow.Composite] Cannot re-add to parent.' );
+         if ( parent ) parent.remove( e );
+         e._parent = me;
+         e.fireAttributeChanged( 'parent', me, parent );
+         c.push( e );
+      } );
       this.fireStrutureChanged( comp, null );
-      if ( c ) {
-         c.push( comp );
-      } else {
-         this._children = [ comp ];
-      }
    },
 
-   'remove' : function ( comp ) {
-      var c = this._children, pos = c ? c.indexOf( comp ) : 0;
-      _.assert( comp.getParent() === this && pos >= 0, '[sparrow.Composite] Cannot remove non-existing children' );
-      comp._parent = null;
-      comp.fireAttributeChanged( 'parent', null, this );
+   'remove' : function ( components ) {
+      var comp = _.array( components ), c = this._children, me = this;
+      if ( comp.length <= 0 ) return;
+      _.assert( c && c.length, '[sparrow.Composite] Cannot remove without children' );
+      comp.forEach( function _Composite_remove ( e ) {
+         var pos = c.indexOf( e );
+         _.assert( e.getParent() === me && pos >= 0, '[sparrow.Composite] Cannot remove non-existing children' );
+         e._parent = null;
+         e.fireAttributeChanged( 'parent', null, me );
+         c.splice( pos, 1 );
+      } );
+      if ( c.length <= 0 ) this._children = null;
       this.fireStrutureChanged( null, comp );
-      if ( c ) {
-         if ( c.length > 1 ) {
-            c.splice( pos, 1 );
-         } else {
-            this._children = null;
-         }
-      }
    },
 
    'iterator' : function ( ) {
@@ -226,9 +227,14 @@ _.Composite = {
    get childrenCount ( ) { return this._children ? this._children.length : 0; },
    get children ( ) { return this._children ? this._children.concat() : []; },
    set children ( child ) {
-      child = _.ary( child );
-      for ( var c of this._children ) if ( child.indexOf( c ) < 0 ) this.remove( c );
-      for ( var c of child ) if ( this._children.indexOf( c ) < 0 ) this.add( c );
+      child = _.array( child );
+      if ( this._children ) {
+         this.remove( this._children.filter( function ( c ) { return child.indexOf( c ) < 0; } ) );
+         this.add   ( child.filter( function ( c ) { return this._children.indexOf( c ) < 0; } ) );
+      } else {
+         this.add( child );
+      }
+      this._children = child.concat(); // Set children order
    },
    'getRoot' : function ( type ) {
       if ( type ) {
