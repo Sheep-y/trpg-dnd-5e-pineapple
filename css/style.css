@@ -5,123 +5,125 @@
 .negative_order { order: -10; }
 
 html
-{
-   font: 14px Arial;
-   text-rendering: optimizeLegibility;
-   background: url("../img/letter-d.svg") center / contain no-repeat, var( --main-bkgd );
-   color: var( --main-text );
-}
+   {
+      font: 14px Arial;
+      text-rendering: optimizeLegibility;
+      background: url("../img/letter-d.svg") center / contain no-repeat, var( --main-bkgd );
+      color: var( --main-text );
+   }
 html, body
-{
-   margin: 0;
-   min-width: 100%;
-   min-height: 100%;
-}
+   {
+      margin: 0;
+      min-width: 100%;
+      min-height: 100%;
+   }
 div
-{
-   padding: 0;
-   margin: 0;
-}
+   {
+      padding: 0;
+      margin: 0;
+   }
 table
-{
-   border-spacing: 0;
-}
+   {
+      border-spacing: 0;
+   }
 a, a:visited
-{
-   color: var( --cmpl-t2 );
-   text-decoration: none;
-}
+   {
+      color: var( --cmpl-t2 );
+      text-decoration: none;
+   }
 a:hover
-{
-   color: var( --cmpl-t1 );
-   text-decoration: underline;
-}
+   {
+      color: var( --cmpl-t1 );
+      text-decoration: underline;
+   }
 
 /* Input fields */
 label > span:first-child
-{
-   display: inline-block;
-   min-width: 120px;
-}
+   {
+      display: inline-block;
+      min-width: 120px;
+   }
 input, select, textarea, input[type="checkbox"] + span
-{
-   background-color: transparent;
-   color: var( --main-text );
-   border: 1px solid var( --main );
-   border-radius: 4px;
-   margin: 2px 4px;
-   font: 14px Arial;
-   transition: background-color 1s;
-}
-@keyframes hover_border_cycle { from { border-color: var( --main ); } to { border-color: var( --main-t2 ); }  }
-input:hover, select:hover, textarea:hover, input + span:hover
    {
-      background-color: var( --main-b2 );
-      animation: hover_border_cycle 2s linear 0s infinite alternate;
+      background-color: transparent;
+      color: var( --main-text );
+      border: 1px solid var( --main );
+      border-radius: 4px;
+      margin: 2px 4px;
+      font: 14px Arial;
+      transition: background-color 1s;
    }
-@keyframes focus_border_cycle { from { border-color: var( --cmpl ); } to { border-color: var( --cmpl-t2 ); }  }
-input:focus, select:focus, textarea:focus, input:focus + span
-   {
-      background-color: var( --cmpl-b2 );
-      color: var( --cmpl-t2 );
-      animation: focus_border_cycle 2s linear 0s infinite alternate;
-   }
+   @keyframes hover_border_cycle { from { border-color: var( --main ); } to { border-color: var( --main-t2 ); }  }
+   input:hover, select:hover, textarea:hover, input[type="checkbox"] + span:hover
+      {
+         background-color: var( --main-b2 );
+         animation: hover_border_cycle 2s linear 0s infinite alternate;
+      }
+   @keyframes focus_border_cycle { from { border-color: var( --cmpl ); } to { border-color: var( --cmpl-t2 ); }  }
+   input:focus, select:focus, textarea:focus, input[type="checkbox"]:focus + span
+      {
+         background-color: var( --cmpl-b2 );
+         color: var( --cmpl-t2 );
+         animation: focus_border_cycle 2s linear 0s infinite alternate;
+      }
 input[type="number"]
-{
-   max-width: 50px;
-}
+   {
+      max-width: 50px;
+   }
 select
-{
-   min-width: 100px;
-}
-select
-{
-   /** Non-standard override of select style **/
-   -webkit-appearance: none;
-   -moz-appearance: none;
-}
+   {
+      min-width: 120px;
+      /** Non-standard override of select style **/
+      -webkit-appearance: none;
+      -moz-appearance: none;
+   }
 /* Checkboxes should be followed by a span, both wrapped by a label */
 input[type="checkbox"]
-{
-   position: absolute;
-   top: -8000px;
-   opacity: 0;
-   z-index: -1000;
-}
-input[type="checkbox"] + span
    {
-      padding: 0 4px;
-      border: 1px solid transparent;
+      position: absolute;
+      top: -8000px;
+      opacity: 0;
+      z-index: -1000;
    }
-   input[type="checkbox"]:checked + span
+   input[type="checkbox"] + span
       {
-         border: 1px solid var( --main );
+         padding: 0 4px;
+         border: 1px solid transparent;
       }
-      input[type="checkbox"]:checked:focus + span
+      input[type="checkbox"]:checked + span
          {
-            color: var( --main-t2 );
-            animation: hover_border_cycle 2s linear 0s infinite alternate;
+            border: 1px solid var( --main );
          }
-label:not(:last-child) > input[type="checkbox"] + span
+         input[type="checkbox"]:checked:focus + span
+            {
+               color: var( --main-t2 );
+               animation: hover_border_cycle 2s linear 0s infinite alternate;
+            }
+   label:not(:last-child) > input[type="checkbox"] + span
    {
       margin-right: 0;
    }
 
 /* Top navigation */
 nav#top 
-{
-   display: flex;
-   justify-content: space-between;
-   border-bottom: 2px solid var( --main );
-}
-nav#top a
    {
-      margin: 0 5px;
+      display: flex;
+      justify-content: space-between;
+      border-bottom: 2px solid var( --main );
    }
-nav#top h1
-   {
-      flex-grow: 1;
-      margin: 0;
-      text-align: center;
-      font-size: 100%;
-   }
+   nav#top a
+      {
+         margin: 0 5px;
+         color: var( --cmpl-t1 );
+      }
+      nav#top a:hover
+         {
+            color: var( --cmpl-t2 );
+         }
+   nav#top h1
+      {
+         flex-grow: 1;
+         margin: 0;
+         text-align: center;
+         font-size: 100%;
+      }
