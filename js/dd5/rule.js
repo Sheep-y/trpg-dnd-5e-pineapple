@@ -243,7 +243,6 @@ rule.Character = {
       if ( component ) {
          // A component's query hook has changed. We need to find and remove all old reference and add new reference.
          // Please note that this usage is NOT recursive.
-         _.assert( component.getCharacter() === this, 'remap_query cannot be called on non-top or non-owning character' );
          for ( var hook in this._query_map || {} ) {
             var pos = this._query_map[ hook ].indexOf( component );
             if ( pos ) {
@@ -251,7 +250,7 @@ rule.Character = {
                updatedHooks.push( hook );
             }
          }
-         if ( component.query_hook ) { // Done remove part. Now try to add.
+         if ( component.query_hook && component.getCharacter() === this ) { // Done remove part. Now try to add.
             for ( var hook of _.array( component.query_hook() ) ) {
                var lst = map[ hook ] || ( map[ hook ] = [] );
                lst.push( component );

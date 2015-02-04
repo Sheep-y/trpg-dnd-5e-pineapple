@@ -6,6 +6,8 @@ var ui = ns.ui;
 var symbol = _.ui.symbol;
 var log = ns.event;
 
+var refresh_timer = 0;
+
 ui.Chargen = {
    '__proto__' : _.ui.Component,
    'create' ( char ) {
@@ -22,9 +24,16 @@ ui.Chargen = {
    '_character' : null,
 
    'refresh' ( ) {
-      ui.saveFocus();
-      _.clear( this.dom )[0].appendChild( this._character.createUI( 'edit', this.dom ) );
-      ui.loadFocus();
+      if ( refresh_timer ) return;
+      refresh_timer = _.setImmediate( () => {
+         try { 
+            ui.saveFocus();
+            _.clear( this.dom )[0].appendChild( this._character.createUI( 'edit', this.dom ) );
+            ui.loadFocus();
+         } finally {
+            refresh_timer = 0;
+         }
+      } );
    },
 
    'destroy' ( ) {

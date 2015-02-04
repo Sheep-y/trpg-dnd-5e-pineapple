@@ -19,6 +19,35 @@ var base = subrule.Subrule = {
    'copy_list' : [ 'dependent_attribute' ],
    'dependent_attribute' : null,
    'query_hook' ( ) { return []; },
+   'build' ( ) {
+      var me = rule.Rule.build.call( this );
+      if ( me.dependent_attribute ) {
+         var obs = ( mods ) => {
+            for ( var m in mods ) if ( me.dependent_attribute.includes( m.name ) ) {
+               log.fine( `Dynamic subrule's dependency ${m.name} changed.` );
+               var c = this.getCharacter();
+               if ( c ) c.remap_query( me );
+               break;
+            }
+         };
+         me.addObserver( 'attribute', ( mods ) => {
+            for ( var m in mods ) if ( m.name === 'root' ) {
+               log.fine( `Dynamic subrule's root changed.` );
+               if ( m.oldValue !== this ) {
+                  m.oldValue.removeObserver( 'attribute', obs );
+                  c.remap_query( me ); // Cleanup
+               }
+               if ( m.newValue !== this ) m.newValue.addObserver( 'attribute', obs );
+            }
+         } );
+      }
+      return me;
+   },
+   'characterAttributeChanged' ( name, newValue, oldValue ) {
+      log.fine( `Character ${name} changed from ${oldValue} to ${newValue}.` );
+      var char = this.getCharacter();
+      if ( char ) char.fireAttributeChanged.call( name, newValue, oldValue );
+   },
 };
 
 function setProficiency ( rule, query, prof_type, prof ) {
@@ -199,6 +228,7 @@ subrule.Slot = {
       // Update and fire event.
       this.pick = result;
       this.fireAttributeChanged( this.id, result, orig );
+      this.characterAttributeChanged( this.id, result, orig );
    },
    'validPick' ( pick ) {
       return pick == null || this.getCompatibleOptions().includes( pick );

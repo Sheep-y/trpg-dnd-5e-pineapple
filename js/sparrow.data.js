@@ -158,18 +158,16 @@ _.Composite = {
    '_observers' : null,
 
    'fireStrutureChanged' : function ( newNodes, oldNodes ) {
-      this.fireObserver( 'structure', { 'target': this, 'type': 'structure', 'newNodes': _.ary( newNodes ), 'oldNodes': _.ary( oldNodes ) } );
+      if ( this._observers ) this._observers.fire( 'structure', { 'target': this, 'type': 'structure', 'newNodes': _.ary( newNodes ), 'oldNodes': _.ary( oldNodes ) } );
+      if ( this._parent ) this._parent.fireStrutureChanged( newNodes, oldNodes );
    },
    'fireAttributeChanged' : function ( name, newValue, oldValue ) {
+      if ( ! this._observers ) return;
       if ( Array.isArray( name ) ) {
          var me = this;
          return name.forEach( function( n ) { me.fireAttributeChanged( n, newValue, oldValue ); } );
       }
-      this.fireObserver( 'attribute', { 'target': this, 'type': 'attribute', 'name': name, 'newValue': newValue, 'oldValue': oldValue } );
-   },
-   'fireObserver' : function ( type, event ) {
-      if ( this._observers ) this._observers.fire( type, event );
-      if ( this._parent ) this._parent.fireObserver( type, event );
+      this._observers.fire( 'attribute', { 'target': this, 'type': 'attribute', 'name': name, 'newValue': newValue, 'oldValue': oldValue } );
    },
 
    'addObserver' : function ( type, observer ) {
@@ -189,30 +187,33 @@ _.Composite = {
    'add' : function ( components ) {
       var comp = _.array( components ), me = this;
       if ( comp.length <= 0 ) return;
-      var c = this._children || ( this._children = [] );
+      var child = this._children || ( this._children = [] ), root = this.getRoot();
       comp.forEach( function _Composite_add ( e ) {
          var parent = e.getParent();
          _.assert( parent !== me, '[sparrow.Composite] Cannot re-add to parent.' );
          if ( parent ) parent.remove( e );
          e._parent = me;
          e.fireAttributeChanged( 'parent', me, parent );
-         c.push( e );
+         e.recur( function( c ) { c.fireAttributeChanged( 'root', root, e ); } );
+         child.push( e );
       } );
       this.fireStrutureChanged( comp, null );
    },
 
    'remove' : function ( components ) {
-      var comp = _.array( components ), c = this._children, me = this;
+      var comp = _.array( components );
       if ( comp.length <= 0 ) return;
-      _.assert( c && c.length, '[sparrow.Composite] Cannot remove without children' );
+      var child = this._children, me = this, root = this.getRoot()
+      _.assert( child && child.length, '[sparrow.Composite] Cannot remove without children' );
       comp.forEach( function _Composite_remove ( e ) {
-         var pos = c.indexOf( e );
+         var pos = child.indexOf( e );
          _.assert( e.getParent() === me && pos >= 0, '[sparrow.Composite] Cannot remove non-existing children' );
          e._parent = null;
          e.fireAttributeChanged( 'parent', null, me );
-         c.splice( pos, 1 );
+         e.recur( function( c ) { c.fireAttributeChanged( 'root', e, root ); } );
+         child.splice( pos, 1 );
       } );
-      if ( c.length <= 0 ) this._children = null;
+      if ( child.length <= 0 ) this._children = null;
       this.fireStrutureChanged( null, comp );
    },
 
