@@ -19,26 +19,29 @@ var rule = ns.rule = _.map();
 
 /** Wrap up object for easier use. */
 rule.wrapper = {
-   you : {
-      // Divert unknown properties to query function
-      'get' ( me, name ) {
-         return name in me ? me[ name ] : me.query( sys.Query.create( name, me ) ).value;
-      }
+   you ( target ) {
+      var c = target ? target.getCharacter() : null;
+      if ( ! c ) c = { query: _.echo, queryChar: _.dummy };
+      return new Proxy( c, { // Divert unknown properties to query function
+            'get' ( me, name ) {
+               return name in me ? me[ name ] : me.query( sys.Query.create( name, me ) ).value;
+            }
+         } );
    },
-   res : {
-      // Repack categories as function
-      'get' ( me, name ) {
-         return name in me
-            ? criteria => new Proxy( me[ name ].get( criteria ), rule.wrapper.first )
-            : null;
-      }
+   res : new Proxy( dd5.res, { // Repack categories as function
+            'get' ( me, name ) {
+               return name in me
+                  ? criteria => rule.wrapper.first( me[ name ].get( criteria ) )
+                  : null;
+            }
+         } ),
+   first ( target ) {
+      return new Proxy( target, { // if there is only one match, divert unknown properties to first result
+         'get' ( me, name ) {
+            return name in me ? me[ name ] : ( me.length == 1 ? me[0][ name ] : undefined );
+         }
+      } );
    },
-   first : {
-      // if there is only one match, divert unknown properties to first result
-      'get' ( me, name ) {
-         return name in me ? me[ name ] : ( me.length == 1 ? me[0][ name ] : undefined );
-      }
-   }
 };
 
 /*****************************************************************************/
@@ -55,8 +58,8 @@ function property_compiler ( subject, prop, value, args ) {
          func = subject[ prop ] = new Function( body );
       } else {
          var head = '', varlist = [];
-         if ( body.match( /\bdb\b/ ) ) varlist.push( 'db=new Proxy(dd5.res,dd5.rule.wrapper.res)' );
-         if ( body.match( /\byou\b/ ) ) varlist.push( 'you=new Proxy(this.getCharacter(),dd5.rule.wrapper.you)' );
+         if ( body.match( /\bdb\b/ ) ) varlist.push( 'db=dd5.rule.wrapper.res' );
+         if ( body.match( /\byou\b/ ) ) varlist.push( 'you=dd5.rule.wrapper.you(this)' );
          if ( body.match( /\bmin\b/ ) ) varlist.push( 'min=Math.min' );
          if ( body.match( /\bmax\b/ ) ) varlist.push( 'max=Math.max' );
          if ( body.match( /\btoCId\b/ ) ) varlist.push( 'toCId=dd5.sys.toCId' );
@@ -275,7 +278,7 @@ rule.Character = {
       if ( query.query.indexOf( '.' ) >= 0 || this._query_map === null ) { // If query contains dot, it is likely a path, do not use query map.
          return Resource.query.call( this, query );
       } else { // Non-path query will go through observer map for optimal execution.
-         if ( this._query_map[ query.query ] )
+         if ( query.query in this._query_map )
             for ( var comp of _.ary( this._query_map[ query.query ] ) )
                comp.query( query );
       }

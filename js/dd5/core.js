@@ -268,12 +268,12 @@ var Catalog = {
             var criteron = criteria[i], filter;
             if ( Array.isArray( criteron ) ) {
                // List match
-               filter = ( e ) => criteron.includes( e[i] );
+               filter = ( e ) => criteron.includes( e[ i ] );
             } else if ( typeof( criteron ) === 'object' ) {
                // Range match
                var lo = criteron['>='], hi = criteron['<='];
                filter = ( e ) => {
-                  var val = +e[i];
+                  var val = +e[ i ];
                   if ( isNaN( val ) ) return false;
                   if ( lo !== undefined && val < lo ) return false;
                   if ( hi !== undefined && val > hi ) return false;
@@ -282,7 +282,7 @@ var Catalog = {
             } else {
                // Plain value match
                criteron += "";
-               filter = ( e ) => { return criteron === "" + ( e[i] !== undefined ? e[i] : undefined ); };
+               filter = ( e ) => { return criteron === "" + ( i in e ? e[ i ] : undefined ); };
             }
             result = result.filter( filter );
             if ( result.length <= 0 ) break;
