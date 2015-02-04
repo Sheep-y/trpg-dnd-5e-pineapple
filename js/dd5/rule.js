@@ -192,30 +192,34 @@ rule.Character = {
       me.remap_queries();
       me.addObserver( 'structure', ( mon ) => {
          if ( me.getCharacter() !== me ) return; // Run only if this is the root character
-         // Can further optimise by consolidating 'addlist' and 'removelist' first
+         var oldNodes = [], newNodes = [], updatedHooks = [];
          for ( var m of mon ) {
-            for ( var node of _.array( m.oldNodes ) ) { // Element is deteched.  Unhook them from query map.
-               node.recur( null, ( val ) => {
-                  if ( ! val.query_hook ) return;
-                  for ( var h of val.query_hook() ) if ( h ) {
-                     var lst = me._queries[ h ];
-                     if ( ! lst || lst.indexOf( val ) < 0 ) log.warn( "Inconsistent query map: Cannot unhook " + val + " from " + h );
-                     else lst.splice( lst.indexOf( val ), 1 );
-                     me.fireAttributeChanged( h );
-                  }
-               } );
-            }
-            for ( var node of _.array( m.newNodes ) ) { // Element is attached.  Unhook them from query map.
-               node.recur( null, ( val ) => {
-                  if ( ! val.query_hook ) return;
-                  for ( var h of val.query_hook() ) if ( h ) {
-                     var lst = me._queries[ h ] || ( me._queries[ h ] = [] );
-                     lst.push( val );
-                     me.fireAttributeChanged( h );
-                  }
-               } );
+            if ( m.oldNodes ) for ( var c of m.oldNodes ) c.recur( e => oldNodes.push( e ) );
+            if ( m.newNodes ) for ( var c of m.newNodes ) c.recur( e => newNodes.push( e ) );
+         }
+         oldNodes = _.unique( oldNodes );
+         newNodes = _.unique( newNodes );
+         if ( oldNodes.length && newNodes.length ) { // If the lists intersect, the state is uncertain and should just remap.
+            for ( var c of oldNodes ) if ( newNodes.includes( c ) ) return this.remap_queries();
+            for ( var c of newNodes ) if ( oldNodes.includes( c ) ) return this.remap_queries();
+         }
+         for ( var val of oldNodes ) if ( val.query_hook ) { // Unhook removed component from query map
+            for ( var h of val.query_hook() ) if ( h ) {
+               var lst = me._queries[ h ];
+               if ( ! lst || ! lst.includes( val ) ) log.warn( "Inconsistent query map: Cannot unhook " + val + " from " + h );
+               else lst.splice( lst.indexOf( val ), 1 );
+               if ( ! updatedHooks.includes( h ) ) updatedHooks.push( h );
             }
          }
+         for ( var val of newNodes ) if ( val.query_hook ) { // Hook new component to query map
+            for ( var h of val.query_hook() ) if ( h ) {
+               var lst = me._queries[ h ] || ( me._queries[ h ] = [] );
+               if ( lst.includes( h ) ) log.warn( "Inconsistent query map: Cannot hook " + val + " to " + h );
+               else lst.push( val );
+               if ( ! updatedHooks.includes( h ) ) updatedHooks.push( h );
+            }
+         }
+         this.fireAttributeChanged( updatedHooks );
       } );
       me.addObserver( 'attribute', ( mon ) => {
          var last = '';
@@ -225,25 +229,26 @@ rule.Character = {
                if ( m.newValue ) last = 'Attach';
             }
          }
-         if      ( last === 'Detach' ) me.remap_queries();    // This character is deteched; remap queries.
-         else if ( last === 'Attach' ) me._queries = _.map(); // This character is attached; reset query map.
+         if      ( last === 'Detach' ) me.remap_queries(); // This character is deteched; remap queries.
+         else if ( last === 'Attach' ) me._queries = null; // This character is attached; clear query map.
       } );
       return me;
    },
-   '_queries' : _.map(),
+   '_queries' : null,
    'remap_queries' ( ) {
       this._queries = _.map();
-      this.recur( null, ( n ) => {
+      this.recur( ( n ) => {
          if ( n === this || ! n.query_hook ) return;
-         for ( var h of n.query_hook() ) {
+         for ( var h of n.query_hook() ) if ( h ) {
             var lst = this._queries[ h ] || ( this._queries[ h ] = [] );
             lst.push( n );
          }
-      });
+      } );
+      this.fireAttributeChanged( Object.keys( this._queries ) );
    },
 
    'query' : function ( query ) {
-      if ( query.query.indexOf( '.' ) >= 0 ) { // Query contains dot, likely a path, do not use query map.
+      if ( query.query.indexOf( '.' ) >= 0 || this._queries === null ) { // If query contains dot, it is likely a path, do not use query map.
          return Resource.query.call( this, query );
       } else { // Non-path query will go through observer map for optimal execution.
          if ( this._queries[ query.query ] )

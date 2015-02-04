@@ -132,7 +132,7 @@ sys.Query = {
          if ( this.value === undefined ) {
             this.value = e;
          } else if ( Array.isArray( this.value ) ) {
-            if ( this.value.indexOf( e ) < 0 ) this.value.push( e );
+            if ( ! this.value.includes( e ) ) this.value.push( e );
          } else {
             this.value = [ this.value ].concat( e );
          }
@@ -147,7 +147,7 @@ sys.Query = {
          if ( this.value === undefined ) {
             this.value = [ e ];
          } else if ( Array.isArray( this.value ) ) {
-            if ( this.value.indexOf( e ) < 0 ) this.value.push( e );
+            if ( ! this.value.includes( e ) ) this.value.push( e );
          } else {
             log.warn( `Unknown query result for ${ this.query }, cannot add proficiency to query.` );
          }
@@ -196,7 +196,7 @@ sys.Composite = {
    'getPath' ( root ) {
       var p = this.getParent();
       var myid = this.id;
-      if ( ! myid ) myid = p ? p.children.indexOf( this ) : 'headless';
+      if ( ! myid ) myid = p ? p.children.indexOf( this ) : 'headless'; // Headless = no parent, no id
       if ( ! p || this === root ) return myid;
       return p.getPath( root ) + '.' + myid;
    },
@@ -206,10 +206,7 @@ sys.Composite = {
       return _.coalesce( this.name, this.id );
    },
    'getDesc' ( ) {
-      if ( ! this._children ) return '';
-      var result = '';
-      this.recur( null, ( node ) => result += node.getDesc(), null );
-      return result;
+      return this.getName();
    },
    'getLabel' ( ) {
       return this.id ? _.l( 'dd5.attribute.' + this.id ) : _.coalesce( this.cid, this.getPath() );
@@ -218,6 +215,7 @@ sys.Composite = {
       return this.getName();
    },
 
+   // TODO: Implement character cache. We can override add and remove to clear the cache. getResource is not worth a cache.
    'getCharacter' ( ) { return this.getRoot( ns.rule.Character ); },
    'getResource' ( ) { return this.getParent( ns.rule.Resource ); },
 
@@ -270,7 +268,7 @@ var Catalog = {
             var criteron = criteria[i], filter;
             if ( Array.isArray( criteron ) ) {
                // List match
-               filter = ( e ) => criteron.indexOf( e[i] ) >= 0;
+               filter = ( e ) => criteron.includes( e[i] );
             } else if ( typeof( criteron ) === 'object' ) {
                // Range match
                var lo = criteron['>='], hi = criteron['<='];

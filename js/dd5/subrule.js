@@ -78,7 +78,7 @@ subrule.Adj = {
    },
    'query' ( query ) {
       var prop = _.array( this.property( query ) );
-      if ( prop.indexOf( query.query ) >= 0 || query.query === this.getPath() ) {
+      if ( prop.includes( query.query ) || query.query === this.getPath() ) {
          var val = parseFloat( this.value( query ) );
          if ( this.min ) val = Math.min( val, this.min( query ) );
          if ( this.max ) val = Math.max( val, this.max( query ) );
@@ -199,7 +199,7 @@ subrule.Slot = {
       this.fireAttributeChanged( this.id, result, orig );
    },
    'validPick' ( pick ) {
-      return pick == null || this.getCompatibleOptions().indexOf( pick ) >= 0;
+      return pick == null || this.getCompatibleOptions().includes( pick );
    },
    'query' ( query ) {
       if ( query.query === this.id || query.query === this.getPath() ) {
@@ -271,7 +271,7 @@ subrule.ProfSlot = {
       var options = this.getCompatibleOptions( context );
       return options.map( e => {
          var opt = sys.Option.create( e )
-         if ( e !== pick && existing.indexOf( e ) >= 0 ) {
+         if ( e !== pick && existing.includes( e ) ) {
             opt.valid = false;
             opt.note = _.l( 'dd5.system.you_have_this_proficiency', null, e.getName() );
          }

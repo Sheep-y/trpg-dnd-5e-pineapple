@@ -1,5 +1,5 @@
 /*
- * sparrow_data.js
+ * sparrow.data.js
  *
  * Data module for Sparrow library.
  */
@@ -161,6 +161,10 @@ _.Composite = {
       this.fireObserver( 'structure', { 'target': this, 'type': 'structure', 'newNodes': _.ary( newNodes ), 'oldNodes': _.ary( oldNodes ) } );
    },
    'fireAttributeChanged' : function ( name, newValue, oldValue ) {
+      if ( Array.isArray( name ) ) {
+         var me = this;
+         return name.forEach( function( n ) { me.fireAttributeChanged( n, newValue, oldValue ); } );
+      }
       this.fireObserver( 'attribute', { 'target': this, 'type': 'attribute', 'name': name, 'newValue': newValue, 'oldValue': oldValue } );
    },
    'fireObserver' : function ( type, event ) {
@@ -236,6 +240,14 @@ _.Composite = {
       }
       this._children = child.concat(); // Set children order
    },
+   /**
+    * Find furthest parent node.
+    * If type is not given, the root node of this object is returned.
+    * If type is given, the furthest node of this type (including this object) is returned.
+    *
+    * @param {*} type Type of parent to find.
+    * @returns {_.Composite} A composite object that match the requirement, or null.
+    */
    'getRoot' : function ( type ) {
       if ( type ) {
          var result = this === type || type.isPrototypeOf( this ) ? this : null;
@@ -245,6 +257,14 @@ _.Composite = {
       if ( ! this._parent ) return this;
       return this._parent.getRoot();
    },
+   /**
+    * Find nearest parent node.
+    * If type is not given, the parent node of this object is returned, if any.
+    * If type is given, the nearest node of this type (including this object) is returned.
+    *
+    * @param {*} type Type of parent to find.
+    * @returns {_.Composite} A composite object that match the requirement, or null.
+    */
    'getParent' : function ( type ) {
       if ( type ) {
          if ( this === type || type.isPrototypeOf( this ) ) return this;
@@ -253,16 +273,16 @@ _.Composite = {
       return this._parent;
    },
 
-   'recur' : function ( pre, leaf, post, parent ) {
+   'recur' : function ( pre, leaf, post ) {
       var c = this._children;
+      if ( pre ) pre.call( this, this );
       if ( c ) {
-         if ( pre ) pre.call( this, this );
          for ( var i = 0, l = c.length ; i < l ; i++ )
-            c[i].recur( pre, leaf, post, this );
-         if ( post ) post.call( this, this );
+            c[ i ].recur( pre, leaf, post );
       } else {
          if ( leaf ) leaf.call( this, this );
       }
+      if ( post ) post.call( this, this );
    }
 };
 
