@@ -188,10 +188,12 @@ rule.Character = {
    'create' ( opt ) {
       var me = _.newIfSame( this, rule.Character );
       Resource.create.call( me, 'character', opt );
+      me._query_stack = [];
       return me;
    },
    'build' ( ) {
       var me = Resource.build.call( this );
+      me._query_stack = [];
       me.remap_query();
       me.addObserver( 'structure', ( mon ) => {
          if ( me.getCharacter() !== me ) return; // Run only if this is the root character
@@ -277,13 +279,28 @@ rule.Character = {
       this.fireAttributeChanged( updatedHooks );
    },
 
+   '_query_stack' : null,
+   
    'query' : function ( query ) {
-      if ( query.query.indexOf( '.' ) >= 0 || this._query_map === null ) { // If query contains dot, it is likely a path, do not use query map.
-         return Resource.query.call( this, query );
-      } else { // Non-path query will go through observer map for optimal execution.
-         if ( query.query in this._query_map )
-            for ( var comp of _.ary( this._query_map[ query.query ] ) )
-               comp.query( query );
+      var key = query.query;
+      if ( this._query_stack.includes( key ) ) {
+         log.warn( `Recursive query ${key}. Query stack: [ ${this._query_stack.join(' > ')} ].` );
+         return query;
+      }
+      this._query_stack.push( key );
+      try {
+         if ( query.query.indexOf( '.' ) >= 0 || this._query_map === null ) { // If query contains dot, it is likely a path, do not use query map.
+            Resource.query.call( this, query );
+         } else { // Non-path query will go through observer map for optimal execution.
+            if ( query.query in this._query_map )
+               for ( var comp of _.ary( this._query_map[ query.query ] ) ) try {
+                  comp.query( query );
+               } catch ( err ) {
+                  log.error( `Error on ${comp.getPath()} in query ${key}`, err );
+               }
+         }
+      } finally {
+         this._query_stack.pop();
       }
       return query;
    }
