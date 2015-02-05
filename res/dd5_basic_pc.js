@@ -67,7 +67,7 @@ dd5.loader.jsonp.load_rules( { 'version':'alpha',
 { entry:'entity', type:'gender', id:'gender-x' },
 { entry:'entity', type:'gender', id:'gender-t' },
 { entry:'entity', type:'gender', id:'gender-other' },
-
+////////////////////////////////////////////////////////////////////////////////////////////////////////////
 { entry:'character', id: 'system', subrules: [ // Implementation of basec system rules
    ' adj.str_mod  : floor( ( you.str - 10 ) / 2 ) ', ' adj.dex_mod  : floor( ( you.dex - 10 ) / 2 ) ',
    ' adj.con_mod  : floor( ( you.con - 10 ) / 2 ) ', ' adj.int_mod  : floor( ( you.int - 10 ) / 2 ) ',
@@ -99,6 +99,7 @@ dd5.loader.jsonp.load_rules( { 'version':'alpha',
    ' adj.performance    : you.cha_mod ',
    ' adj.persuasion     : you.cha_mod ',
 ] },
+////////////////////////////////////////////////////////////////////////////////////////////////////////////
 { entry:'character', id: 'pc', subrules: [ // Standard PC
    ' numSlot.level : 1 [1,20] ',
    ' include : db.character( "system" ) ',
@@ -112,8 +113,13 @@ dd5.loader.jsonp.load_rules( { 'version':'alpha',
    ] },
    ' slot.alignment : db.entity({ type: "alignment" }) ',
    ' slot.race : db.race() ',
-] },
-
+] }, /*
+      ' adj.prof_mod : [ 2,2,2,2,3,3,3,3,4,4,4,4,5,5,5,5,6,6,6,6 ][ you.level ] ',
+      { 'slot':'bonus_language', 'count':'you.int_mod', 'options':'#entity({type:language,rarity:common})' },
+      { 'slot':'background', 'options':'#background' },
+      { 'slot':'level'  , 'min_val': 1, 'max_val': 20, 'default': 1 },
+      { 'slot':'level_1', 'level':'1', 'options':'#class' }, */
+////////////////////////////////////////////////////////////////////////////////////////////////////////////
 { entry:'race', id: 'dwarf', subrules: [
    ' slot.gender : db.entity({ type: "gender" }) ',
    ' adj.speed : 25 ',
@@ -122,6 +128,13 @@ dd5.loader.jsonp.load_rules( { 'version':'alpha',
    ' prof.language : common, dwarvish ',
    ' slot.subrace : db.feature({ type: "subrace", of: "dwarf" }) '
 ] },
+{ entry:'feature', id: 'dwarf-hill', type: 'subrace', of: 'dwarf', subrules: [
+   ' adj.wis : 1 ',
+] },
+{ entry:'feature', id: 'dwarf-mountain', type: 'subrace', of: 'dwarf', subrules: [
+   ' adj.str : 2 ',
+] },
+////////////////////////////////////////////////////////////////////////////////////////////////////////////
 { entry:'race', id: 'elf', subrules: [
    ' slot.gender : db.entity({ type: "gender" }) ',
    ' adj.speed : 30 ',
@@ -129,29 +142,6 @@ dd5.loader.jsonp.load_rules( { 'version':'alpha',
    ' adj.dex : 2 ',
    ' prof.language : common, elvish ',
    ' slot.subrace : db.feature({ type: "subrace", of: "elf" }) '
-] },
-{ entry:'race', id: 'halfling', subrules: [
-   ' slot.gender : db.entity({ type: "gender" }) ',
-   ' adj.speed : 25 ',
-   ' adj.size : 2 ',
-   ' adj.dex : 2 ',
-   ' prof.language : common, halfing ',
-   ' slot.subrace : db.feature({ type: "subrace", of: "halfling" }) '
-] },
-{ entry:'race', id: 'human', subrules: [
-   ' slot.gender : db.entity({ type: "gender" }) ',
-   ' adj.speed : 30 ',
-   ' adj.size : 3 ',
-   ' prof.language : common ',
-   ' profSlot.language.bonus_language : db.entity({ type: "language", rarity: "standard" }) ',
-   ' slot.subrace : db.feature({ type: "subrace", of: "human" }) '
-] },
-
-{ entry:'feature', id: 'dwarf-hill', type: 'subrace', of: 'dwarf', subrules: [
-   ' adj.wis : 1 ',
-] },
-{ entry:'feature', id: 'dwarf-mountain', type: 'subrace', of: 'dwarf', subrules: [
-   ' adj.str : 2 ',
 ] },
 { entry:'feature', id: 'elf-high', type: 'subrace', of: 'elf', subrules: [
    ' adj.int : 1 ',
@@ -161,11 +151,29 @@ dd5.loader.jsonp.load_rules( { 'version':'alpha',
    ' adj.wis : 1 ',
    ' adj.speed : 5 ',
 ] },
+////////////////////////////////////////////////////////////////////////////////////////////////////////////
+{ entry:'race', id: 'halfling', subrules: [
+   ' slot.gender : db.entity({ type: "gender" }) ',
+   ' adj.speed : 25 ',
+   ' adj.size : 2 ',
+   ' adj.dex : 2 ',
+   ' prof.language : common, halfing ',
+   ' slot.subrace : db.feature({ type: "subrace", of: "halfling" }) '
+] },
 { entry:'feature', id: 'halfling-lightfoot', type: 'subrace', of: 'halfling', subrules: [
    ' adj.cha : 1 ',
 ] },
 { entry:'feature', id: 'halfling-stout', type: 'subrace', of: 'halfling', subrules: [
    ' adj.con : 1 ',
+] },
+////////////////////////////////////////////////////////////////////////////////////////////////////////////
+{ entry:'race', id: 'human', subrules: [
+   ' slot.gender : db.entity({ type: "gender" }) ',
+   ' adj.speed : 30 ',
+   ' adj.size : 3 ',
+   ' prof.language : common ',
+   ' profSlot.language.bonus_language : db.entity({ type: "language", rarity: "standard" }) ',
+   ' slot.subrace : db.feature({ type: "subrace", of: "human" }) '
 ] },
 { entry:'feature', id: 'human-basic', type: 'subrace', of: 'human', subrules: [
    { adj: 'toCId( db.entity({ type: "ability" }) )', value: 1 }, // Increase ALL abilities by one
@@ -173,14 +181,8 @@ dd5.loader.jsonp.load_rules( { 'version':'alpha',
 { entry:'feature', id: 'human-phb', type: 'subrace', of: 'human', subrules: [
    { slot : 'bonus_ability', options : 'db.entity({ type: "ability" })', count: 2 },
    { adj : 'toCId( you.bonus_ability )', value: 1, dependent_attribute: 'bonus_ability' },
-   'slot.feat : db.feat() ',
+   ' profSlot.skill.bonus_skill : db.entity({ type: "skill" }) ',
+   ' slot.feat : db.feat() ',
 ] },
 ],
-/*
-      ' adj.prof_mod : [ 2,2,2,2,3,3,3,3,4,4,4,4,5,5,5,5,6,6,6,6 ][ you.level ] ',
-      { 'slot':'bonus_language', 'count':'you.int_mod', 'options':'#entity({type:language,rarity:common})' },
-      { 'slot':'background', 'options':'#background' },
-      { 'slot':'level'  , 'min_val': 1, 'max_val': 20, 'default': 1 },
-      { 'slot':'level_1', 'level':'1', 'options':'#class' },
-*/
 } );

@@ -18,8 +18,9 @@ _.l.set( 'en-US', 'dd5.attribute', {
    'gender' : 'Gender',
    'language' : 'Language',
    'prof$language' : 'Known Language',
-   'bonus_language' : 'Bonus Language',
    'bonus_ability' : 'Bonus Ability',
+   'bonus_skill'   : 'Bonus Skill',
+   'bonus_language' : 'Bonus Language',
    'subrace' : 'Subrace',
    'feat' : 'Feat',
 } );

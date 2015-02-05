@@ -18,8 +18,9 @@ _.l.set( 'zh-Hant', 'dd5.attribute', {
    'gender' : '姓別',
    'language' : '語言',
    'prof$language' : '通曉語言',
-   'bonus_language' : '額外語言',
    'bonus_ability' : '能力值加值',
+   'bonus_skill'   : '額外技能',
+   'bonus_language' : '額外語言',
    'subrace' : '亞種',
    'feat' : '專長',
 } );
