@@ -75,41 +75,33 @@ var loader = ns.loader = {
 
          // Load data
          _.log.collapse( "Loading " + ( document.currentScript ? document.currentScript.getAttribute('src') : ( JSON.stringify(data).length+" characters" ) ) );
-         for ( var type in data ) {
-            var proc, data_entry = data[ type ], lctype = type.toLowerCase();
-            switch ( lctype ) {
+         for ( var i = 0, len = data.data.length ; i < len ; i++ ) try {
+            var entry = data.data[ i ], result;
+            if ( ! entry ) continue;
+
+            var type = entry.entry || "undefined";
+            switch ( type.toLowerCase() ) {
                case 'source' :
-                  proc = ( e ) => {
-                     var r = rule.Source.create( e );
-                     if ( r.url ) loader.load( r.url, r );
-                     return r;
-                  };
+                  result = rule.Source.create( entry );
+                  if ( result.url ) loader.load( result.url, result );
                   break;
 
                case 'character' :
                case 'entity' :
                case 'feature' :
                case 'race' :
-                  proc = ( e ) => loader.jsonp.load_rule( type, e );
+                  result = loader.jsonp.load_rule( type, entry );
                   break;
 
                default :
-                  log.error( `[dd5.loader] Unknown resource type: ${type}` );
+                  log.error( `[dd5.loader] Unknown entry type: ${type}` );
+                  continue;
             }
 
-            if ( ! proc ) continue;
-
-            var safeCall = ( e, i ) => {
-               try {
-                  var result = proc( e );
-                  loader.jsonp.check_unused_attr( e, ' in ' + result.cid );
-                  loaded_rules.push( result );
-               } catch ( ex ) {
-                  log.error( `Cannot load ${type}.${ e.id ? e.id : ( '#' + i ) }`, ex );
-               }
-            };
-            if ( Array.isArray( data_entry ) ) data_entry.forEach( safeCall );
-            else safeCall( data_entry );
+            loader.jsonp.check_unused_attr( entry, ' in ' + result.cid );
+            loaded_rules.push( result );
+         } catch ( ex ) {
+            log.error( `Cannot load ${type}.${ entry.id ? entry.id : ( '#' + i ) }`, ex );
          }
          _.log.end();
       },

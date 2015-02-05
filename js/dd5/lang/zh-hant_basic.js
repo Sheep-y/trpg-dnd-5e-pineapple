@@ -12,6 +12,7 @@ _.l.set( 'zh-Hant', 'dd5.attribute', {
    'int' : '智',
    'wis' : '感',
    'cha' : '魅',
+   'level' : '等級',
    'alignment' : '陣營',
    'race' : '種族',
    'gender' : '姓別',

@@ -12,6 +12,7 @@ _.l.set( 'en-US', 'dd5.attribute', {
    'int' : 'INT',
    'wis' : 'WIS',
    'cha' : 'CHA',
+   'level' : 'Level',
    'alignment' : 'Alignment',
    'race' : 'Race',
    'gender' : 'Gender',
