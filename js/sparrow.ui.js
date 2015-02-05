@@ -64,7 +64,6 @@ ui.Mask = {
    'create' : function ( opt ) {
       var me = _.newIfSame( this, ui.Mask );
       ui.Component.create.call( me, opt = _ui_defaults( ui.Mask, opt ) );
-      if ( opt.title ) me.header.textContent = opt.title;
       return me;
    },
    prototype : {
@@ -83,18 +82,19 @@ ui.Dialog = {
    'create' : function ( opt ) {
       var me = _.newIfSame( this, ui.Dialog );
       ui.Component.create.call( me, opt = _ui_defaults( ui.Dialog, opt ) );
-      if ( opt.title ) me.header.textContent = opt.title;
+      if ( opt.title ) me.title = opt.title;
+      _( me.header, 'button' )[ 0 ].addEventListener( 'click', function(){ me.hide(); } );
       return me;
    },
-   get title ( ) { return this.header.textContent; },
-   set title ( title ) { this.header.textContent = title; },
+   get title ( ) { return this.header.lastChild.textContent; },
+   set title ( title ) { this.header.lastChild.textContent = title; },
    get header ( ) { return this.dom.firstChild.firstChild; },
    get body   ( ) { return this.header.nextSibling;   },
    get innerHTML ( ) { return this.body.innerHTML; },
    set innerHTML ( html ) { this.body.innerHTML = html; },
    get footer ( ) { return this.dom.firstChild.lastChild; },
    prototype : {
-      'create_dom' ( ) { return _.html( '<dialog class="ui"><section><header></header><div></div><footer></footer></section></dialog>' ); },
+      'create_dom' ( ) { return _.html( '<dialog class="ui"><section><header><button name="close">✖</button><span></span></header><div></div><footer></footer></section></dialog>' ); },
       'default_options' : { 'visible': true, 'parent': document.body },
       'id' : 'dialog',
       'style' :
@@ -109,6 +109,7 @@ ui.Dialog = {
    dialog.ui > section > header {
       font-size: 125%; font-weight: bold; min-height: 1.5em;
       padding: 2px 5px; background: #BBB; border-bottom: 2px solid #444; } /* Header background colour */
+   dialog.ui > section > header > button[name="close"] { float: right; }
    dialog.ui > section > div { flex: 1; overflow: auto; }
    dialog.ui > section > footer { text-align: right; }
 }` }

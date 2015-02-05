@@ -94,7 +94,7 @@ rule.Rule = {
       if ( opt.id ) _.assert( opt.id.match( /^[\w-]+$/ ), `Invalid id "${ opt.id }", must be alphanumeric, underscore, or hypen.` );
       for ( var prop of me.copy_list ) { var val = opt[ prop ];
          if ( val !== undefined && val !== null ) {
-            _.assert( ! me.hasOwnProperty( prop ), `[dd5.Rule] Rule ${ this.cid } cannot copy property "${ prop }" to created component.` );
+            _.assert( ! me.hasOwnProperty( prop ), `[dd5.Rule] Rule ${ this.cid }#${ this.id } cannot copy property "${ prop }" to created component.` );
             me[ prop ] = val;
             delete opt[ prop ];
          }

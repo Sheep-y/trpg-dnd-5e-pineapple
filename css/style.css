@@ -35,20 +35,6 @@ a:hover
       color: var( --cmpl-t1 );
       text-decoration: underline;
    }
-   
-html dialog.ui
-   {
-      color: var( --main-text );
-      background-color: var( --main-b2-o7 );
-      border-color: var( --cmpl );
-      box-shadow: none;
-   }
-   html dialog.ui section header
-      {
-         color: var( --cmpl-t1 );
-         background-color: var( --cmpl-b2 );
-         border-bottom-color: var( --cmpl );
-      }
 
 /* Input fields */
 label > span:first-child
@@ -56,7 +42,7 @@ label > span:first-child
       display: inline-block;
       min-width: 120px;
    }
-input, select, textarea, input[type="checkbox"] + span
+input, select, textarea, button, input[type="checkbox"] + span
    {
       background-color: transparent;
       color: var( --main-text );
@@ -67,14 +53,14 @@ input, select, textarea, input[type="checkbox"] + span
       transition: background-color 1s ease, border 1s ease;
    }
    @keyframes hover_border_cycle { from { border-color: var( --main-t2 ); } to { border-color: var( --main ); }  }
-   input:hover, select:hover, textarea:hover, input[type="checkbox"] + span:hover
+   input:hover, select:hover, textarea:hover, button:hover, input[type="checkbox"] + span:hover
       {
          border-color: var( --main-t2 );
          background-color: var( --main-b2-o7 );
          animation: hover_border_cycle 2s linear 1s infinite alternate;
       }
    @keyframes focus_border_cycle { from { border-color: var( --cmpl-t2 ); } to { border-color: var( --cmpl ); }  }
-   input:focus, select:focus, textarea:focus, input[type="checkbox"]:focus + span
+   input:focus, select:focus, textarea:focus, button:focus, input[type="checkbox"]:focus + span
       {
          border-color: var( --cmpl-t2 );
          background-color: var( --cmpl-b2-o7 );
@@ -143,3 +129,28 @@ nav#top
          text-align: center;
          font-size: 100%;
       }
+      
+      
+/* UI component style override */
+html dialog.ui
+   {
+      color: var( --main-text );
+      background-color: var( --main-b2-o7 );
+      border-color: var( --cmpl );
+      box-shadow: none;
+   }
+   html dialog.ui section header
+      {
+         color: var( --cmpl-t1 );
+         background-color: var( --cmpl-b2 );
+         border-bottom-color: var( --cmpl );
+      }
+      html dialog.ui header button
+         {
+            border-color: var( --cmpl );
+            color: var( --cmpl-t1 );
+         }
+         html dialog.ui header button:hover
+            {
+               border-color: var( --main-t2 );
+            }
