@@ -126,7 +126,7 @@ subrule.Prof = {
    'cid' : 'subrule.prof',
 
    'getLabel' ( ) {
-      return _.l( 'dd5.attribute.' + this.prof_type );
+      return _.l( 'dd5.attribute.proficiency' );
    },
 
    'value' : null,

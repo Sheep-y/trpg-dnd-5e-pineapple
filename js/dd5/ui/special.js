@@ -11,7 +11,7 @@ var subrule = rule.subrule;
 ui.registerFactory( 'feature.pc_ability', {
    'edit' ( rule, container ) {
       var list = [];
-      var l10n = 'dd5.feature.pc_ability.';
+      var l10n = 'dd5.feature.pc_ability.', glue = _.l( 'glue' );
 
       // Ability table captions
       var html = `<div class="dd5 pc_ability"><table><caption>${ _.l( l10n + 'caption' ) }</caption><thead>
@@ -29,15 +29,12 @@ ui.registerFactory( 'feature.pc_ability', {
             <td data-attr="${attr}_save" data-format="bonus"></td></tr>`;
          list.push( e );
       } );
+      html += `<tr><td colspan="99"><b>${ _.l( 'dd5.attribute.proficiency' ) }</b><br/>`;
       // Proficiencies, displayed primary for prototype purpose
-      res.entity.get({ type: 'proficiency' }).forEach( ( type ) => {
-         var profs = rule.queryChar( 'prof$'+type.id, 'ui' );
-         if ( profs ) {
-            html += `<tr><td colspan="99"><b>${ type.getName() }</b><br/>`;
-            html += _.ary( profs ).map( e =>  e.getName() ).join( _.l( 'glue' ) );
-            html += '</td></tr>';
-         }
-      } );
+      html += _.flatten( res.entity.get({ type: 'proficiency' }).map( ( type ) => {
+         return _.array( rule.queryChar( 'prof$'+type.id, 'ui' ) ).map( e => e.getName() ).join( glue );
+      } ) ).filter( e => e ).join( '<br/>' );
+      html += '</td></tr>';
 
       html += '</tbody></table></div>';
       html = _.html( html );

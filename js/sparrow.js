@@ -223,13 +223,14 @@ _.coalesce = function _coalesce ( a ) {
 _.flatten = function _flatten ( stack, ary ) {
    if ( arguments.length <= 1 ) {
       ary = stack;
-      if ( ! Array.isArray( ary ) ) return ary;
+      if ( ! Array.isArray( ary ) || ary.length <= 0 ) return ary;
       stack = [];
    }
    stack.push( ary );
    var result = [];
    ary.forEach( function _flatten_each ( e ) {
       if ( Array.isArray( e ) ) {
+         if ( e.length <= 0 ) return;
          if ( stack.indexOf( e ) >= 0 ) result.push( e );
          else result = result.concat( _flatten( stack, e ) );
       } else result.push( e );

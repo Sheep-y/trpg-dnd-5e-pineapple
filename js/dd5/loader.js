@@ -135,8 +135,8 @@ var loader = ns.loader = {
 
          switch ( subrule ) {
             case 'prof' :
-               right = right.replace( /\s*,\s*/g, '","' );
-               var result = { 'subrule': 'prof', 'prof_type': 'prof$' + left[1], 'value': `db.entity({id:["${ right }"]})` };
+               right = right.indexOf( "." ) >= 0 ? right : ( 'db.entity(["' + right.replace( /\s*,\s*/g, '","' ) + '"])' );
+               var result = { 'subrule': 'prof', 'prof_type': 'prof$' + left[1], 'value': right };
                if ( left.length !== 2 || ! right ) throw `Invalid prof syntax: ${e}`;
                return result;
 
@@ -189,6 +189,10 @@ var loader = ns.loader = {
          if ( e.adj ) {
             e.subrule = 'adj';
             e.property = e.adj;
+            delete e.adj;
+         } else if ( e.prof ) {
+            e.subrule = 'prof';
+            e.prof_type = 'prof$' + e.prof;
             delete e.adj;
          } else {
             for ( var p of [ 'feature', 'slot' ] ) {

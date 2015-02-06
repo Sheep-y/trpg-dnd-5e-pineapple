@@ -125,12 +125,12 @@ ui.registerFactory( 'subrule.numslot', {
    }
 } );
 
-ui.registerFactory( 'subrule.prof', {
+/* ui.registerFactory( 'subrule.prof', { // Static proficiency
    'edit' ( e, container ) {
       var val = e.value().map( v => `<span>${ v.getName() }</span>` ).join( _.l( 'glue' ) );
       return _.html( `<div><label class='dd5 prof'><span> ${ e.getLabel() }</span> ${val} </label></div>` )
    }
-} );
+} ); */
 
 pinbun.event.load( 'dd5.ui.general' );
 
