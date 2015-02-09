@@ -93,6 +93,7 @@ var loader = ns.loader = {
                case 'entity' :
                case 'feature' :
                case 'race' :
+               case 'equipment' :
                   result = loader.jsonp.load_rule( type, entry );
                   break;
 

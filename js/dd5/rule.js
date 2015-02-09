@@ -325,4 +325,14 @@ rule.Race = {
    },
 };
 
+rule.Equipment = {
+   '__proto__' : Resource,
+   'create' ( opt ) {
+      var me = _.newIfSame( this, rule.Equipment );
+      Resource.create.call( me, 'equipment', opt );
+      return me;
+   },
+   'copy_list' : Resource.copy_list.concat([ 'type' ]),
+};
+
 })( dd5 );

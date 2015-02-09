@@ -107,6 +107,13 @@ _.l.set( 'en-US', 'dd5.race', {
    'human'   : 'Human',
 } );
 
+_.l.set( 'en-US', 'dd5.feature.pc_ability', {
+   'caption'  : 'Abilities',
+   'final'    : 'Fin.',
+   'modifier' : 'Mod.',
+   'check'    : 'Chk.',
+   'save'     : 'Save',
+} );
 _.l.set( 'en-US', 'dd5.feature.dwarf-hill', 'Hill' );
 _.l.set( 'en-US', 'dd5.feature.dwarf-mountain', 'Mountain' );
 _.l.set( 'en-US', 'dd5.feature.elf-high', 'High' );
@@ -116,10 +123,13 @@ _.l.set( 'en-US', 'dd5.feature.halfling-stout', 'Stout' );
 _.l.set( 'en-US', 'dd5.feature.human-basic', 'Basic' );
 _.l.set( 'en-US', 'dd5.feature.human-phb'  , 'PHB' );
 
-_.l.set( 'en-US', 'dd5.feature.pc_ability', {
-   'caption'  : 'Abilities',
-   'final'    : 'Fin.',
-   'modifier' : 'Mod.',
-   'check'    : 'Chk.',
-   'save'     : 'Save',
+_.l.set( 'en-US', 'dd5.equipment', {
+   'handaxe'     : 'Handaxe',
+   'light-hammer': 'Light Hammer',
+   'battleaxe'   : 'Battleaxe',
+   'longsword'   : 'Longsword',
+   'shortsword'  : 'Shortsword',
+   'warhammer'   : 'Warhammer',
+   'shortbow'    : 'Shortbow',
+   'longbow'     : 'Longbow',
 } );

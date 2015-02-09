@@ -123,3 +123,14 @@ _.l.set( 'zh-Hant', 'dd5.feature.pc_ability', {
    'check'    : '檢定',
    'save'     : '豁免',
 } );
+
+_.l.set( 'zh-Hant', 'dd5.equipment', {
+   'handaxe'     : '手斧',
+   'light-hammer': '輕鎚',
+   'battleaxe'   : '戰斧',
+   'longsword'   : '長劍',
+   'shortsword'  : '短劍',
+   'warhammer'   : '戰鎚',
+   'shortbow'    : '短弓',
+   'longbow'     : '長弓',
+} );
