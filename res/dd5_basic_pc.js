@@ -111,7 +111,9 @@ dd5.loader.jsonp.load_rules( { 'version':'alpha',
       ' numSlot.int : 10 [3,18] ',
       ' numSlot.wis : 10 [3,18] ',
       ' numSlot.cha : 10 [3,18] ',
-      ' adj.pointCost : [,,,,,,,,0,1,2,3,4,5,7,9][you["pc_ability.str"]] '
+      ' adj.point_cost : [,,,,,,,,0,1,2,3,4,5,7,9][you["pc.pc_ability.str"]] + [,,,,,,,,0,1,2,3,4,5,7,9][you["pc.pc_ability.dex"]] + \
+                         [,,,,,,,,0,1,2,3,4,5,7,9][you["pc.pc_ability.con"]] + [,,,,,,,,0,1,2,3,4,5,7,9][you["pc.pc_ability.int"]] + \
+                         [,,,,,,,,0,1,2,3,4,5,7,9][you["pc.pc_ability.wis"]] + [,,,,,,,,0,1,2,3,4,5,7,9][you["pc.pc_ability.cha"]] || 0',
    ] },
    ' slot.alignment : db.entity({ type: "alignment" }) ',
    ' slot.race : db.race() ',

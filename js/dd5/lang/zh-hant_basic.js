@@ -122,6 +122,7 @@ _.l.set( 'zh-Hant', 'dd5.feature.pc_ability', {
    'modifier' : '調整',
    'check'    : '檢定',
    'save'     : '豁免',
+   'point_buy': '點購',
 } );
 
 _.l.set( 'zh-Hant', 'dd5.equipment', {

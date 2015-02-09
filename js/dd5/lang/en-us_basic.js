@@ -113,6 +113,7 @@ _.l.set( 'en-US', 'dd5.feature.pc_ability', {
    'modifier' : 'Mod.',
    'check'    : 'Chk.',
    'save'     : 'Save',
+   'point_buy': 'Point-Buy',
 } );
 _.l.set( 'en-US', 'dd5.feature.dwarf-hill', 'Hill' );
 _.l.set( 'en-US', 'dd5.feature.dwarf-mountain', 'Mountain' );
