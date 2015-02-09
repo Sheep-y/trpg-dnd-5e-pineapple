@@ -55,6 +55,7 @@ var loader = ns.loader = {
       'load_rules' ( data ) {
          var src, version = data.version, id = data.id;
          loaded_rules = [];
+         _.time();
 
          // Version validation
          if ( version !== 'alpha' ) return log.error( 'Unknown jsonp data version "' + version + '".' );
@@ -74,7 +75,8 @@ var loader = ns.loader = {
          loading_source = src;
 
          // Load data
-         _.log.collapse( "Loading " + ( document.currentScript ? document.currentScript.getAttribute('src') : ( JSON.stringify(data).length+" characters" ) ) );
+         var logid = document.currentScript ? document.currentScript.getAttribute('src') : ( JSON.stringify(data).length+" characters" );
+         _.log.collapse( "Loading " + logid );
          for ( var i = 0, len = data.data.length ; i < len ; i++ ) try {
             var entry = data.data[ i ], result;
             if ( ! entry ) continue;
@@ -104,6 +106,7 @@ var loader = ns.loader = {
          } catch ( ex ) {
             log.error( `Cannot load ${type}.${ entry.id ? entry.id : ( '#' + i ) }`, ex );
          }
+         _.time( `${logid} loaded` );
          _.log.end();
       },
 
