@@ -280,7 +280,7 @@ rule.Character = {
    },
 
    '_query_stack' : null,
-   
+
    'query' : function ( query ) {
       var key = query.query;
       if ( this._query_stack.includes( key ) ) {

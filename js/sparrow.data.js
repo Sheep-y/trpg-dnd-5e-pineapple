@@ -239,7 +239,7 @@ _.Composite = {
       } else {
          this.add( child );
       }
-      this._children = child.concat(); // Set children order
+      this._children = child.concat(); // Set children order by copying the Array
    },
    /**
     * Find furthest parent node.

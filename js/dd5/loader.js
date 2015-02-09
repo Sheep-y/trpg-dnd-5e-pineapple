@@ -80,6 +80,7 @@ var loader = ns.loader = {
             if ( ! entry ) continue;
 
             var type = entry.entry || "undefined";
+            delete entry.entry;
             switch ( type.toLowerCase() ) {
                case 'source' :
                   result = rule.Source.create( entry );
@@ -135,15 +136,14 @@ var loader = ns.loader = {
 
          switch ( subrule ) {
             case 'prof' :
-               right = right.indexOf( "." ) >= 0 ? right : ( 'db.entity(["' + right.replace( /\s*,\s*/g, '","' ) + '"])' );
-               var result = { 'subrule': 'prof', 'prof_type': 'prof$' + left[1], 'value': right };
+               right = right.indexOf( "." ) >= 0 ? right : ( 'db.entity({id:["' + right.replace( /\s*,\s*/g, '","' ) + '"]})' );
                if ( left.length !== 2 || ! right ) throw `Invalid prof syntax: ${e}`;
+               var result = { 'subrule': 'prof', 'prof_type': 'prof$' + left[1], 'value': right };
+               _.log( JSON.stringify( result ) );
                return result;
 
             case 'adj' : // "adj.[prop](.min\d+)?(.max\d+)?" : "[bonus]" // Add a bonus(penalty), min/max X(-X) e.g. adj.check.dex=2
             case 'set' : // "set(min|max).[prop](.min\d+)?(.max\d+)?" : "[value]" // Set a property to given value
-            case 'setmin' :
-            case 'setmax' :
                var result = { 'subrule': subrule, 'value': right }, next = left.pop();
                if ( next && next.startsWith( 'max' ) ) {
                   result.max = next.substr( 3 );
@@ -193,7 +193,7 @@ var loader = ns.loader = {
          } else if ( e.prof ) {
             e.subrule = 'prof';
             e.prof_type = 'prof$' + e.prof;
-            delete e.adj;
+            delete e.prof;
          } else {
             for ( var p of [ 'feature', 'slot' ] ) {
                if ( e[ p ] ) {

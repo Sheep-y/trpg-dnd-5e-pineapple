@@ -251,7 +251,7 @@ subrule.NumSlot = {
    'cid': 'subrule.numslot',
    'min_val'  : null,
    'max_val'  : null,
-   'compile_list' : subrule.Slot.compile_list.concat( [ 'min_val', 'max_val' ] ),
+   'compile_list' : subrule.Slot.compile_list.concat([ 'min_val', 'max_val' ]),
 
    'getMinVal' ( context ) {
       return this.min_val ? this.queryChar( 'slotMinVal', this, this.min_val( context ), context ) : null;
@@ -285,13 +285,13 @@ subrule.NumSlot = {
 subrule.ProfSlot = {
    '__proto__' : subrule.Slot,
    'create' ( opt ) {
-      var me = _.newIfSame( this, subrule.NumSlot );
+      var me = _.newIfSame( this, subrule.ProfSlot );
       subrule.Slot.create.call( me, opt );
       _.assert( me.prof_type, '[dd5.rule.ProfSlot] ProfSlot must have prof_type.' );
       return me;
    },
    'cid': 'subrule.profslot',
-   'copy_list' : subrule.Slot.copy_list.concat( [ 'prof_type' ] ),
+   'copy_list' : subrule.Slot.copy_list.concat([ 'prof_type' ]),
 
    'getOptions' ( context ) {
       var pick = this.getPick( context );

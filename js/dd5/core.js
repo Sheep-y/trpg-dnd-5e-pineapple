@@ -134,7 +134,7 @@ sys.Query = {
          } else if ( Array.isArray( this.value ) ) {
             if ( ! this.value.includes( e ) ) this.value.push( e );
          } else {
-            this.value = [ this.value ].concat( e );
+            this.value = [ this.value, e ]; // Do not treat e as array, even if it is.
          }
       }
       if ( Array.isArray( entity ) ) entity.forEach( add );
@@ -161,6 +161,7 @@ sys.Query = {
 sys.Option = {
    'create' ( value ) {
       var me = _.newIfSame( this, sys.Option );
+      _.assert( value, '[dd5.sys.Option] Option cannot be empty' );
       me.value = value;
       return me;
    },
@@ -261,32 +262,31 @@ var Catalog = {
    // find( { 'level': { '>=': 4, '<=': 6 },
    //         'freq' : [ 'daily', 'at-will' ] } )
    'get' ( criteria ) {
+      if ( ! criteria ) return this._list.concat();
       if ( typeof( criteria ) === 'string' ) criteria = { 'id' : criteria }; // We can do optimisation later
-      var result = this._list.concat();
-      if ( criteria ) {
-         for ( var i in criteria ) {
-            var criteron = criteria[ i ], filter;
-            if ( Array.isArray( criteron ) ) {
-               // List match
-               filter = ( e ) => criteron.includes( e[ i ] );
-            } else if ( typeof( criteron ) === 'object' ) {
-               // Range match
-               var lo = criteron['>='], hi = criteron['<='];
-               filter = ( e ) => {
-                  var val = +e[ i ];
-                  if ( isNaN( val ) ) return false;
-                  if ( lo !== undefined && val < lo ) return false;
-                  if ( hi !== undefined && val > hi ) return false;
-                  return true;
-               };
-            } else {
-               // Plain value match
-               criteron += "";
-               filter = ( e ) => { return criteron === "" + ( i in e ? e[ i ] : undefined ); };
-            }
-            result = result.filter( filter );
-            if ( result.length <= 0 ) break;
+      var result = this._list;
+      for ( var prop in criteria ) {
+         var criteron = criteria[ prop ], filter;
+         if ( Array.isArray( criteron ) ) {
+            // List match
+            filter = ( e ) => criteron.includes( e[ prop ] );
+         } else if ( typeof( criteron ) === 'object' ) {
+            // Range match
+            var lo = criteron['>='], hi = criteron['<='];
+            filter = ( e ) => {
+               var val = +e[ prop ];
+               if ( isNaN( val ) ) return false;
+               if ( lo !== undefined && val < lo ) return false;
+               if ( hi !== undefined && val > hi ) return false;
+               return true;
+            };
+         } else {
+            // Plain value match
+            criteron += "";
+            filter = ( e ) => { return criteron === "" + ( prop in e ? e[ prop ] : undefined ); };
          }
+         result = result.filter( filter );
+         if ( result.length <= 0 ) break;
       }
       return result;
    }
@@ -298,10 +298,7 @@ var Catalog = {
   "feat", "spell_list", "spell" ].forEach( ns.res.new );
 
 sys.toCId = function dd5_sys_toCId ( data ) {
-   return _.flatten( _.array( data )
-                      .filter( e => e )
-                      .map( e => [ e.cid, e.cid.split('.').pop() ] )
-                   );
+   return _.array( data ).filter( e => e ).map( (e,i,ary) => e ? ( ary.push( e.cid ) , e.cid.split('.').pop() ) : e );
 };
 
 pinbun.event.load( 'dd5' );
