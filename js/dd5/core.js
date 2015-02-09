@@ -193,6 +193,12 @@ sys.Composite = {
    },
    'id' : undefined, // string
    'cid' : undefined, // component id
+   '_cache_Character' : null, // getCharacter cache
+
+   'fireAttributeChanged' : function ( name, newValue, oldValue ) {
+      if ( name === 'root' ) this._cache_Character = null;
+      return _.Composite.fireAttributeChanged.call( this, name, newValue, oldValue );
+   },
 
    'getPath' ( root ) {
       var p = this.getParent();
@@ -216,9 +222,11 @@ sys.Composite = {
       return this.getName();
    },
 
-   // TODO: Implement character cache. We can override add and remove to clear the cache. getResource is not worth a cache.
-   'getCharacter' ( ) { return this.getRoot( ns.rule.Character ); },
-   'getResource' ( ) { return this.getParent( ns.rule.Resource ); },
+   'getCharacter' ( ) {
+      if ( this._cache_Character ) return this._cache_Character;
+      return this._cache_Character = this.getRoot( ns.rule.Character );
+   },
+   'getResource' ( ) { return this.getParent( ns.rule.Resource ); }, // A rule is rarely far from its resource.
 
    'createUI' ( type, container ) { return ns.ui.createUI( this, type, container ); },
 
