@@ -16,6 +16,19 @@ var ui = ns.ui = {
       ui.Global.create();
    },
 
+   setLocale ( locale ) {
+      for ( var lang of ns.lang ) {
+         if ( lang.code && lang.code === locale ) {
+            _.attr( '#btn_lang', 'text', lang.label );
+            _.attr( 'menuitem[data-lang]:checked', 'checked', null );
+            _.attr( `menuitem[data-lang="${locale}"]`, 'checked', 'checked' );
+            _.l.setLocale( locale );
+            _.l.localise();
+            break;
+         }
+      }
+   },
+
    /** Set or add to dialog panel and pop it up */
    openDialog ( content ) {
       content = '<div>' + content + '</div>';

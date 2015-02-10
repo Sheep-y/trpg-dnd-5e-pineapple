@@ -5,15 +5,17 @@
 <link rel="stylesheet" href="css/deepsea.css" />
 <link rel="stylesheet" href="css/style.css" />
 </head><body>
-<nav id="top" class="clear_float">
+<nav id="top">
    <h1 class="i18n" data-i18n="pinbun.title">🍞 Pineapple Bun 🍞</h1>
    <a class="i18n negative_order" data-i18n="pinbun.lnk_home" href="https://github.com/Sheep-y/trpg-dnd-5e-pineapple">Home</a>
    <a class="i18n negative_order" data-i18n="pinbun.lnk_ellesime" href="http://www.goddessfantasy.net/">Forum</a>
    <a class="i18n" data-i18n="pinbun.lnk_commit" href="https://github.com/Sheep-y/trpg-dnd-5e-pineapple/commits/master"></a>
    <a class="i18n" data-i18n="pinbun.lnk_issue" href="https://github.com/Sheep-y/trpg-dnd-5e-pineapple/issues"></a>
-   <button id="btn_lang" type="menu" menu="mnu_lang" contextmenu="mnu_lang">Language</button>
+   <button id="btn_theme" type="menu" menu="mnu_theme" contextmenu="mnu_theme" title="Theme"></button>
+   <button id="btn_lang"  type="menu" menu="mnu_lang"  contextmenu="mnu_lang"  title="Language"></button>
 </nav>
-<menu id="mnu_lang" type="context"></menu>
+<menu id="mnu_theme" type="popup"></menu>
+<menu id="mnu_lang"  type="popup"></menu>
 <div id="stage"></div>
 
 <script src='js/polyfill_es7.js'></script>
@@ -22,9 +24,9 @@
 <script src='js/sparrow.ui.js'></script>
 <script src='js/pinbun/pinbun.js'></script>
 <script src='js/pinbun/ui.js'></script>
+<script src='js/pinbun/resource_list.js'></script>
 <script src='js/pinbun/panel/global.js'></script>
 <script src='js/pinbun/panel/chargen.js'></script>
-<script src='js/pinbun/lang/langlist.js'></script>
 <script src='js/pinbun/lang/en-us.js'></script>
 <script src='js/pinbun/lang/zh-hant.js'></script>
 <script src='js/dd5/core.js'></script>

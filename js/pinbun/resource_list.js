@@ -7,10 +7,16 @@ pinbun.lang = [
    name  : 'English (US)',
    label : 'EN',
 },
-   '-',
 {
-   code: 'zh-Hant',
+   code  : 'zh-Hant',
    name  : 'Chinese 中文（正體）',
    label : 'ZH',
 }
+];
+
+pinbun.theme = [
+{
+   code  : 'deepsea',
+   file  : [ 'deepsea.css' ],
+},
 ];

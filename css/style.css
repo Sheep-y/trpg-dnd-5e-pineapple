@@ -112,6 +112,7 @@ input[type="checkbox"]
 nav#top
    {
       display: flex;
+      align-items: flex-end;
       justify-content: space-between;
       border-bottom: 2px solid var( --main );
    }
@@ -130,6 +131,15 @@ nav#top
          margin: 0;
          text-align: center;
          font-size: 100%;
+      }
+   #btn_theme::before
+      {
+         content: "🎨";
+      }
+   #btn_lang::before
+      {
+         content: "🎌";
+         margin-right: 5px;
       }
 
 
