@@ -3,7 +3,7 @@ if ( ! pinbun ) throw new Error( '[dd5] Pineapplebun core must be loaded first.'
 else if ( ! pinbun.ui ) ( function pinbun_ui_init ( ns ) { 'use strict';
 
 var panels = [], next_unique_id = 0;
-var dlg_main = _.ui.Dialog.create( { title: 'Message', visible: false } ); // Main dialog
+var dlg_main = _.ui.Dialog.create( { visible: false } ); // Main dialog
 var savedFocus, savedScrollX, savedScrollY;
 
 var ui = ns.ui = {

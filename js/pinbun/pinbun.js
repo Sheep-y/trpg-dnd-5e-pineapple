@@ -27,10 +27,11 @@ log.add( 'fine', _.info );
 
 _.EventManager.onerror = ( err, evt ) => log.error( `Error when processing ${evt} event`, err );
 
-var pnl_content = _( '#container' )[0];
+var pnl_content = _( '#stage' )[0];
 
 ns.init = function pinbun_init ( source_url ) {
    log.add( 'warn', ns.ui.openDialog );
+   _.removeClass( '#top', 'hide' );
    _.attr( document.documentElement, { 'lang': _.l.detectLocale( 'en-US' ) } ); // Detect language and set document attribute
    _.l.localise();
    if ( source_url ) {
@@ -51,6 +52,11 @@ ns.init = function pinbun_init ( source_url ) {
 Object.defineProperty( ns, 'activeCharacter',  { // Dummy support for singleton chargen panel
    get ( ) { return ns.ui.panels[0]._character; }
 } );
+
+ns.lang = { 'en' : { // In case we failed to load language list, default to en
+   name   : 'English',
+   symbol : 'EN',
+} };
 
 pinbun.event.load( 'pinbun' );
 

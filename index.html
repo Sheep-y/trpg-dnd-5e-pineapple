@@ -5,15 +5,14 @@
 <link rel="stylesheet" href="css/deepsea.css" />
 <link rel="stylesheet" href="css/style.css" />
 </head><body>
-<nav id="top" class="clear_float">
+<nav id="top" class="clear_float hide">
    <h1 class="i18n">pinbun.title</h1>
    <a class="i18n negative_order " href="https://github.com/Sheep-y/trpg-dnd-5e-pineapple">pinbun.lnk_home</a>
    <a class="i18n negative_order " href="http://www.goddessfantasy.net/">pinbun.lnk_ellesime</a>
    <a class="i18n" href="https://github.com/Sheep-y/trpg-dnd-5e-pineapple/commits/master">pinbun.lnk_commit</a>
    <a class="i18n" href="https://github.com/Sheep-y/trpg-dnd-5e-pineapple/issues">pinbun.lnk_issue</a>
 </nav>
-<div id="container">
-</div>
+<div id="stage"></div>
 
 <script src='js/polyfill_es7.js'></script>
 <script src='js/sparrow.js'></script>
@@ -37,12 +36,12 @@
 <script>(function init ( ) { 'use strict';
 
 if ( ! window.Proxy ) {
-   document.getElementById('container').style.textAlign = 'center';
-   document.getElementById('container').innerHTML =
+   document.getElementById('stage').style = "margin: 1rem; text-align:center;";
+   document.getElementById('stage').innerHTML =
       '<a href="https://www.mozilla.org/firefox/"><img src="https://mozorg.cdn.mozilla.net/media/img/styleguide/identity/firefox/usage-standard.png" alt="Please use Firefox" /></a>'+
       '<br/>Your browser does not support <a href="http://kangax.github.io/compat-table/es6/">ECMAScript 6</a>. Try <a href="https://www.mozilla.org/firefox/">Firefox</a>.';
+   if ( window.pinbun && pinbun.ui && pinbun.ui.closeDialog ) pinbun.ui.closeDialog();
 } else {
-   _.l.setLocale( 'zh-Hant' );
    pinbun.init( 'res/dd5_sources.js' );
 }
 

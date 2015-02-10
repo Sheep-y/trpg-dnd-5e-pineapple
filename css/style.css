@@ -3,18 +3,20 @@
 .f_right { float: right; }
 .clear_float:after { content: " "; display: table; clear: both; }
 .negative_order { order: -10; }
+.hide { display: none !important; }
 
-html
-   {
-      font: 16px Arial;
-      text-rendering: optimizeLegibility;
-      color: var( --main-text );
-   }
 html, body
    {
       margin: 0;
       min-width: 100%;
       min-height: 100%;
+   }
+html
+   {
+      font: 16px Arial;
+      text-rendering: optimizeLegibility;
+      color: var( --main-text );
+      height: 100%;
    }
 div
    {
@@ -107,7 +109,7 @@ input[type="checkbox"]
    }
 
 /* Top navigation */
-nav#top 
+nav#top
    {
       display: flex;
       justify-content: space-between;
@@ -129,8 +131,8 @@ nav#top
          text-align: center;
          font-size: 100%;
       }
-      
-      
+
+
 /* UI component style override */
 html dialog.ui
    {
