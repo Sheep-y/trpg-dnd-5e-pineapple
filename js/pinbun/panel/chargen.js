@@ -1,6 +1,6 @@
 var pinbun; // Globals
 if ( ! pinbun || ! pinbun.ui ) throw new Error( '[dd5] Pineapplebun UI module must be loaded first.' );
-else if ( ! pinbun.ui.Chargen ) ( function pinbun_ui_chargen_init ( ns ) { 'use strict';
+else if ( ! pinbun.ui.Chargen ) ( function ui_chargen_init ( ns ) { 'use strict';
 
 var ui = ns.ui;
 var symbol = _.ui.symbol;
@@ -26,7 +26,7 @@ ui.Chargen = {
    'refresh' ( ) {
       if ( refresh_timer ) return;
       refresh_timer = _.setImmediate( () => {
-         try { 
+         try {
             ui.saveFocus();
             _.clear( this.dom )[0].appendChild( this._character.createUI( 'edit', this.dom ) );
             ui.loadFocus();

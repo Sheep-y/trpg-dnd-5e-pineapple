@@ -31,9 +31,8 @@ var pnl_content = _( '#stage' )[0];
 
 ns.init = function pinbun_init ( source_url ) {
    log.add( 'warn', ns.ui.openDialog );
-   _.removeClass( '#top', 'hide' );
-   _.attr( document.documentElement, { 'lang': _.l.detectLocale( 'en-US' ) } ); // Detect language and set document attribute
-   _.l.localise();
+   _.l.event.add( 'locale', lang => log.l10n( lang ) );
+   ns.ui.init();
    if ( source_url ) {
       dd5.loader.event.add( 'progress', e => ns.ui.openDialog( "Loaded: " + ( e.url || e ) ) );
       dd5.loader.event.add( 'load', ( e ) => {
@@ -50,13 +49,14 @@ ns.init = function pinbun_init ( source_url ) {
 };
 
 Object.defineProperty( ns, 'activeCharacter',  { // Dummy support for singleton chargen panel
-   get ( ) { return ns.ui.panels[0]._character; }
+   get ( ) { return ns.ui.panels[1]._character; }
 } );
 
-ns.lang = { 'en' : { // In case we failed to load language list, default to en
+ns.lang = [ { // In case we failed to load language list, default to en
+   code   : 'en',
    name   : 'English',
    symbol : 'EN',
-} };
+} ];
 
 pinbun.event.load( 'pinbun' );
 

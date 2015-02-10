@@ -10,6 +10,12 @@ var ui = ns.ui = {
    '__proto__' : null,
    'panels' : panels,
 
+   init ( ) {
+      _.l.detectLocale( 'en-US' ); // Detect language
+      _.l.localise();  // Localise and set document attribute
+      ui.Global.create();
+   },
+
    /** Set or add to dialog panel and pop it up */
    openDialog ( content ) {
       content = '<div>' + content + '</div>';

@@ -7,7 +7,7 @@ _.l.set( 'en-US', null, {
 } );
 
 _.l.set( 'en-US', 'pinbun', {
-   'title'     : 'Pineapple Bun',
+   'title'     : '🍞 Pineapple Bun 🍞',
    'lnk_ellesime' : 'Goddess Fantasy',
    'lnk_home'  : 'Home',
    'lnk_commit': 'Progress',
