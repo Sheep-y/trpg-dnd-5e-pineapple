@@ -133,4 +133,8 @@ _.l.set( 'en-US', 'dd5.equipment', {
    'warhammer'   : 'Warhammer',
    'shortbow'    : 'Shortbow',
    'longbow'     : 'Longbow',
+
+   'smith-tool' : "Smith's tools",
+   'brewer-tool': "Brewer's supplies",
+   'mason-tool' : "Mason's tools",
 } );

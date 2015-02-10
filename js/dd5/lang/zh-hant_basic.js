@@ -134,4 +134,8 @@ _.l.set( 'zh-Hant', 'dd5.equipment', {
    'warhammer'   : '戰鎚',
    'shortbow'    : '短弓',
    'longbow'     : '長弓',
+
+   'smith-tool' : "鐵匠工具",
+   'brewer-tool': "釀制道具",
+   'mason-tool' : "石匠工具",
 } );
