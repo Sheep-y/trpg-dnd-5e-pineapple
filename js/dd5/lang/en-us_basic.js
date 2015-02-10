@@ -125,6 +125,15 @@ _.l.set( 'en-US', 'dd5.feature.human-basic', 'Basic' );
 _.l.set( 'en-US', 'dd5.feature.human-phb'  , 'PHB' );
 
 _.l.set( 'en-US', 'dd5.equipment', {
+   'padded'        : 'Padded',
+   'leather'       : 'Leather',
+   'studdedleather': 'Studded Leather',
+   'hide'          : 'Hide',
+   'chainshirt'    : 'Chain Shirt',
+   'scalemail'     : 'Scale Mail',
+   'breastplate'   : 'Breastplate',
+   'halfplate'     : 'Half Plate',
+
    'handaxe'     : 'Handaxe',
    'light-hammer': 'Light Hammer',
    'battleaxe'   : 'Battleaxe',

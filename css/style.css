@@ -1,6 +1,7 @@
 * { box-sizing: border-box; }
 .f_left  { float: left; }
 .f_right { float: right; }
+.full_width { width: 100%; }
 .clear_float:after { content: " "; display: table; clear: both; }
 .negative_order { order: -10; }
 .hide { display: none !important; }
@@ -166,3 +167,8 @@ html dialog.ui
             {
                border-color: var( --main-t2 );
             }
+
+.pbui.chargen
+   {
+      max-width: 330px;
+   }

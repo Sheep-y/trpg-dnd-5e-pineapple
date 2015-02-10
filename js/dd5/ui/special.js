@@ -14,7 +14,7 @@ ui.registerFactory( 'feature.pc_ability', {
       var l10n = 'dd5.feature.pc_ability.', glue = _.l( 'glue' );
 
       // Ability table captions
-      var html = `<div class="dd5 pc_ability"><table><caption>${ _.l( l10n + 'caption' ) }</caption><thead>
+      var html = `<div class="dd5 pc_ability full_width"><table class="full_width"><caption>${ _.l( l10n + 'caption' ) }</caption><thead>
          <tr><th></th><th></th><th>${ _.l( l10n + 'final' ) }</th><th>${ _.l( l10n + 'modifier' ) }</th><th>${ _.l( l10n + 'check' ) }</th><th>${ _.l( l10n + 'save' ) }</th>
          </thead><tbody>`;
       // Abilities - there may be more then six! (ex: certain v3.0 expansion)

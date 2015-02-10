@@ -313,7 +313,7 @@ rule.Feature = {
       Resource.create.call( me, 'feature', opt );
       return me;
    },
-   'copy_list' : [ 'type', 'of' ]
+   'copy_list' : Resource.copy_list.concat([ 'type', 'of' ])
 };
 
 rule.Race = {
@@ -332,7 +332,7 @@ rule.Equipment = {
       Resource.create.call( me, 'equipment', opt );
       return me;
    },
-   'copy_list' : Resource.copy_list.concat([ 'type' ]),
+   'copy_list' : Resource.copy_list.concat([ 'type', 'weapon', 'armour' ]),
 };
 
 })( dd5 );

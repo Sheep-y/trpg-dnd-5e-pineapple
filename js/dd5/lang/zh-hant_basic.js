@@ -126,6 +126,15 @@ _.l.set( 'zh-Hant', 'dd5.feature.pc_ability', {
 } );
 
 _.l.set( 'zh-Hant', 'dd5.equipment', {
+   'padded'        : '布甲',
+   'leather'       : '皮甲',
+   'studdedleather': '鑲釘皮甲',
+   'hide'          : '厚皮甲',
+   'chainshirt'    : '鏈衫',
+   'scalemail'     : '鱗甲',
+   'breastplate'   : '胸甲',
+   'halfplate'     : '輕板甲',
+
    'handaxe'     : '手斧',
    'light-hammer': '輕鎚',
    'battleaxe'   : '戰斧',

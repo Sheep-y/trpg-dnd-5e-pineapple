@@ -14,7 +14,7 @@ ui.Chargen = {
       var me = _.newIfSame( this, ui.Chargen );
       me.refresh = me.refresh.bind( me );
       me._character = char;
-      me[ symbol.Dom ] = _.create( 'div', { id : ui.newId() } );
+      me[ symbol.Dom ] = _.create( 'div', { class: 'pbui panel chargen', id : ui.newId() } );
       char.addObserver( 'structure', me.refresh );
       log.add( 'l10n', me.refresh );
       ui.panels.push( me );
