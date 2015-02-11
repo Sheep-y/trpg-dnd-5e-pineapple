@@ -2,12 +2,12 @@ var _; // Globals
 if ( ! _ ) throw new Error( '[pinbin.l10n.en-us] Sparrow library must be loaded first.' );
 
 _.l.set( 'en-US', null, {
-   'title': 'Pineapple Bun Prototype',
+   'title': '🍞',
    'glue' : ', ',
 } );
 
 _.l.set( 'en-US', 'pinbun', {
-   'title'     : '🍞 Pineapple Bun 🍞',
+   'title'     : '🍞 (Prototype) 🍞',
    'lnk_ellesime' : 'Goddess Fantasy',
    'lnk_home'  : 'Home',
    'lnk_commit': 'Progress',
