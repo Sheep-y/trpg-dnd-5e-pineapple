@@ -16,7 +16,6 @@ var base = subrule.Subrule = {
       rule.Rule.create.call( this, opt );
       return me;
    },
-   'copy_list' : [ 'dependent_attribute' ],
    'dependent_attribute' : null,
    'query_hook' ( ) { return []; },
    'build' ( ) {
@@ -131,7 +130,6 @@ subrule.Prof = {
 
    'value' : null,
 
-   'copy_list' : base.copy_list.concat( 'prof_type' ),
    'compile_list' : base.compile_list.concat([ 'value', 'type' ]),
 
    'toString' ( ) {
@@ -291,7 +289,6 @@ subrule.ProfSlot = {
       return me;
    },
    'cid': 'subrule.profslot',
-   'copy_list' : subrule.Slot.copy_list.concat([ 'prof_type' ]),
 
    'getOptions' ( context ) {
       var pick = this.getPick( context );

@@ -92,13 +92,6 @@ rule.Rule = {
       sys.Composite.create.call( me, opt );
       _.assert( rule.Resource.isPrototypeOf( me ) || rule.subrule.Subrule.isPrototypeOf( me ), 'Rule not resource or subrule!' );
       if ( opt.id ) _.assert( opt.id.match( /^[\w-]+$/ ), `Invalid id "${ opt.id }", must be alphanumeric, underscore, or hypen.` );
-      for ( var prop of me.copy_list ) { var val = opt[ prop ];
-         if ( val !== undefined && val !== null ) {
-            _.assert( ! me.hasOwnProperty( prop ), `[dd5.Rule] Rule ${ this.cid }#${ this.id } cannot copy property "${ prop }" to created component.` );
-            me[ prop ] = val;
-            delete opt[ prop ];
-         }
-      }
       for ( var prop of me.compile_list ) { var val = opt[ prop ];
          if ( val !== undefined && val !== null ) {
             _.assert( ! me.hasOwnProperty( prop ), `[dd5.Rule] Rule ${ this.cid } cannot copy property "${ prop }" to created component.` );
@@ -106,10 +99,18 @@ rule.Rule = {
             delete opt[ prop ];
          }
       }
+      for ( var prop in opt ) { var val = opt[ prop ];
+         if ( me.copy_blacklist.includes( prop ) ) continue;
+         if ( val !== undefined && val !== null ) {
+            _.assert( ! me.hasOwnProperty( prop ), `[dd5.Rule] Rule ${ this.cid }#${ this.id } cannot copy property "${ prop }" to created component.` );
+            me[ prop ] = val;
+            delete opt[ prop ];
+         }
+      }
       return me;
    },
    'compile_list' : [],
-   'copy_list' : [],
+   'copy_blacklist' : [ 'subrules' ],
    'build' ( ) {
       log.finer( '[dd5.rule] Creating ' + this.cid );
       var result = sys.Composite.create.call( Object.create( this ) );
@@ -126,8 +127,8 @@ var Resource = rule.Resource = {
       if ( ! opt.cid ) opt.cid = type + '.' + opt.id;
       rule.Rule.create.call( me, opt );
       _.assert( res[ type ] && me.id && me.cid, '[dd5.Resource] Resource must have id and compoent id.' );
-      var dup = res[ type ].get( opt.id );
-      if ( dup.length ) throw new Error( `Redeclaring ${ type }.${ me.id  }. (already declared by ${ dup[0].source.cid })` );
+      var dup = res[ type ].get( me.id );
+      if ( dup.length ) throw new Error( `Redeclaring ${ type }.${ me.id }. (already declared by ${ dup[0].source.cid })` );
       if ( opt ) {
          if ( opt.source ) {
             if ( typeof( opt.source ) === 'string' ) opt.source = res.source.get({ id: opt.source })[0];
@@ -151,12 +152,6 @@ rule.Source = {
       Resource.create.call( me, 'source', opt );
       return me;
    },
-   'copy_list' : [
-      'publisher',
-      'category',
-      'type',
-      'url',
-   ],
    'loaded' : null, // Array of loaded rules
 };
 
@@ -313,7 +308,6 @@ rule.Feature = {
       Resource.create.call( me, 'feature', opt );
       return me;
    },
-   'copy_list' : Resource.copy_list.concat([ 'type', 'of' ])
 };
 
 rule.Race = {
@@ -332,7 +326,6 @@ rule.Equipment = {
       Resource.create.call( me, 'equipment', opt );
       return me;
    },
-   'copy_list' : Resource.copy_list.concat([ 'type', 'weapon', 'armour' ]),
 };
 
 })( dd5 );

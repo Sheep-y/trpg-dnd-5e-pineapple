@@ -185,10 +185,22 @@ sys.Composite = {
       var me = _.newIfSame( this, sys.Composite );
       _.Composite.create.call( me );
       if ( ! opt ) return me;
-      if ( opt.id ) me.id = opt.id;
-      if ( opt.cid ) me.cid = opt.cid;
-      if ( opt.name ) me.name = opt.name;
-      if ( opt.parent ) opt.parent.add( me );
+      if ( opt.id ) {
+         me.id = opt.id;
+         delete opt.id;
+      }
+      if ( opt.cid ) {
+         me.cid = opt.cid;
+         delete opt.cid;
+      }
+      if ( opt.name ) {
+         me.name = opt.name;
+         delete opt.name;
+      }
+      if ( opt.parent ) {
+         opt.parent.add( me );
+         delete opt.parent;
+      }
       return me;
    },
    'id' : undefined, // string
