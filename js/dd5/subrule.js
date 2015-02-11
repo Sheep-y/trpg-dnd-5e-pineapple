@@ -105,14 +105,42 @@ subrule.Adj = {
       var prop = _.array( this.property( query ) );
       if ( prop.includes( query.query ) || query.query === this.getPath() ) {
          var val = this.queryChar( 'adjValue', this, parseFloat( this.value( query ) ), query );
-         if ( this.min ) val = Math.min( val, this.queryChar( 'adjMin', this, this.min( query ) ), query );
-         if ( this.max ) val = Math.max( val, this.queryChar( 'adjMax', this, this.max( query ) ), query );
+         if ( this.min ) val = Math.max( val, this.queryChar( 'adjMin', this, this.min( query ) ), query );
+         if ( this.max ) val = Math.min( val, this.queryChar( 'adjMax', this, this.max( query ) ), query );
          return query.add_bonus( val, this.getResource() || this, _.call( this.type || null, query ) );
       }
       return base.query.call( this, query );
    },
    'query_hook' ( ) { return _.array( this.property() ); },
 };
+
+subrule.Negate = {
+   '__proto__' : base,
+   'create' ( opt ) {
+      var me = _.newIfSame( this, subrule.Negate );
+      base.create.call( me, opt );
+      _.assert( me.property, '[dd5.rule.Negate] Negate must have property.' );
+      return me;
+   },
+   'cid' : 'subrule.negate',
+   'compile_list' : base.compile_list.concat([ 'property', 'negate_target', 'min', 'max' ]),
+   'query' ( query ) {
+      if ( query.query === 'adjValue' && query.whoask && query.cause && query.whoask.getResource && query.cause.query ) {
+         var prop = _.array( this.property( query ) );
+         if ( ! prop.includes( query.cause.query ) ) return; // Not a property we are interested. Pass.
+         var target = _.array( this.negate_target( query ) );
+         if ( target && ! target.includes( query.whoask.getResource().id ) ) return; // Not a source we are interst
+
+         if ( typeof( query.value ) === 'number' ) {
+            if ( this.min ) query.value = Math.max( query.value, this.queryChar( 'adjMin', this, this.min( query ) ), query );
+            if ( this.max ) query.value = Math.min( query.value, this.queryChar( 'adjMax', this, this.max( query ) ), query );
+            else if ( ! this.min ) query.value = 0; // No min, no max = total negation
+         }
+      }
+      return base.query.call( this, query );
+   },
+   'query_hook' ( ) { return [ 'adjValue' ]; },
+}
 
 subrule.Prof = {
    '__proto__' : base,

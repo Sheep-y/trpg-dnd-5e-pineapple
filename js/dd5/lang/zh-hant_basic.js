@@ -23,6 +23,8 @@ _.l.set( 'zh-Hant', 'dd5.attribute', {
    'bonus_language' : '額外語言',
    'subrace' : '亞種',
    'feat' : '專長',
+   'armour' : '鎧甲',
+   'ac' : '護甲等級',
 } );
 
 _.l.set( 'zh-Hant', 'dd5.entity', {
@@ -134,6 +136,10 @@ _.l.set( 'zh-Hant', 'dd5.equipment', {
    'scalemail'     : '鱗甲',
    'breastplate'   : '胸甲',
    'halfplate'     : '輕板甲',
+   'ringmail'      : '羅圈甲',
+   'chainmail'     : '鏈甲',
+   'splintmail'    : '條板甲',
+   'platemail'     : '板甲',
 
    'handaxe'     : '手斧',
    'light-hammer': '輕鎚',

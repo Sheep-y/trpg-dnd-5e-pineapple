@@ -23,6 +23,8 @@ _.l.set( 'en-US', 'dd5.attribute', {
    'bonus_language' : 'Bonus Language',
    'subrace' : 'Subrace',
    'feat' : 'Feat',
+   'armour' : 'Armour',
+   'ac' : 'AC',
 } );
 
 _.l.set( 'en-US', 'dd5.entity', {
@@ -133,6 +135,10 @@ _.l.set( 'en-US', 'dd5.equipment', {
    'scalemail'     : 'Scale Mail',
    'breastplate'   : 'Breastplate',
    'halfplate'     : 'Half Plate',
+   'ringmail'      : 'Ring Mail',
+   'chainmail'     : 'Chainmail',
+   'splintmail'    : 'Splint',
+   'platemail'     : 'Plate',
 
    'handaxe'     : 'Handaxe',
    'light-hammer': 'Light Hammer',

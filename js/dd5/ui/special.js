@@ -30,6 +30,7 @@ ui.registerFactory( 'feature.pc_ability', {
          list.push( e );
       } );
       html += `<tr><td colspan='99' align='center'>${ _.l( 'dd5.feature.pc_ability.point_buy' ) } <span data-attr="point_cost"></span></td></tr>`;
+      html += `<tr><td colspan='99'>${ _.l( 'dd5.attribute.ac' ) } <span data-attr="ac"></span></td></tr>`;
       html += `<tr><td colspan='99'><b>${ _.l( 'dd5.attribute.proficiency' ) }</b><br/>`;
       // Proficiencies, displayed primary for prototype purpose
       html += _.flatten( res.entity.get({ type: 'proficiency' }).map( ( type ) => {

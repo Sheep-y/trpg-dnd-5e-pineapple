@@ -153,19 +153,27 @@ var loader = ns.loader = {
                return { subrule: 'prof', prof_type: 'prof$' + left[1], 'value': parse_prof_string( right ) };
 
             case 'adj' :
-               var result = { subrule: subrule, value: right }, next = left.pop();
-               if ( next && next.startsWith( 'max' ) ) {
-                  result.max = next.substr( 3 );
-                  next = left.pop();
-               }
-               if ( next && next.startsWith( 'min' ) ) {
-                  result.min = left.pop().substr( 3 );
-                  next = left.pop();
-               }
-               result.property = '"' + next + '"';
-               if ( left.length !== 1 || ! result.property || ! right ) throw `Invalid adj/set syntax: ${e}`;
+               if ( left.length !== 2 || ! left[1] || ! right ) throw `Invalid adj syntax: ${e}`;
+               var { val, min, max } = parse_value_range( right );
+               var result = { subrule: subrule, value: val, property: quote( left[1] ) };
+               if ( min !== undefined ) result.min = min;
+               if ( max !== undefined ) result.max = max;
                return result;
                break;
+
+            case 'negate' :
+               if ( left.length !== 2 || ! left[1] ) throw `Invalid negate syntax: ${e}`;
+               var result = { subrule: subrule, property: quote( left[1] ) };
+               var pos = right ? right.indexOf( '[' ) : -1;
+               if ( pos < 0 ) {
+                  result.negate_target = quote( right );
+               } else {
+                  var { min, max } = parse_value_range( right.substr( pos ) );
+                  result.negate_target = quote( right.substr( 0, pos ) );
+                  if ( min !== undefined ) result.min = min;
+                  if ( max !== undefined ) result.max = max;
+               }
+               return result;
 
             case 'slot' :
             case 'numslot' :
@@ -239,6 +247,10 @@ var loader = ns.loader = {
                result = subrule.Slot.create( e );
                break;
 
+            case 'negate' : // Negation slot
+               result = subrule.Negate.create( e );
+               break;
+
             case 'numslot' : // Numeric slot
                result = subrule.NumSlot.create( e );
                break;
@@ -297,16 +309,23 @@ function parse_prof_string ( src ) {
       src = "entity:" + src;
       pos = "entity".length;
    }
-   var type = src.substr( 0, pos ).trim(), ids = src.substr( pos + 1 ).trim();
-   if ( ids.indexOf( "," ) < 0 ) return `db.${type}("${ids}")`;
-   else return `db.${type}({id:["` + ids.replace( /\s*,\s*/g, '","' ) + '"]})';
+   var type = src.substr( 0, pos ).trim(), ids = src.substr( pos + 1 );
+   return `db.${type}({id:${ quote( ids ) }})`;
+}
+
+function quote ( src ) {
+   src = src.trim();
+   if ( src.match( /[."';\[\(]/ ) ) return src;
+   if ( src.indexOf( ',' ) >= 0 ) return '["' + src.replace( /\s*,\s*/g, '","' ) + '"]';
+   return `"${src}"`;
 }
 
 function parse_value_range ( src ) {
    src = src.trim();
+   if ( src.match( /[a-zA-Z_]/ ) ) return { val: src };
    if      ( src.match( /^\-?\d+\.?$/   ) ) return { val: parseInt  ( src ) };
    else if ( src.match( /^\-?\d*\.\d+$/ ) ) return { val: parseFloat( src ) };
-   var values = src.match( /^(-?\d+)?\s*\[(-?\d+)?,(-?\d+)?\]$/ ), result = { };
+   var values = src.match( /^(-?\d+)?\s*\[(-?\d+)?,(-?\d+)?\]$/ ), result = {};
    if ( values ) {
       if ( values[1] ) result.val = parseInt( values[1] );
       if ( values[2] ) result.min = parseInt( values[2] );
