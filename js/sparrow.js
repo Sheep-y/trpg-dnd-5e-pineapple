@@ -327,7 +327,7 @@ if ( this && this.setImmediate ) {
    _.clearImmediate = this.cancelAnimationFrame.bind( this );
 
 } else {
-   _.setImmediate = function setImmediate ( func ) { return setTimeout(func, 0); };
+   _.setImmediate = function setImmediate ( func ) { return setTimeout( func, 0 ); };
    _.clearImmediate = this.clearTimeout;
 }
 

@@ -104,9 +104,9 @@ subrule.Adj = {
    'query' ( query ) {
       var prop = _.array( this.property( query ) );
       if ( prop.includes( query.query ) || query.query === this.getPath() ) {
-         var val = parseFloat( this.value( query ) );
-         if ( this.min ) val = Math.min( val, this.min( query ) );
-         if ( this.max ) val = Math.max( val, this.max( query ) );
+         var val = this.queryChar( 'adjValue', this, parseFloat( this.value( query ) ), query );
+         if ( this.min ) val = Math.min( val, this.queryChar( 'adjMin', this, this.min( query ) ), query );
+         if ( this.max ) val = Math.max( val, this.queryChar( 'adjMax', this, this.max( query ) ), query );
          return query.add_bonus( val, this.getResource() || this, _.call( this.type || null, query ) );
       }
       return base.query.call( this, query );
@@ -149,7 +149,7 @@ subrule.Slot = {
       var me = _.newIfSame( this, subrule.Slot );
       base.create.call( me, opt );
       // Please also update subrule.Number, since subrule.Number is bypassing this constructor because of the assertion
-      _.assert( opt.id && me.options, '[dd5.rule.Slot] Slot must have id and options set.' );
+      _.assert( me.id && me.options, '[dd5.rule.Slot] Slot must have id and options set.' );
       return me;
    },
    'cid': 'subrule.slot',

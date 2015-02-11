@@ -99,6 +99,8 @@ dd5.loader.jsonp.load_rules( { 'version':'alpha',
    ' adj.intimidation   : you.cha_mod ',
    ' adj.performance    : you.cha_mod ',
    ' adj.persuasion     : you.cha_mod ',
+   ' adj.ac : 10 ',
+   ' feature.dex_to_ac  : adj.ac : you.dex_mod ',
 ] },
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////
 { entry:'character', id: 'pc', subrules: [ // Standard PC
@@ -133,10 +135,10 @@ dd5.loader.jsonp.load_rules( { 'version':'alpha',
    ' profSlot.tool.bonus_prof : equipment : smith-tool, brewer-tool, mason-tool ',
    ' slot.subrace  : db.feature({ type: "subrace", of: "dwarf" }) ',
 ] },
-{ entry:'feature', id: 'dwarf-hill', type: 'subrace', of: 'dwarf', subrules: [
+{ feature: 'dwarf-hill', type: 'subrace', of: 'dwarf', subrules: [
    ' adj.wis : 1 ',
 ] },
-{ entry:'feature', id: 'dwarf-mountain', type: 'subrace', of: 'dwarf', subrules: [
+{ feature: 'dwarf-mountain', type: 'subrace', of: 'dwarf', subrules: [
    ' adj.str : 2 ',
    ' prof.armour : db.equipment({ type: "armour", armour: [ "light", "medium" ] }) ',
 ] },
@@ -150,12 +152,12 @@ dd5.loader.jsonp.load_rules( { 'version':'alpha',
    ' prof.skill    : entity : perception ',
    ' slot.subrace  : db.feature({ type: "subrace", of: "elf" }) '
 ] },
-{ entry:'feature', id: 'elf-high', type: 'subrace', of: 'elf', subrules: [
+{ feature: 'elf-high', type: 'subrace', of: 'elf', subrules: [
    ' adj.int : 1 ',
    ' prof.weapon   : equipment : longsword, shortsword, shortbow, longbow ',
    ' profSlot.language.bonus_language : db.entity({ language: "standard" }) ',
 ] },
-{ entry:'feature', id: 'elf-wood', type: 'subrace', of: 'elf', subrules: [
+{ feature: 'elf-wood', type: 'subrace', of: 'elf', subrules: [
    ' adj.wis : 1 ',
    ' adj.speed : 5 ',
    ' prof.weapon   : equipment : longsword, shortsword, shortbow, longbow ',
@@ -169,10 +171,10 @@ dd5.loader.jsonp.load_rules( { 'version':'alpha',
    ' prof.language : entity : common, halfing ',
    ' slot.subrace : db.feature({ type: "subrace", of: "halfling" }) '
 ] },
-{ entry:'feature', id: 'halfling-lightfoot', type: 'subrace', of: 'halfling', subrules: [
+{ feature: 'halfling-lightfoot', type: 'subrace', of: 'halfling', subrules: [
    ' adj.cha : 1 ',
 ] },
-{ entry:'feature', id: 'halfling-stout', type: 'subrace', of: 'halfling', subrules: [
+{ feature: 'halfling-stout', type: 'subrace', of: 'halfling', subrules: [
    ' adj.con : 1 ',
 ] },
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -184,10 +186,10 @@ dd5.loader.jsonp.load_rules( { 'version':'alpha',
    ' profSlot.language.bonus_language : db.entity({ language: "standard" }) ',
    ' slot.subrace : db.feature({ type: "subrace", of: "human" }) ',
 ] },
-{ entry:'feature', id: 'human-basic', type: 'subrace', of: 'human', subrules: [
+{ feature: 'human-basic', type: 'subrace', of: 'human', subrules: [
    { adj: 'toCId( db.entity({ type: "ability" }) )', value: 1 }, // Increase ALL abilities by one
 ] },
-{ entry:'feature', id: 'human-phb', type: 'subrace', of: 'human', subrules: [
+{ feature: 'human-phb', type: 'subrace', of: 'human', subrules: [
    { slot : 'bonus_ability', options : 'db.entity({ type: "ability" })', count: 2 },
    { adj : 'toCId( you.bonus_ability )', value: 1, dependent_attribute: 'bonus_ability' },
    ' profSlot.skill.bonus_prof : db.entity({ type: "skill" }) ',

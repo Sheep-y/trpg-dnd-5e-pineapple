@@ -13,9 +13,9 @@ var loaded_rules;
 var loading_source;
 
 var loader = ns.loader = {
-   'stack': {}, // Loader stack, used to match load request with load data
+   stack: {}, // Loader stack, used to match load request with load data
 
-   'load' ( opt, source ) {
+   load ( opt, source ) {
       _.assert( ns && ns.rule && ns.rule.subrule, '[dd5.loader] 5e subrule module must be loaded first.');
       if ( typeof( opt ) === 'string' ) opt = { url: opt };
       var done = opt.ondone, err = opt.onerror, url = opt.url;
@@ -50,9 +50,9 @@ var loader = ns.loader = {
    },
 
    /** jsonp loader callback */
-   'jsonp' : {
+   jsonp : {
       /** Generic callback called by jsonp rule resources */
-      'load_rules' ( data ) {
+      load_rules ( data ) {
          var src, version = data.version, id = data.id;
          loaded_rules = [];
          _.time();
@@ -81,7 +81,11 @@ var loader = ns.loader = {
             var entry = data.data[ i ], result;
             if ( ! entry ) continue;
 
-            var type = entry.entry || "undefined";
+            var type = entry.entry;
+            if ( type === undefined ) {
+               entry = loader.jsonp.compile_object( entry );
+               type = entry.entry;
+            }
             delete entry.entry;
             switch ( type.toLowerCase() ) {
                case 'source' :
@@ -111,7 +115,7 @@ var loader = ns.loader = {
          _.log.end();
       },
 
-      'load_rule' ( type, e ) {
+      load_rule ( type, e ) {
          if ( ! e.source && loading_source ) e.source = loading_source;
          var uftype = _.ucfirst( type );
          var r = rule[ uftype ].create( e );
@@ -126,12 +130,12 @@ var loader = ns.loader = {
          return r;
       },
 
-      'check_unused_attr' ( e, suffix ) {
+      check_unused_attr ( e, suffix ) {
          for ( var a in e ) ns.event.warn( `Unused attribute "${a}" (value "${e[a]}")' ${suffix}` );
       },
 
       // Convert a string into jsonp subrule
-      'compile_string' : ( e ) => {
+      compile_string : ( e ) => {
          e = e.trim();
          var pos = e.indexOf( ':' );
          var left = ( pos >= 0 ? e.substr( 0, pos ).trim() : e ).split( /\s*\.\s*/g );
@@ -139,14 +143,17 @@ var loader = ns.loader = {
          var subrule = left[0].toLowerCase();
 
          switch ( subrule ) {
+            case 'feature':
+               if ( left.length !== 2 || ! right ) throw `Invalid feature syntax: ${e}`;
+               return { entry: 'feature', subrule: 'feature', id: left[1], subrules: right.trim().split( /\s*;\s*/g ) };
+               // TODO: combine entry and subrule.
+
             case 'prof' :
                if ( left.length !== 2 || ! right ) throw `Invalid prof syntax: ${e}`;
-               var result = { 'subrule': 'prof', 'prof_type': 'prof$' + left[1], 'value': parse_prof_string( right ) };
-               return result;
+               return { subrule: 'prof', prof_type: 'prof$' + left[1], 'value': parse_prof_string( right ) };
 
-            case 'adj' : // "adj.[prop](.min\d+)?(.max\d+)?" : "[bonus]" // Add a bonus(penalty), min/max X(-X) e.g. adj.check.dex=2
-            case 'set' : // "set(min|max).[prop](.min\d+)?(.max\d+)?" : "[value]" // Set a property to given value
-               var result = { 'subrule': subrule, 'value': right }, next = left.pop();
+            case 'adj' :
+               var result = { subrule: subrule, value: right }, next = left.pop();
                if ( next && next.startsWith( 'max' ) ) {
                   result.max = next.substr( 3 );
                   next = left.pop();
@@ -163,16 +170,16 @@ var loader = ns.loader = {
             case 'slot' :
             case 'numslot' :
             case 'profslot' :
-               var result = { 'subrule': subrule, 'id' : left.pop() };
+               var result = { subrule: subrule, id : left.pop() };
                if ( subrule === 'profslot' ) {
                   result.prof_type = 'prof$' + left.pop();
                   right = parse_prof_string( right );
                }
                if ( subrule === 'numslot' ) {
-                  var values = right.match( /^(-?\d+)?\s*\[(-?\d+)?,(-?\d+)?\]$/ );
-                  if ( values[1] ) result.default = parseInt( values[1] );
-                  if ( values[2] ) result.min_val  = parseInt( values[2] );
-                  if ( values[3] ) result.max_val  = parseInt( values[3] );
+                  var { val, min, max } = parse_value_range( right );
+                  if ( val !== undefined ) result.default = val;
+                  if ( min !== undefined ) result.min_val = min;
+                  if ( max !== undefined ) result.max_val = max;
                } else {
                   result.options = right; // slot and profslot
                }
@@ -190,7 +197,7 @@ var loader = ns.loader = {
       },
 
       // Convert a simplified jsonp subrule into full jsonp subrule
-      'compile_object' ( e ) {
+      compile_object ( e ) {
          if ( e.adj ) {
             e.subrule = 'adj';
             e.property = e.adj;
@@ -202,7 +209,7 @@ var loader = ns.loader = {
          } else {
             for ( var p of [ 'feature', 'slot' ] ) {
                if ( e[ p ] ) {
-                  e.subrule = p;
+                  e.subrule = e.entry = p;
                   e.id = e[ p ];
                   delete e[ p ];
                   break;
@@ -212,7 +219,7 @@ var loader = ns.loader = {
          return e;
       },
 
-      'load_subrule' ( e ) {
+      load_subrule ( e ) {
          var result;
          log.finest( "Loading subrule: " + JSON.stringify( e ) );
          if ( typeof( e ) === 'string' ) {
@@ -270,9 +277,9 @@ var loader = ns.loader = {
       }
    },
 
-   'event' : _.EventManager.create( [ 'load', 'progress' ] ),
+   event : _.EventManager.create( [ 'load', 'progress' ] ),
 
-   'parser' : null // Created in parser.js
+   parser : null // Created in parser.js
 };
 
 /**
@@ -293,6 +300,19 @@ function parse_prof_string ( src ) {
    var type = src.substr( 0, pos ).trim(), ids = src.substr( pos + 1 ).trim();
    if ( ids.indexOf( "," ) < 0 ) return `db.${type}("${ids}")`;
    else return `db.${type}({id:["` + ids.replace( /\s*,\s*/g, '","' ) + '"]})';
+}
+
+function parse_value_range ( src ) {
+   src = src.trim();
+   if      ( src.match( /^\-?\d+\.?$/   ) ) return { val: parseInt  ( src ) };
+   else if ( src.match( /^\-?\d*\.\d+$/ ) ) return { val: parseFloat( src ) };
+   var values = src.match( /^(-?\d+)?\s*\[(-?\d+)?,(-?\d+)?\]$/ ), result = { };
+   if ( values ) {
+      if ( values[1] ) result.val = parseInt( values[1] );
+      if ( values[2] ) result.min = parseInt( values[2] );
+      if ( values[3] ) result.max = parseInt( values[3] );
+   }
+   return result;
 }
 
 pinbun.event.load( 'dd5.loader' );
