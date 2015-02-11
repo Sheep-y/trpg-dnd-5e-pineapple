@@ -140,10 +140,8 @@ var loader = ns.loader = {
 
          switch ( subrule ) {
             case 'prof' :
-               right = right.indexOf( "." ) >= 0 ? right : ( 'db.entity({id:["' + right.replace( /\s*,\s*/g, '","' ) + '"]})' );
                if ( left.length !== 2 || ! right ) throw `Invalid prof syntax: ${e}`;
-               var result = { 'subrule': 'prof', 'prof_type': 'prof$' + left[1], 'value': right };
-               _.log( JSON.stringify( result ) );
+               var result = { 'subrule': 'prof', 'prof_type': 'prof$' + left[1], 'value': parse_prof_string( right ) };
                return result;
 
             case 'adj' : // "adj.[prop](.min\d+)?(.max\d+)?" : "[bonus]" // Add a bonus(penalty), min/max X(-X) e.g. adj.check.dex=2
@@ -166,7 +164,10 @@ var loader = ns.loader = {
             case 'numslot' :
             case 'profslot' :
                var result = { 'subrule': subrule, 'id' : left.pop() };
-               if ( subrule === 'profslot' ) result.prof_type = 'prof$' + left.pop();
+               if ( subrule === 'profslot' ) {
+                  result.prof_type = 'prof$' + left.pop();
+                  right = parse_prof_string( right );
+               }
                if ( subrule === 'numslot' ) {
                   var values = right.match( /^(-?\d+)?\s*\[(-?\d+)?,(-?\d+)?\]$/ );
                   if ( values[1] ) result.default = parseInt( values[1] );
@@ -273,6 +274,26 @@ var loader = ns.loader = {
 
    'parser' : null // Created in parser.js
 };
+
+/**
+ * Convert <code>type : id</code> into <code>db[type]("id")</code> and
+ * <code>type : id1, id2</code> into <code>db[type]({id:["id1","id2"]})</code>.
+ * src with dots or quotes are unaffected.
+ * @param {String} src String form proficiency.
+ * @return {String} Converted string form.
+ */
+function parse_prof_string ( src ) {
+   if ( src.indexOf( "." ) >= 0 && src.indexOf( '"' ) >= 0 ) return src;
+   var pos = src.indexOf( ":" ), type, id;
+   if ( pos < 0 ) {
+      log.warn( `Missing proficiency type, defaulting to entity: "${ src }".` );
+      src = "entity:" + src;
+      pos = "entity".length;
+   }
+   var type = src.substr( 0, pos ).trim(), ids = src.substr( pos + 1 ).trim();
+   if ( ids.indexOf( "," ) < 0 ) return `db.${type}("${ids}")`;
+   else return `db.${type}({id:["` + ids.replace( /\s*,\s*/g, '","' ) + '"]})';
+}
 
 pinbun.event.load( 'dd5.loader' );
 
