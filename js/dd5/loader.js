@@ -165,13 +165,24 @@ var loader = ns.loader = {
                if ( left.length !== 2 || ! left[1] ) throw `Invalid negate syntax: ${e}`;
                var result = { subrule: subrule, property: quote( left[1] ) };
                var pos = right ? right.indexOf( '[' ) : -1;
-               if ( pos < 0 ) {
-                  result.negate_target = quote( right );
-               } else {
+               if ( pos > 0 ) {
                   var { min, max } = parse_value_range( right.substr( pos ) );
-                  result.negate_target = quote( right.substr( 0, pos ) );
                   if ( min !== undefined ) result.min = min;
                   if ( max !== undefined ) result.max = max;
+                  right = right.substr( 0, pos ).trim();
+               }
+               if ( right ) {
+                  if ( right.match( /[."';\[\(]/ ) ) {
+                     result.negate_target = quote( right );
+                  } else {
+                     var target = [], whitelist = [];
+                     right.split( /\s*,\s*/ ).forEach( e => {
+                        if ( e.startsWith( "^" ) ) whitelist.push( e.substr( 1 ) );
+                        else target.push( e );
+                     } );
+                     if (    target.length ) result.negate_target     = quote(    target.join(",") );
+                     if ( whitelist.length ) result.negate_whitelistt = quote( whitelist.join(",") );
+                  }
                }
                return result;
 

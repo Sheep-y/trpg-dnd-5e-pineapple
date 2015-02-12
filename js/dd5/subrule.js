@@ -123,17 +123,25 @@ subrule.Negate = {
       return me;
    },
    'cid' : 'subrule.negate',
-   'compile_list' : base.compile_list.concat([ 'property', 'negate_target', 'min', 'max' ]),
+   'compile_list' : base.compile_list.concat([ 'property', 'negate_target', 'negate_whitelist', 'min', 'max' ]),
+   'negate_target' : _.dummy,
+   'negate_whitelist' : _.dummy,
+
    'query' ( query ) {
-      if ( query.query === 'adjValue' && query.whoask && query.cause && query.whoask.getResource && query.cause.query ) {
+      if ( query.query === 'adjValue' && query.cause && query.cause.query ) {
          var prop = _.array( this.property( query ) );
          if ( ! prop.includes( query.cause.query ) ) return; // Not a property we are interested. Pass.
-         var target = _.array( this.negate_target( query ) );
-         if ( target && ! target.includes( query.whoask.getResource().id ) ) return; // Not a source we are interst
+         // Check whether cause is target and, if yes, check whitelist
+         var target = _.ary( this.negate_target( query ) );
+         var { id: causeid } = target && query.whoask && query.whoask.getResource ? query.whoask.getResource() : {};
+         if ( target && ( ! causeid || ! target.includes( causeid ) ) ) return; // Not from a source we are interested in
+         var white = _.ary( this.negate_whitelist( query ) );
+         if ( white && causeid && white.includes( causeid ) ) return; // In whitelist? We will let you go too.
 
+         // Apply min / max to query result.
          if ( typeof( query.value ) === 'number' ) {
-            if ( this.min ) query.value = Math.max( query.value, this.queryChar( 'adjMin', this, this.min( query ) ), query );
-            if ( this.max ) query.value = Math.min( query.value, this.queryChar( 'adjMax', this, this.max( query ) ), query );
+            if ( this.min ) query.value = Math.max( query.value, this.queryChar( 'adjMin', this, this.min( query ) ) );
+            if ( this.max ) query.value = Math.min( query.value, this.queryChar( 'adjMax', this, this.max( query ) ) );
             else if ( ! this.min ) query.value = 0; // No min, no max = total negation
          }
       }
@@ -253,7 +261,7 @@ subrule.Slot = {
       this.characterAttributeChanged( this.id, result, orig );
    },
    'validPick' ( pick ) {
-      return pick == null || this.getCompatibleOptions().includes( pick );
+      return pick === null || this.getCompatibleOptions().includes( pick );
    },
    'query' ( query ) {
       if ( query.query === this.id || query.query === this.getPath() ) {
