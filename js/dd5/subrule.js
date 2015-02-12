@@ -104,9 +104,9 @@ subrule.Adj = {
    'query' ( query ) {
       var prop = _.array( this.property( query ) );
       if ( prop.includes( query.query ) || query.query === this.getPath() ) {
-         var val = this.queryChar( 'adjValue', this, parseFloat( this.value( query ) ), query );
-         if ( this.min ) val = Math.max( val, this.queryChar( 'adjMin', this, this.min( query ) ), query );
-         if ( this.max ) val = Math.min( val, this.queryChar( 'adjMax', this, this.max( query ) ), query );
+         var val = this.queryChar( 'adjValue', this, parseFloat( this.value( query ) ) );
+         if ( this.min ) val = Math.max( val, this.queryChar( 'adjMin', this, this.min( query ) ) );
+         if ( this.max ) val = Math.min( val, this.queryChar( 'adjMax', this, this.max( query ) ) );
          return query.add_bonus( val, this.getResource() || this, _.call( this.type || null, query ) );
       }
       return base.query.call( this, query );
@@ -206,7 +206,7 @@ subrule.Slot = {
 
    'pick' : null, // Selected option.
    'getCompatibleOptions' ( context ) {
-      return this.queryChar( 'slotOptions', this, this.options( context ), context );
+      return this.queryChar( 'slotOptions', this, this.options( context ) );
    },
    'getOptions' ( context ) {
       return this.getCompatibleOptions( context ).map( e => sys.Option.create( e ) );
@@ -218,7 +218,7 @@ subrule.Slot = {
          if ( e && rule.Rule.isPrototypeOf( e ) ) this.remove( e );
       };
       var adder = ( e ) => {
-         if ( ! this.validPick( e ) ) {
+         if ( ! this.validPick( e ) ) { // TODO: optimise with a "compatible option" cache.
             log.warn( `[dd5.rule.Slot] Invalid picked option for slot ${ this.id }: ${ e }` );
             return null;
          } else if ( _.is.object( e ) ) {
@@ -288,10 +288,10 @@ subrule.NumSlot = {
    'compile_list' : subrule.Slot.compile_list.concat([ 'min_val', 'max_val' ]),
 
    'getMinVal' ( context ) {
-      return this.min_val ? this.queryChar( 'slotMinVal', this, this.min_val( context ), context ) : null;
+      return this.min_val ? this.queryChar( 'slotMinVal', this, this.min_val( context ) ) : null;
    },
    'getMaxVal' ( context ) {
-      return this.max_val ? this.queryChar( 'slotMaxVal', this, this.max_val( context ), context ) : null;
+      return this.max_val ? this.queryChar( 'slotMaxVal', this, this.max_val( context ) ) : null;
    },
 
    'toString' ( ) {
@@ -328,7 +328,7 @@ subrule.ProfSlot = {
 
    'getOptions' ( context ) {
       var pick = this.getPick( context );
-      var existing = this.queryChar( this.prof_type, this, undefined, context ) || [];
+      var existing = this.queryChar( this.prof_type, this ) || [];
       var options = this.getCompatibleOptions( context );
       return options.map( e => {
          var opt = sys.Option.create( e )

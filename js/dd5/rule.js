@@ -20,21 +20,20 @@ var rule = ns.rule = _.map();
 /** Wrap up object for easier use. */
 rule.wrapper = {
    you ( target ) {
-      var c = target ? target.getCharacter() : null;
-      if ( ! c ) c = { query: _.echo, queryChar: _.dummy };
+      var c = ( target ? target.getCharacter() : null ) || { query: _.echo, queryChar: _.dummy };
       return new Proxy( c, { // Divert unknown properties to query function
-            'get' ( me, name ) {
-               return name in me ? me[ name ] : me.query( sys.Query.create( name, me ) ).value;
-            }
-         } );
+         'get' ( me, name ) {
+            return name in me ? me[ name ] : me.queryChar( name, me );
+         }
+      } );
    },
    res : new Proxy( dd5.res, { // Repack categories as function
-            'get' ( me, name ) {
-               return name in me
-                  ? criteria => rule.wrapper.first( me[ name ].get( criteria ) )
-                  : null;
-            }
-         } ),
+      'get' ( me, name ) {
+         return name in me
+            ? criteria => rule.wrapper.first( me[ name ].get( criteria ) )
+            : null;
+      }
+   } ),
    first ( target ) {
       return new Proxy( target, { // if there is only one match, divert unknown properties to first result
          'get' ( me, name ) {
@@ -115,7 +114,11 @@ rule.Rule = {
       log.finer( '[dd5.rule] Creating ' + this.cid );
       var result = sys.Composite.create.call( Object.create( this ) );
       result.build = null;
-      for ( var c of this.children ) result.add( c.build() );
+      for ( var c of this.children ) try {
+         result.add( c.build() );
+      } catch ( err ) {
+         log.error( `Cannot build ${ c.cid } when building ${ this.id || this.cid }`, err );
+      }
       return result;
    },
 };
@@ -289,7 +292,7 @@ rule.Character = {
          } else { // Non-path query will go through observer map for optimal execution.
             if ( query.query in this._query_map )
                for ( var comp of _.ary( this._query_map[ query.query ] ) ) try {
-                  comp.query( query );
+                  if ( query.checkDimension( comp ) ) comp.query( query );
                } catch ( err ) {
                   log.error( `Error on ${comp.getPath()} in query ${key}`, err );
                }

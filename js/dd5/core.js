@@ -87,18 +87,36 @@ sys.Value = {
  * @returns {dd5_core_init.dd5_Query}
  */
 sys.Query = {
-   'create' ( query, whoask, value, cause ) {
+   'create' ( query, whoask ) {
       var me = _.newIfSame( this, sys.Query );
       me.query = query;
       me.whoask = whoask;
-      me.value = value;
-      me.cause = cause;
       return me;
    },
    'query'   : '',          // Query key
    'whoask'  : null,       // Who formed this query
    'value'   : undefined, // Return value
    'cause'   : null,     // Original query
+   'dimensions' : null, // Dimension limits
+
+   'stack' : [],      // *Global Shared* query stack, depended upon by compiled property
+
+   'setValue' ( value ) {
+      this.value = value;
+      return this;
+   },
+
+   'atLevel' ( level ) {
+      this.dimensions = { level: { '<=': level } };
+      return this;
+   },
+   'checkDimension' ( comp ) {
+      if ( ! this.dimensions ) return true;
+      var lv = comp.getDimension( 'level' );
+      if ( lv === undefined ) return true;
+      return _.getd( this.dimensions, 'level', '<=', lv ) <= lv;
+   },
+
    'valueOf' ( ) {
       var val = this.value;
       if ( Array.isArray( val ) )
@@ -201,11 +219,16 @@ sys.Composite = {
          opt.parent.add( me );
          delete opt.parent;
       }
+      if ( opt.level ) {
+         me._dimensions = { level: opt.level };
+         delete opt.level;
+      }
       return me;
    },
    'id' : undefined, // string
    'cid' : undefined, // component id
    '_cache_Character' : null, // getCharacter cache
+   '_dimensions' : null, // Level, e.g. level specific slot
 
    'fireAttributeChanged' : function ( name, newValue, oldValue ) {
       if ( name === 'root' ) this._cache_Character = null;
@@ -234,6 +257,14 @@ sys.Composite = {
       return this.getName();
    },
 
+   'getDimension' ( name ) {
+      if ( this._dimension && name in this._dimension )
+         return this._dimension[ name ];
+      var parent = this.getParent();
+      if ( ! parent ) return undefined;
+      return parent.getDimension( name );
+   },
+
    'getCharacter' ( ) {
       if ( this._cache_Character ) return this._cache_Character;
       return this._cache_Character = this.getRoot( ns.rule.Character );
@@ -244,7 +275,7 @@ sys.Composite = {
 
    'query' ( query ) {
       for ( var e of this.children ) try {
-         e.query( query );
+         if ( query.checkDimension( e ) ) e.query( query );
       } catch ( ex ) {
          if ( ! this.cid ) throw ex;
          log.error( `Error when querying "${ query.query }" of ${ e.getPath() }.`, ex );
@@ -252,10 +283,20 @@ sys.Composite = {
       return query;
    },
 
-   'queryChar' ( key, whoask, value, cause ) {
-      var c = this.getCharacter();
-      if ( c ) return c.query( sys.Query.create( key, whoask, value, cause ) ).value;
-      return value;
+   'queryChar' ( key, whoask, value, level ) {
+      var char = this.getCharacter();
+      if ( ! char ) return value;
+      var Q = sys.Query, query = Q.create( key, whoask ), len = Q.stack.length;
+      if ( value !== undefined ) query.setValue( value );
+      if ( level !== undefined ) query.setLevel( level );
+      try {
+         if ( len ) query.cause = Q.stack[ len-1 ];
+         Q.stack.push( query );
+         char.query( query );
+      } finally {
+         Q.stack.pop();
+      }
+      return query.value;
    },
 };
 
