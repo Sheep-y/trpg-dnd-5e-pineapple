@@ -45,6 +45,60 @@ var _ = function sparrow ( root, selector ) {
 if ( ns ) ns._ = _;
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// General Helpers
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/**
+ * Return first non-null, non-undefined parameter.
+ *
+ * @returns {*} First non null data.  If none, returns the last argument or undefined.
+ */
+_.coalesce = function _coalesce ( a ) {
+   for ( var i in arguments ) {
+      a = arguments[ i ];
+      if ( a !== undefined && a !== null ) return a;
+   }
+   return a;
+};
+
+/**
+ * Safely get the (deep) property of a object.
+ * If the property is unavailable, return undefined.
+ * e.g. _.get( window, 'localStorage', 'data' );
+ *
+ * @param {*} root Root object to start access
+ * @returns {*} Specified property, or undefined
+ */
+_.get = function _get ( root /*, property */ ) {
+   var base = root, len = arguments.length;
+   for ( var i = 1 ; i < len ; i++ ) {
+      var prop = arguments[ i ];
+      if ( prop in base ) base = base[ prop ];
+      else return undefined;
+   }
+   return base;
+};
+
+/**
+ * Safely get the (deep) property of a object.
+ * If the property is unavailable, return last parameter.
+ * e.g. _.get( window, 'localStorage', 'data', 'default setting' );
+ *
+ * @param {*} root Root object to start access
+ * @param {*} defVal (Last parameter) Default value if property is not found.
+ * @returns {*} Specified property, or defVal
+ */
+_.getd = function _getd ( root /*, property, defVal */ ) {
+   var base = root, len = arguments.length-1, defVal= arguments[ len+1 ];
+   for ( var i = 1 ; i < len ; i++ ) {
+      var prop = arguments[ i ];
+      if ( prop in base ) base = base[ prop ];
+      else return defVal;
+   }
+   return base;
+};
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Array Helpers
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -199,19 +253,6 @@ _.map = function _map ( data, field ) {
 };
 
 /**
- * Return first non-null, non-undefined parameter.
- *
- * @returns {*} First non null data.  If none, returns the last argument or undefined.
- */
-_.coalesce = function _coalesce ( a ) {
-   for ( var i in arguments ) {
-      a = arguments[ i ];
-      if ( a !== undefined && a !== null ) return a;
-   }
-   return a;
-};
-
-/**
  * Flatten and returns a new array.
  *
  * Self-referencing array will be referencd in the new array,
@@ -303,7 +344,7 @@ _.call = function _call ( func, thisObj, param /*...*/ ) {
  * @returns {Function} Function that can be safely called multiple times without calling func more then once
  */
 _.callonce = function _call ( func ) {
-   if ( ! func ) return function () {};
+   if ( ! func ) return _.dummy;
    return function _callonce_call () {
       if ( ! func ) return; // func would be set to null after first call
       var f = func;
@@ -463,7 +504,7 @@ _.is = {
     */
    ie : function _is_ie () {
       var result = /\bMSIE \d|\bTrident\/\d\b./.test( navigator.userAgent );
-      _.is.ie = function _is_ie_result() { return result; };
+      _.is.ie = function () { return result; };
       return result;
    },
 
@@ -473,20 +514,20 @@ _.is = {
     */
    firefox : function _is_firefox () {
       var result = /\bGecko\/\d{8}/.test( navigator.userAgent );
-      _.is.firefox = function _is_firefox_result() { return result; };
+      _.is.firefox = function () { return result; };
       return result;
    },
 
    /**
-    * Detect whether browser has Active X. Works with IE 11.
+    * Detect whether browser has ActiveX. Works with IE 11.
     * @returns {boolean} True if ActiveX is enabled, false otherwise.
     */
    activeX : function _is_activeX () {
       var result = false;
       try {
-         result = !! new ActiveXObject( 'htmlfile' );
+         result = !! new ActiveXObject( 'htmlfile' ); // IE 11 need actual new to not report undefined
       } catch ( ignored ) {}
-      _.is.activeX = function _is_activeX_result() { return result; };
+      _.is.activeX = function () { return result; };
       return result;
    },
 
@@ -549,7 +590,7 @@ _.xml = function _xml ( txt ) {
       return new DOMParser().parseFromString( txt, 'text/xml' );
 
    } else if ( _.is.activeX() )  {
-      var xml = new ActiveXObject('Msxml2.DOMDocument.6.0');
+      var xml = new ActiveXObject( 'Msxml2.DOMDocument.6.0' );
       xml.loadXML( txt );
       return xml;
 
@@ -625,23 +666,11 @@ _.xsl = function _xsl ( xml, xsl ) {
       return xmlDom.transformNode( xslDom );
 
    } else if ( _.is.activeX() )  {
-         /* // This code has problem with special characters
-         var xslt = new ActiveXObject("Msxml2.XSLTemplate");
-         if ( typeof( xsl === 'string' ) ) { // Must use ActiveX free thread document as source.
-            xslDom = new ActiveXObject('Msxml2.FreeThreadedDOMDocument.3.0');
-            xslDom.loadXML( xsl );
-         }
-         xslt.stylesheet = xslDom;
-         var proc = xslt.createProcessor();
-         proc.input = xmlDom;
-         proc.transform();
-         return _.xml( proc.output );
-      */
          xmlDom = new ActiveXObject('Msxml2.DOMDocument.6.0');
-         xmlDom.loadXML( xml );
          xslDom = new ActiveXObject('Msxml2.DOMDocument.6.0');
-         xslDom.loadXML( xsl );
          var result = new ActiveXObject('Msxml2.DOMDocument.6.0');
+         xmlDom.loadXML( xml );
+         xslDom.loadXML( xsl );
          result.async = false;
          result.validateOnParse = true;
          xmlDom.transformNodeToObject( xslDom, result );
@@ -908,9 +937,9 @@ _.newIfSame = function _newIfSame ( subject, prototype ) {
  * @returns {Function} Result subclass function object.
  */
 _.inherit = function _inherit ( base, constructor, prototype ) {
-   _.assert( ! base || base.prototype, _inherit.name + ': base must be inheritable' );
-   _.assert( constructor === null || typeof( constructor ) === 'function', _inherit.name + ': constructor must be function' );
-   if ( constructor === null ) {
+   _.assert( ! base || base.prototype, _inherit.name + ': base must be a constructor' );
+   _.assert( ! constructor || typeof( constructor ) === 'function', _inherit.name + ': constructor must be function' );
+   if ( ! constructor ) {
       if ( base ) constructor = function _inherit_constructor () { base.apply( this, arguments ); };
       else constructor = function _dummy_constructor () {}; // Must always create new function, do not share it
    }
@@ -950,7 +979,8 @@ _.extend = function _extend( target, copyFrom ) {
 };
 
 /**
- * Remove properities from an object.
+ * Remove properities from an object. Will not touch its prototype.
+ *
  * @param {Object} target Target object, will have its properties removed.
  * @param {*} prop Array like property list, or an object with properties.
  * @returns {Object} Curtailed target object
@@ -988,7 +1018,7 @@ _.noDef = function _noDef ( e ) { if ( e && e.preventDefault ) e.preventDefault(
  * @returns {Element} Created DOM element.
  */
 _.create = function _create ( tag, attr ) {
-   /* Disabled Id/class parsing because just the check cause slow down of 6% to 12%, and does not do anything new. *
+   /* Disabled Id/class parsing because just the check cause a slow down of 6% to 12%, and does not do anything new. *
    if ( typeof( attr ) !== 'object' ) attr = { 'text' : attr }; // Convert text / numeric attribute to proper attribute object
    if ( tag.indexOf( '#' ) > 0  || tag.indexOf( '.' ) > 0 ) { // Parse 'table.noprint.fullwidth#nav' into tag, class, id
       if ( ! attr ) attr = {}; // Create attribute object if not given
@@ -998,8 +1028,7 @@ _.create = function _create ( tag, attr ) {
          if ( ! attr.className ) return attr.className = e.substr(1); // Set className
          attr.className += ' ' + e.substr(1); // Append className
       } );
-   }
-   */
+   } /**/
    var result = document.createElement( tag );
    if ( attr ) {
       if ( typeof( attr ) !== 'object' ) {
@@ -1024,7 +1053,7 @@ _.domlist = function _domlist ( e ) {
 };
 
 /**
- * Set a list of object's same attribute/property to given value
+ * Define a list of object's same attribute/property to given value
  * If object is selector or dom element list, this function is same as _.attr( ary, obj, value ).
  *
  * @param {(string|Node|NodeList|Array|Object)} ary Element selcetor, dom list, or Array of JS objects.
@@ -1033,7 +1062,7 @@ _.domlist = function _domlist ( e ) {
  * @param {string=} flag w for non-writable, e for non-enumerable, c for non-configurable.  Can start with '^' for easier understanding.
  * @returns {Array} Array-ifed ary
  */
-_.set = function _set ( ary, obj, value, flag ) {
+_.define = function _define ( ary, obj, value, flag ) {
    // Forward to _.attr if looks like DOM stuff
    if ( typeof( ary ) === 'string' || ( ary && ary[0] instanceof Element ) ) {
       if ( flag && flag !== '^' ) throw new Error( 'Property flags cannot be set on DOM elements' );
@@ -1045,7 +1074,7 @@ _.set = function _set ( ary, obj, value, flag ) {
       attr = {};
       attr[ obj ] = value;
    }
-   ary = _.ary( ary );
+   ary = _.array( ary );
    // Actual run
    if ( ! flag || flag === '^' || ! Object.defineProperties ) {
       setFunc = function _setEach ( e ) {
@@ -1283,7 +1312,7 @@ _.removeClass = function _removeClass ( e, className ) { return _.toggleClass( e
  */
 _.toggleClass = function _toggleClass ( e, className, method ) {
    if ( method === undefined ) method = 'toggle';
-   var cls = _.ary( className );
+   var cls = _.array( className );
    _.forEach( _.domlist( e ), function _toggleClass_each ( dom ) {
       cls.forEach( function _toggleClass_each_each( c ) { dom.classList[ method ]( c ); } );
    } );
