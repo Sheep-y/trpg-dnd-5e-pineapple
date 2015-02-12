@@ -25,8 +25,9 @@ var ui = ns.ui = {
    createUI ( component, type, container ) {
       var domlist = [], result, cid = component.cid;
       var factory = registry[ cid ];
-      if ( factory && factory[ type ] ) {
+      if ( factory && factory[ type ] )
          result = factory[ type ]( component, container );
+      if ( result ) {
          result.dataset.cid = cid;
          result.dataset.uitype = type;
       } else {

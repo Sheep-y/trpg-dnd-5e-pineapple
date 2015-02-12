@@ -79,6 +79,7 @@ function dd5_ui_edit_slot_multiple ( rule, container ) {
    var options = rule.getOptions();
    if ( ! options || ! options.length ) return;
    var { id } = ui._getId( rule, container ), count = rule.count( 'ui' );
+   if ( count <= 0 ) return;
    var picks = _.array( rule.getPick() );
    if ( picks.length ) picks = picks.filter( e => e );
    var html = _.html( `<div><label class='dd5 slot'><span>${ rule.getLabel() }</span></label></div>` );

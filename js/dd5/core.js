@@ -288,7 +288,7 @@ sys.Composite = {
       if ( ! char ) return value;
       var Q = sys.Query, query = Q.create( key, whoask ), len = Q.stack.length;
       if ( value !== undefined ) query.setValue( value );
-      if ( level !== undefined ) query.setLevel( level );
+      if ( level !== undefined ) query.atLevel( level );
       try {
          if ( len ) query.cause = Q.stack[ len-1 ];
          Q.stack.push( query );
@@ -330,10 +330,10 @@ var Catalog = {
             var criteron = crit[ prop ], type = typeof( criterion ), filter;
             if ( type === 'function' )  {
                // Filter function
-               filter = ( e ) => criteron( e[ prop ] );
+               filter = ( e ) => criteron( _.ary( e, prop ), e, prop );
             } else if ( Array.isArray( criteron ) ) {
                // List match
-               filter = ( e ) => _.array( e[ prop ] ).some( t => criteron.includes( t ) );
+               filter = ( e ) => _.array( _.get( e, prop ) ).some( t => criteron.includes( t ) );
             } else if ( type === 'object' ) {
                // Range match
                var lo = criteron[ '>=' ], hi = criteron[ '<=' ];
@@ -350,7 +350,7 @@ var Catalog = {
             } else {
                // Plain value match
                if ( criteron === undefined ) filter = ( e ) => _.get( e, prop ) === undefined;
-               else filter = ( e ) => _.array( e[ prop ] ).includes( criteron );
+               else filter = ( e ) => _.array( _.get( e, prop ) ).includes( criteron )  ;
             }
             filters.push( filter );
          } )( p );

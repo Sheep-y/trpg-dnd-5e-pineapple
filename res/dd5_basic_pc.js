@@ -120,7 +120,7 @@ dd5.loader.jsonp.load_rules( { 'version':'alpha',
    ' slot.alignment : db.entity({ type: "alignment" }) ',
    ' slot.race : db.race() ',
    ' slot.armour : db.equipment({ type: "armour" }) ',
-   { slot: 'bonus_language', count: 'you.queryChar( "intMod", this, undefined, 1 )', options: 'db.entity({ language: "standard" })' },
+   { slot: 'bonus_language', count: 'you.queryChar( "int_mod", this, undefined, 1 )', options: 'db.entity({ language: "standard" })', dependent_attribute: 'int_mod' },
 ] }, /* { 'slot':'background', 'options':'#background' },
         { 'slot':'level'  , 'min_val': 1, 'max_val': 20, 'default': 1 },
         { 'slot':'level_1', 'level':'1', 'options':'#class' }, */
