@@ -281,34 +281,41 @@ var Catalog = {
    },
    // find( { 'level': { '>=': 4, '<=': 6 },
    //         'freq' : [ 'daily', 'at-will' ] } )
-   'get' ( criteria ) {
-      if ( ! criteria ) return this._list.concat();
-      if ( typeof( criteria ) === 'string' ) criteria = { 'id' : criteria }; // We can do optimisation later
-      var result = this._list;
-      for ( var prop in criteria ) {
-         var criteron = criteria[ prop ], filter;
-         if ( Array.isArray( criteron ) ) {
-            // List match
-            filter = ( e ) => criteron.includes( e[ prop ] );
-         } else if ( typeof( criteron ) === 'object' ) {
-            // Range match
-            var lo = criteron['>='], hi = criteron['<='];
-            filter = ( e ) => {
-               var val = +e[ prop ];
-               if ( isNaN( val ) ) return false;
-               if ( lo !== undefined && val < lo ) return false;
-               if ( hi !== undefined && val > hi ) return false;
-               return true;
-            };
-         } else {
-            // Plain value match
-            criteron += "";
-            filter = ( e ) => { return criteron === "" + ( prop in e ? e[ prop ] : undefined ); };
-         }
-         result = result.filter( filter );
-         if ( result.length <= 0 ) break;
+   'get' ( ... criteria ) {
+      var filters = [];
+      for ( var crit of criteria ) {
+         if ( typeof( crit ) === 'string' ) crit = { 'id' : crit };
+         for ( var p in crit ) ( prop => {
+            var criteron = crit[ prop ], type = typeof( criterion ), filter;
+            if ( type === 'function' )  {
+               // Filter function
+               filter = ( e ) => criteron( e[ prop ] );
+            } else if ( Array.isArray( criteron ) ) {
+               // List match
+               filter = ( e ) => _.array( e[ prop ] ).some( t => criteron.includes( t ) );
+            } else if ( type === 'object' ) {
+               // Range match
+               var lo = criteron[ '>=' ], hi = criteron[ '<=' ];
+               filter = ( e ) => {
+                  var val = +e[ prop ];
+                  if ( isNaN( val ) ) return false;
+                  if ( lo !== undefined && val < lo ) return false;
+                  if ( hi !== undefined && val > hi ) return false;
+                  return true;
+               };
+            } else if ( type === 'symbol' ) {
+               // Existance check
+               filter = ( e ) => prop in e;
+            } else {
+               // Plain value match
+               if ( criteron === undefined ) filter = ( e ) => _.get( e, prop ) === undefined;
+               else filter = ( e ) => _.array( e[ prop ] ).includes( criteron );
+            }
+            filters.push( filter );
+         } )( p );
       }
-      return result;
+      if ( ! filters.length ) return this._list.concat();
+      return this._list.filter( e => filters.every( f => f( e ) ) );
    }
 };
 
