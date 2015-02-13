@@ -52,11 +52,13 @@ Object.defineProperty( ns, 'activeCharacter',  { // Dummy support for singleton 
    get ( ) { return ns.ui.panels[1]._character; }
 } );
 
-ns.lang = [ { // In case we failed to load language list, default to en
+ns.lang = [ { // Overridden by resource list.
    code   : 'en',
    name   : 'English',
    symbol : 'EN',
 } ];
+
+ns.themes = []; // Loaded by resource list.
 
 pinbun.event.load( 'pinbun' );
 

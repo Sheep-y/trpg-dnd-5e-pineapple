@@ -4,45 +4,44 @@ else if ( ! pinbun.ui ) ( function pinbun_ui_init ( ns ) { 'use strict';
 
 var panels = [], next_unique_id = 0;
 var dlg_main = _.ui.Dialog.create( { visible: false } ); // Main dialog
-var savedFocus, savedScrollX, savedScrollY;
+var savedFocus, savedScrollX, savedScrollY, currentTheme;
 
 var ui = ns.ui = {
    __proto__ : null,
    panels : panels,
-   theme : '', // Set by Global.create
+   get theme ( ) { return currentTheme; },
    get locale ( ) { return _.l.currentLocale; },
 
    init ( ) {
+      _.l.saveKey = 'pinbun.locale';
       _.l.detectLocale( 'en-US' ); // Detect language
       _.l.localise();  // Localise and set document attribute
-      ui.Global.create();
+      currentTheme = ui.Global.create();
+      ui.setTheme( _.pref( 'pinbun.theme' ) );
    },
 
    setTheme ( theme ) {
-      for ( var e of ns.themes ) {
-         if ( e.code && e.code === theme ) {
-            _.log( 'switching to ' + theme );
-            _.attr( 'menuitem[data-theme]:checked', 'checked', null );
-            _.attr( `menuitem[data-theme="${theme}"]`, 'checked', 'checked' );
-            _.forEach( _( `link.page_style:not([data-theme="${theme}"])` ), e => e.disabled = true );
-            _( `link.page_style[data-theme="${theme}"]` )[0].disabled = false;
-            _.setImmediate( () => _.forEach( _( 'link.page_style[disabled]' ), e => e.disabled = false ) );
-            ui.theme = theme;
-            break;
-         }
+      var e = ns.themes.find( e => e.code && e.code === theme );
+      if ( e ) {
+         _.attr( 'menuitem[data-theme]:checked', 'checked', null );
+         _.attr( `menuitem[data-theme="${theme}"]`, 'checked', 'checked' );
+         _.prop( `link.page_style:not([data-theme="${theme}"])`, { disabled: true } );
+         _.prop( `link.page_style[data-theme="${theme}"]`, { disabled: false } );
+         _.setImmediate( () => _.prop( 'link.page_style[disabled]', { disabled: false } ) );
+         currentTheme = theme;
+         _.pref.set( 'pinbun.theme', theme );
       }
    },
 
    setLocale ( locale ) {
-      for ( var e of ns.locales ) {
-         if ( e.code && e.code === locale ) {
-            _.attr( '#btn_locale', 'text', e.label );
-            _.attr( 'menuitem[data-locale]:checked', 'checked', null );
-            _.attr( `menuitem[data-locale="${locale}"]`, 'checked', 'checked' );
-            _.l.setLocale( locale );
-            _.l.localise();
-            break;
-         }
+      var e = ns.locales.find( e => e.code && e.code === locale );
+      if ( e ) {
+         _.attr( '#btn_locale', 'text', e.label );
+         _.attr( 'menuitem[data-locale]:checked', 'checked', null );
+         _.attr( `menuitem[data-locale="${locale}"]`, 'checked', 'checked' );
+         _.l.saveLocale( locale );
+         _.l.localise();
+         ui.setTheme ( ui.theme ); // On Firefox, changing link title will invalidate that stylesheet, so need to re-set the theme
       }
    },
 

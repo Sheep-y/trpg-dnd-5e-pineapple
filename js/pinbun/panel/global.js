@@ -12,7 +12,7 @@ ui.Global = {
       if ( ui.panels.includes( this ) ) return;
       ui.panels.push( this );
 
-      var menu = _( '#mnu_theme' )[0], dom, item;
+      var menu = _.attr( '#mnu_theme', { onshow: this.mnu_show } )[0], dom, item, theme;
       menu = _( '#mnu_theme' )[0];
       for ( item of ns.themes ) {
          if ( item === '-' ) {
@@ -30,7 +30,7 @@ ui.Global = {
                document.head.appendChild( css );
             } else {
                _.attr( css, attr ); // If exists, set title and class
-               ui.theme = code;
+               theme = code;
                dom.checked = 'checked';
             }
 
@@ -42,7 +42,7 @@ ui.Global = {
       }
       _.attr( '#btn_theme', { onshow: this.mnu_show, onclick: this.mnu_theme_click } );
 
-      menu = _( '#mnu_locale' )[0];
+      menu = _.attr( '#mnu_locale', { onshow: this.mnu_show } )[0];
       for ( item of ns.locales ) {
          if ( item === '-' ) {
             dom = _.create( 'hr' );
@@ -56,7 +56,8 @@ ui.Global = {
          }
          menu.appendChild( dom );
       }
-      _.attr( '#btn_locale', { onshow: this.mnu_show, onclick: this.mnu_locale_click } );
+      _.attr( '#btn_locale', { onclick: this.mnu_locale_click } );
+      return theme;
    },
 
    mnu_show ( evt ) {
