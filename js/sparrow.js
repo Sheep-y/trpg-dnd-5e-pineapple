@@ -269,22 +269,23 @@ _.map = function _map ( data, field ) {
  * @returns {*} Flattened array, or elem if it is not an Array
  */
 _.flatten = function _flatten ( stack /*, ary */ ) {
+   var result = [], ary;
    if ( arguments.length <= 1 ) {
-      var ary = stack;
+      ary = stack;
       if ( ! Array.isArray( ary ) || ary.length <= 0 ) return ary;
       stack = [];
    } else {
       ary = arguments[ 1 ]; // Recursion call, ary is new array to be added.
    }
    stack.push( ary );
-   var result = [];
-   ary.forEach( function _flatten_each ( e ) {
+   for ( var i in ary ) {
+      var e = ary[ i ];
       if ( Array.isArray( e ) ) {
-         if ( e.length <= 0 ) return;
+         if ( e.length <= 0 ) continue;
          if ( stack.indexOf( e ) >= 0 ) result.push( e );
          else result = result.concat( _flatten( stack, e ) );
       } else result.push( e );
-   } );
+   }
    stack.pop();
    return result;
 };
@@ -741,7 +742,7 @@ _.html = function _html ( txt, html ) {
       var frag = range.createContextualFragment( txt );
       return frag.childElementCount > 1 ? frag : frag.firstElementChild;
    } else {
-      _.forEach( _.domlist( txt ), function _html_each( e ) {
+      _.forEach( _.domList( txt ), function _html_each( e ) {
          e.innerHTML = html;
       });
    }
@@ -1073,15 +1074,59 @@ _.extend = function _extend( target, copyFrom ) {
       if ( from === undefined || from === null ) continue;
       var keys = Object.getOwnPropertyNames( from );
       if ( Object.getOwnPropertySymbols ) keys = keys.concat( Object.getOwnPropertySymbols( from ) );
-      keys.forEach( function _extend_copy_prop ( name ) {
+      for ( var i in keys ) {
+         var name = keys[ i ];
          if ( exists.indexOf( name ) < 0 ) {
             prop[ name ] = Object.getOwnPropertyDescriptor( from, name );
             exists.push( name );
          }
-      } );
+      }
    }
    Object.defineProperties( target, prop );
    return target;
+};
+
+/**
+ * Set or define a list of object's property.
+ *
+ * @param {(string|Node|NodeList|Array|Object)} ary Element selcetor, dom list, or Array of JS objects.
+ * @param {(Object|string)} obj Attribute or attribute object to set.
+ * @param {*=} value Value to set.
+ * @param {string=} flag w for non-writable, e for non-enumerable, c for non-configurable.  Can start with '^' for easier understanding.
+ * @returns {Array} Array-ifyed ary.
+ */
+_.prop = function _prop ( ary, obj, flag ) {
+   ary = _.domList( ary );
+   _.assert( _.is.object( obj ), '[sparrow.prop] Set target must be a map object.' );
+   _.assert( ! ( flag && _.get( ary, 0 ) instanceof Node ), '[sparrow.prop] Property flags cannot be set on DOM elements' );
+   // If no flag, we will use the simple method.  Notice that we will not delete properties, use _.curtail for that.
+   if ( ! flag || flag === '^' || ! Object.defineProperties ) {
+      var setter = function _prop_set ( e ) {
+         for ( var name in obj ) {
+            e[ name ] = obj[ name ];
+         }
+      };
+   } else {
+      // Need to set property properties.
+      flag = flag.toLowerCase();
+      var props = {}
+        , c = flag.indexOf( 'c' ) < 0  // False if have 'c'
+        , e = flag.indexOf( 'e' ) < 0  // False if have 'e'
+        , w = flag.indexOf( 'w' ) < 0; // False if have 'w'
+      for ( var name in obj ) {
+         props[ name ] = {
+           value : obj[ name ],
+           configurable : c,
+           enumerable : e,
+           writable : w
+         };
+      }
+      var setter = function _prop_define ( e ) {
+         Object.defineProperties( e, prop );
+      };
+   }
+   _.forEach( ary, setter );
+   return ary;
 };
 
 /**
@@ -1094,10 +1139,25 @@ _.extend = function _extend( target, copyFrom ) {
 _.curtail = function _curtail( target, prop ) {
    if ( prop.length !== undefined ) prop = _.ary( prop );
    else prop = Object.keys( prop );
-   prop.forEach( function _curtail_each( e ) {
+   for ( var i in prop ) {
+      var e = prop[ i ];
       if ( target.hasOwnProperty( e ) ) delete target[ e ];
-   });
+   }
    return target;
+};
+
+/**
+ * Safe method to get an object's prototype.
+ * Return null if input is null.  Return undefined if input is not an object.
+ *
+ * @param {*} base Base object to get prototype.
+ * @returns {Object|undefined|null} Null or undefined if base cannot have prototype.  Otherwise Object.getPrototypeOf.
+ */
+_.proto = function _proto ( base ) {
+   if ( base === undefined || base === null ) return base;
+   if ( ! _.is.object( base ) ) return;
+   if ( base.__proto__ ) return base.__proto__;
+   return Object.getPrototypeOf( base );
 };
 
 // Prevent changing properties
@@ -1152,76 +1212,10 @@ _.create = function _create ( tag, attr ) {
  * @param {(string|Node|NodeList|Array)} e Selector or element(s).
  * @returns {(NodeList|Array)} Array-like list of e.
  */
-_.domlist = function _domlist ( e ) {
+_.domList = function _domList ( e ) {
    if ( typeof( e ) === 'string' ) return _( e );
    else if ( e.tagName || e.length === undefined ) return [ e ];
    return e;
-};
-
-/**
- * Define a list of object's same attribute/property to given value
- * If object is selector or dom element list, this function is same as _.attr( ary, obj, value ).
- *
- * @param {(string|Node|NodeList|Array|Object)} ary Element selcetor, dom list, or Array of JS objects.
- * @param {(Object|string)} obj Attribute or attribute object to set.
- * @param {*=} value Value to set.
- * @param {string=} flag w for non-writable, e for non-enumerable, c for non-configurable.  Can start with '^' for easier understanding.
- * @returns {Array} Array-ifed ary
- */
-_.define = function _define ( ary, obj, value, flag ) {
-   // Forward to _.attr if looks like DOM stuff
-   if ( typeof( ary ) === 'string' || ( ary && ary[0] instanceof Element ) ) {
-      if ( flag && flag !== '^' ) throw new Error( 'Property flags cannot be set on DOM elements' );
-      return _.attr( ary, obj, value );
-   }
-   // Normalise obj to attr.  e.g. given 'val', it will become {'val':'val'}
-   var attr = obj, setFunc;
-   if ( _.is.literal( obj ) ) {
-      attr = {};
-      attr[ obj ] = value;
-   }
-   ary = _.array( ary );
-   // Actual run
-   if ( ! flag || flag === '^' || ! Object.defineProperties ) {
-      setFunc = function _setEach ( e ) {
-         for ( var name in attr ) {
-            e[ name ] = attr[ name ];
-         }
-      };
-
-   } else {
-      // Need to set property properties.
-      flag = flag.toLowerCase();
-      var prop = {}
-        , c = flag.indexOf( 'c' ) < 0  // False if have 'c'
-        , e = flag.indexOf( 'e' ) < 0  // False if have 'e'
-        , w = flag.indexOf( 'w' ) < 0; // False if have 'w'
-      for ( var name in attr ) {
-         prop[ name ] = {
-           value : attr[ name ],
-           configurable : c,
-           enumerable : e,
-           writable : w
-         };
-      };
-      setFunc = function _defineEach ( e ) {
-         Object.defineProperties( e, prop );
-      };
-   }
-   ary.forEach( setFunc );
-   return ary;
-};
-
-/**
- * Safe method to get an object's prototype
- *
- * @param {*} base Base object to get prototype.
- * @returns {Object|undefined|null} Null or undefined if base cannot have prototype.  Otherwise Object.getPrototypeOf.
- */
-_.proto = function _proto ( base ) {
-   if ( base === undefined || base === null ) return base;
-   if ( ! _.is.object( base ) ) return;
-   return Object.getPrototypeOf( base );
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1244,9 +1238,10 @@ _.attr = function _attr( ary, obj, value ) {
       attr = {};
       attr[ obj ] = value;
    }
-   ary = _.ary( _.domlist( ary ) );
-   ary.forEach( function _attr_each( e ) {
+   ary = _.domList( ary );
+   _.forEach( ary, function _attr_each( e ) {
       for ( var name in attr ) {
+         var val = attr[ name ];
          switch ( name ) {
             case 'text':
             case 'textContent' :
@@ -1260,38 +1255,38 @@ _.attr = function _attr( ary, obj, value ) {
 
             case 'class' :
             case 'className' :
-               e.className = attr[ name ];
+               e.className = val;
                break;
 
             case 'style' :
-               if ( typeof( attr[ name ] ) === 'object' ) {
-                  _.style( e, attr[ name ] );
+               if ( typeof( val ) === 'object' ) {
+                  _.style( e, val );
                   break;
                }
                // Else fall through as set/remove style attribute
 
             case 'parent' :
             case 'parentNode' :
-               if ( attr[ name ] && attr[ name ].appendChild )
-                  attr[ name ].appendChild( e );
-               else if ( ! attr[ name ] && e.parentNode )
+               if ( val && val.appendChild )
+                  val.appendChild( e );
+               else if ( ! val && e.parentNode )
                   e.parentNode.removeChild( e );
                break;
 
             case 'child' :
             case 'children' :
                while ( e.firstChild ) e.removeChild( e.firstChild );
-               if ( attr[ name ] ) _.ary( attr[ name ] ).forEach( function _attr_each_child ( child ) {
+               if ( val ) _.forEach( _.domList( val ), function _attr_each_child ( child ) {
                   if ( child ) e.appendChild( child );
                } );
                break;
 
             default:
                if ( name.substr( 0, 2 ) === 'on' ) {
-                  e.addEventListener( name.substr( 2 ), attr[ name ] );
+                  e.addEventListener( name.substr( 2 ), val );
                } else {
-                  if ( attr[ name ] !== undefined ) {
-                     e.setAttribute( name, attr[ name ] );
+                  if ( val !== undefined ) {
+                     e.setAttribute( name, val );
                   } else {
                      e.removeAttribute( name );
                   }
@@ -1316,9 +1311,8 @@ _.style = function _style ( ary, obj, value ) {
       attr = {};
       attr[ obj ] = value;
    }
-   if ( typeof( ary ) === 'string' ) ary =_( ary );
-   ary = _.ary( ary );
-   ary.forEach( function _styleEach ( e ) {
+   ary =_.domList( ary );
+   _.forEach( ary, function _styleEach ( e ) {
       for ( var name in attr ) {
          if ( attr[ name ] !== undefined ) {
             e.style[ name ] = attr[ name ];
@@ -1367,13 +1361,13 @@ _.visible = function _visible ( e, visible ) {
  * @returns {Array} Array-ifed e
  */
 _.clear = function _clear ( e ) {
-   _.forEach( e = _.domlist( e ), function _clear_each ( p ) {
+   e = _.domList( e );
+   _.forEach( e, function _clear_each ( p ) {
       var c = p.firstChild;
-      if ( ! c ) return;
-      do {
+      while ( c ) {
          p.removeChild( c );
          c = p.firstChild;
-      } while ( c );
+      }
    } );
    return e;
 };
@@ -1387,7 +1381,7 @@ _.clear = function _clear ( e ) {
  */
 _.hasClass = function _hasClass ( e, className ) {
    // TODO: May fail when e returns a domlist, e.g. if passed a selector?
-   return _.domlist( e ).some( function(c){ return c.classList.contains( className ); } );
+   return _.domList( e ).some( function(c){ return c.classList.contains( className ); } );
 };
 
 /**
@@ -1418,11 +1412,11 @@ _.removeClass = function _removeClass ( e, className ) { return _.toggleClass( e
  */
 _.toggleClass = function _toggleClass ( e, className, method ) {
    if ( method === undefined ) method = 'toggle';
-   var cls = _.array( className );
-   _.forEach( _.domlist( e ), function _toggleClass_each ( dom ) {
-      cls.forEach( function _toggleClass_each_each( c ) { dom.classList[ method ]( c ); } );
+   var cls = _.array( className ), ary = _.domList( e );
+   _.forEach( ary, function _toggleClass_each ( dom ) {
+      for ( var c in cls ) dom.classList[ method ]( cls[ c ] );
    } );
-   return e;
+   return ary;
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1769,6 +1763,9 @@ _.l.fallbackLocale = 'en';
 /** L10n resources. */
 _.l.data = _.map();
 
+/** Storage key for saving / loading locale */
+_.l.saveKey = 'sparrow.l.locale';
+
 /**
  * Set current locale.
  *
@@ -1788,10 +1785,10 @@ _.l.setLocale = function _l_setLocale ( lang ) {
  */
 _.l.saveLocale = function _l_saveLocale ( lang ) {
    if ( lang ) {
-      _.pref.set( 'sparrow.l.locale', lang );
+      _.pref.set( _.l.saveKey, lang );
       _.l.setLocale( lang );
    } else {
-      _.pref.set( 'sparrow.l.locale' ); // Delete preference
+      _.pref.set( _.l.saveKey ); // Delete preference
    }
 };
 
@@ -1802,7 +1799,7 @@ _.l.saveLocale = function _l_saveLocale ( lang ) {
  * @return {string} Current locale after detection.
  */
 _.l.detectLocale = function _l_detectLocale ( defaultLocale ) {
-   var l = _.l, pref = _.pref( 'sparrow.l.locale', _.get( window, 'navigator', [ 'language', 'userLanguage' ] ) );
+   var l = _.l, pref = _.pref( _.l.saveKey, _.get( window, 'navigator', [ 'language', 'userLanguage' ] ) );
    if ( defaultLocale ) l.fallbackLocale = defaultLocale;
    if ( pref ) l.setLocale( _.l.matchLocale( pref, Object.keys( l.data ) ) );
    return l.currentLocale;
@@ -1902,6 +1899,7 @@ _.l.localise = function _l_localise ( root ) {
             default:         key = e.textContent;
          }
          if ( ! key ) {
+            e.classList.remove( 'i18n' );
             return _.warn( 'i18 class without l10n key: ' + e.tagName.toLowerCase() + (e.id ? '#' + e.id : '' ) + ' / ' + e.textContext );
          }
          key = key.trim();
@@ -1917,7 +1915,7 @@ _.l.localise = function _l_localise ( root ) {
                           break;
          default:         e.innerHTML = val;
       }
-   });
+   } );
 };
 
 _.l.event = _.EventManager.create( ['set','locale'], _.l );
