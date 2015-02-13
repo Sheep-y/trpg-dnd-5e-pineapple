@@ -228,19 +228,21 @@ sys.Composite = {
    'id' : undefined, // string
    'cid' : undefined, // component id
    '_cache_Character' : null, // getCharacter cache
+   '_cache_Path' : null, // getCharacter cache
    '_dimensions' : null, // Level, e.g. level specific slot
 
    'fireAttributeChanged' : function ( name, newValue, oldValue ) {
-      if ( name === 'root' ) this._cache_Character = null;
+      if ( name === 'root' ) this._cache_Character = this._cache_Path = null;
       return _.Composite.fireAttributeChanged.call( this, name, newValue, oldValue );
    },
 
    'getPath' ( root ) {
+      if ( this._cache_Path ) return this._cache_Path;
       var p = this.getParent();
       var myid = this.id;
       if ( ! myid ) myid = p ? p.children.indexOf( this ) : 'headless'; // Headless = no parent, no id
       if ( ! p || this === root ) return myid;
-      return p.getPath( root ) + '.' + myid;
+      return this._cache_Path = p.getPath( root ) + '.' + myid;
    },
 
    'getName' ( ) {
@@ -322,35 +324,52 @@ var Catalog = {
    },
    // find( { 'level': { '>=': 4, '<=': 6 },
    //         'freq' : [ 'daily', 'at-will' ] } )
-   'get' ( ... criteria ) {
+   'get' ( ... criteria ) { // TODO: a query cache based on weakmap is likely to improves performance
       var filters = [];
       for ( var crit of criteria ) {
          if ( typeof( crit ) === 'string' ) crit = { 'id' : crit };
          for ( var p in crit ) ( prop => {
-            var criteron = crit[ prop ], type = typeof( criterion ), filter;
-            if ( type === 'function' )  {
-               // Filter function
-               filter = ( e ) => criteron( _.ary( e, prop ), e, prop );
-            } else if ( Array.isArray( criteron ) ) {
-               // List match
-               filter = ( e ) => _.array( _.get( e, prop ) ).some( t => criteron.includes( t ) );
-            } else if ( type === 'object' ) {
-               // Range match
-               var lo = criteron[ '>=' ], hi = criteron[ '<=' ];
-               filter = ( e ) => {
-                  var val = +e[ prop ];
-                  if ( isNaN( val ) ) return false;
-                  if ( lo !== undefined && val < lo ) return false;
-                  if ( hi !== undefined && val > hi ) return false;
-                  return true;
-               };
-            } else if ( type === 'symbol' ) {
-               // Existance check
-               filter = ( e ) => prop in e;
-            } else {
-               // Plain value match
-               if ( criteron === undefined ) filter = ( e ) => _.get( e, prop ) === undefined;
-               else filter = ( e ) => _.array( _.get( e, prop ) ).includes( criteron )  ;
+            var criteron = crit[ prop ], filter;
+            switch ( typeof( criterion ) ) {
+               case 'object' :
+                  if ( Array.isArray( criteron ) ) { // List match (any in list), second most common case
+                     filter = ( e ) => {
+                        if ( ! prop in e ) return false;
+                        var val = e[ prop ];
+                        if ( Array.isArray( val ) ) return val.some( t => criteron.includes( t ) );
+                        else return criteron.includes( val );
+                     };
+                  } else { // Range match
+                     var lo = criteron[ '>=' ], hi = criteron[ '<=' ];
+                     filter = ( e ) => {
+                        var val = +e[ prop ];
+                        if ( isNaN( val ) ) return false;
+                        if ( lo !== undefined && val < lo ) return false;
+                        if ( hi !== undefined && val > hi ) return false;
+                        return true;
+                     };
+                  }
+                  break;
+
+               case 'function' : // Filter function
+                  filter = ( e ) => criteron( _.ary( e, prop ), e, prop );
+                  break;
+
+               case 'symbol' : // Existance check
+                  filter = ( e ) => prop in e;
+                  break;
+
+               case 'undefined' : // Non existance check
+                  filter = ( e ) => ! prop in e || e[ prop ] === undefined;
+                  break;
+
+               default : // Plain value match
+                  filter = ( e ) => { // Most common case, deserves optimisation.
+                     if ( ! prop in e ) return false;
+                     var val = e[ prop ];
+                     if ( Array.isArray( val ) ) return val.includes( criteron );
+                     else return val === criteron;
+                  };
             }
             filters.push( filter );
          } )( p );

@@ -881,7 +881,7 @@ _.alert.log = [];
  */
 _.time = function _time ( msg ) {
    var t = _.time;
-   var now = new Date();
+   var now = window.performance ? performance.now() : new Date();
    if ( msg === undefined ) {
       t.base = now;
       t.last = null;
