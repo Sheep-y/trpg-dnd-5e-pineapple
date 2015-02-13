@@ -49,7 +49,7 @@ function compile_property ( subject, prop, value ) { // Could have inlined but t
    return function ( ) { return property_compiler.call( this, subject, prop, value, arguments ); };
 }
 
-function property_compiler ( subject, prop, value, args ) {
+function property_compiler ( subject, prop, value, args ) { // TODO: Cache compiled functions.
    try {
       var body = String( value ), func;
       if ( (""+value).match( /^(\d+|[^"\r\n]*"|'[^'\r\n]*'|`[^`]*`|true|false|null|undefined)$/ ) ) { // simple values
