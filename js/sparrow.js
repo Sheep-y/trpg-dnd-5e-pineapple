@@ -64,36 +64,43 @@ _.coalesce = function _coalesce ( a ) {
 /**
  * Safely get the (deep) property of a object.
  * If the property is unavailable, return undefined.
- * e.g. _.get( window, 'localStorage', 'data' );
+ * e.g. _.get( window, [ 'localStorage', 'sessionStorage' ], 'datakey' );
  *
  * @param {*} root Root object to start access
  * @returns {*} Specified property, or undefined
  */
 _.get = function _get ( root /*, property */ ) {
-   var base = root, len = arguments.length;
-   for ( var i = 1 ; i < len ; i++ ) {
-      var prop = arguments[ i ];
-      if ( prop in base ) base = base[ prop ];
-      else return undefined;
-   }
-   return base;
+   return _.getd.apply( this, _.ary( arguments ).concat( undefined ) );
 };
 
 /**
  * Safely get the (deep) property of a object.
  * If the property is unavailable, return last parameter.
- * e.g. _.get( window, 'localStorage', 'data', 'default setting' );
+ * e.g. _.get( window, [ 'localStorage', 'sessionStorage' ], 'datakey', 'default setting' );
  *
  * @param {*} root Root object to start access
  * @param {*} defVal (Last parameter) Default value if property is not found.
  * @returns {*} Specified property, or defVal
  */
 _.getd = function _getd ( root /*, property, defVal */ ) {
-   var base = root, len = arguments.length-1, defVal= arguments[ len+1 ];
+   var base = root, len = arguments.length-1, defVal= arguments[ len ];
    for ( var i = 1 ; i < len ; i++ ) {
+      if ( base === null || base === undefined ) return base;
+      base = Object( base );
       var prop = arguments[ i ];
-      if ( prop in base ) base = base[ prop ];
-      else return defVal;
+      if ( Array.isArray( prop ) ) { // Try each candidate and continue with first match
+         for ( var j in prop ) { var p = prop[ j ];
+            if ( p in base ) {
+               base = base[ p ];
+               j = null;
+               break;
+            }
+         }
+         if ( j !== null ) return defVal;
+      } else {
+         if ( prop in base ) base = base[ prop ];
+         else return defVal;
+      }
    }
    return base;
 };
@@ -258,14 +265,16 @@ _.map = function _map ( data, field ) {
  * Self-referencing array will be referencd in the new array,
  * but the reference will stay the same and no longer self-referencing.
  *
- * @param {*} elem Source array, will not be modified.
+ * @param {*} stack Source array, will not be modified.
  * @returns {*} Flattened array, or elem if it is not an Array
  */
-_.flatten = function _flatten ( stack, ary ) {
+_.flatten = function _flatten ( stack /*, ary */ ) {
    if ( arguments.length <= 1 ) {
-      ary = stack;
+      var ary = stack;
       if ( ! Array.isArray( ary ) || ary.length <= 0 ) return ary;
       stack = [];
+   } else {
+      ary = arguments[ 1 ]; // Recursion call, ary is new array to be added.
    }
    stack.push( ary );
    var result = [];
@@ -283,7 +292,7 @@ _.flatten = function _flatten ( stack, ary ) {
 /**
  * Remove duplicates from an array.
  *
- * @param {Array} Source array, will not be modified.
+ * @param {Array} ary Source array, will not be modified.
  * @returns {Array} A new array without duplicates.
  */
 _.unique = function _unique ( ary ) {
@@ -297,12 +306,107 @@ _.unique = function _unique ( ary ) {
 // Text Helpers
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+/**
+ * Convert the first letter of input to upper case, and return whole string.
+ *
+ * @param {String} txt String to convert. Will be casted to a string.
+ * @returns {String} Converted string.
+ */
 _.ucfirst = function _ucfirst ( txt ) {
-   return txt ? txt.substr(0,1).toUpperCase() + txt.substr(1) : txt;
+   return txt ? String(txt).substr(0,1).toUpperCase() + txt.substr(1) : txt;
 };
 
+/**
+ * Convert the first letter of each word, and return whole string.
+ * Word is detected by word boundary, as defined by regular expression.
+ *
+ * @param {String} txt String to convert. Will be casted to a string.
+ * @returns {String} Converted string.
+ */
 _.ucword = function _ucword ( txt ) {
-   return txt ? txt.split( /\b(?=[a-zA-Z])/g ).map( ns.ucfirst ).join( '' ) : txt;
+   return txt ? String(txt).split( /\b(?=[a-zA-Z])/g ).map( ns.ucfirst ).join( '' ) : txt;
+};
+
+/**
+ * Get data from localStorage.
+ * If a key is not found, result will be undefined.
+ * e.g. _.pref({ id: "myapp.lastid" }, { id: "defaultId" }) => { id: "localStorage['myapp.lastid'] or defaultId" }
+ *
+ * @param {(String|Array|Object)=} key Key to get, Map of 'return':'key', or array of key/map to get.
+ * @param {*=} defaultValue If key is string, the default value to return.  Othewise this value will be merged into result using _.extend.
+ */
+_.pref = function _pref ( key, defaultValue ) {
+   if ( arguments.length <= 1 ) defaultValue = null;
+   if ( window.localStorage ) {
+      var store = localStorage;
+      if ( key === undefined ) {
+         return new Array( store.length ).fill( undefined ).map( function _pref_list ( e, i ) {
+            return store.key( i );
+         } );
+      }
+      if ( Array.isArray( key ) ) {
+         return _.extend( key.map( function _pref_each ( k ) {
+            return _pref( k );
+         } ), defaultValue );
+      }
+      if ( _.is.object( key ) ) {
+         var result = {};
+         for ( var k in key ) {
+            var v  = getter( key[ k ] );
+            if ( v !== undefined ) result[ k ] = v;
+         }
+         return _.extend( result, defaultValue );
+      }
+      return getter( key, defaultValue );
+   } else {
+      return key === undefined ? [] : defaultValue;
+   }
+
+   function getter ( k, def ) {
+      var val = store.getItem( k );
+      if ( val && val.match( /^\t\n\r(?=\S).*(?:\S)\n\r\t$/ ) ) try {
+         val = JSON.parse( val );
+      } catch ( err ) {}
+      else if ( val === null ) return def;
+      return val;
+   }
+};
+
+/**
+ * Set data to localStorage.
+ * Simple values and objects, such as null or { a: 1 }, will auto stringify to JSON on set and parsed on get.
+ * e.g. _.pref.set({ "conf":{"hide":1} }) => localStorage.setItem( 'conf', ' {"hide":1} ' );
+ *
+ * (Because of JSON, NaN will be converted to null, whether plain value or part of object value.)
+ *
+ * @param {(String|Array|Object)=} key Key to get, Map of 'key':'value', or array of key/map to get.
+ * @param {*=} value Value to set.  If both key and value is an array, will try to map values to the key.
+ *                   Otherwise will be stored as string or as json string.
+ */
+_.pref.set = function _pref_set ( key, value ) {
+   if ( window.localStorage ) {
+      var store = window.localStorage;
+      if ( _.is.literal( key ) ) {
+         setter( key, value );
+      } else if ( Array.isArray( key ) ) {
+         key.forEach( function( e, i ) { _pref_set( e, _.getd( value, i, value ) ); } );
+      } else if ( _.is.object( key ) ) {
+         for ( var k in key ) setter( k, key[ k ] );
+      } else {
+         throw '[sparrow.pref.set] Unknown key, must be string, array, or object.';
+      }
+   }
+   function setter ( k, value ) {
+      if ( value === undefined ) {
+         store.removeItem( k );
+      } else {
+         _.assert( _.is.literal( value ) || value.__proto__ === null || value.__proto__ === Object.prototype, "Preference value must be literal or simple object." );
+         if ( typeof( value ) !== 'string' && ( _.is.literal( value ) || _.is.object( value ) ) ) {
+            value = "\t\n\r" + JSON.stringify( value ) + "\n\r\t"; // JSON only has four kind of spaces. Not much choices here.
+         }
+         store.setItem( k, value );
+      }
+   }
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -353,7 +457,7 @@ _.callonce = function _call ( func ) {
    };
 };
 
-/**
+/*
  * Call a function immediately after current JS stack is resolved.
  *
  * @param {function(...*)} func Function to call
@@ -965,7 +1069,9 @@ _.extend = function _extend( target, copyFrom ) {
    var prop = [], exists = Object.getOwnPropertyNames( target );
    if ( Object.getOwnPropertySymbols ) exists = exists.concat( Object.getOwnPropertySymbols( target ) );
    for ( var i = 1, len = arguments.length ; i < len ; i++ ) {
-      var from = arguments[ i ], keys = Object.getOwnPropertyNames( from );
+      var from = arguments[ i ];
+      if ( from === undefined || from === null ) continue;
+      var keys = Object.getOwnPropertyNames( from );
       if ( Object.getOwnPropertySymbols ) keys = keys.concat( Object.getOwnPropertySymbols( from ) );
       keys.forEach( function _extend_copy_prop ( name ) {
          if ( exists.indexOf( name ) < 0 ) {
@@ -1323,7 +1429,7 @@ _.toggleClass = function _toggleClass ( e, className, method ) {
 // Asynchronous programming
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-// TODO: Can be replaced by Promise?
+// TODO: Rewrite with Promise.  As it stands, even with Promise they are still useful.
 
 /**
  * Countdown Latch object
@@ -1681,11 +1787,12 @@ _.l.setLocale = function _l_setLocale ( lang ) {
  * @param {string} lang  Locale to use and save.
  */
 _.l.saveLocale = function _l_saveLocale ( lang ) {
-    if ( window.localStorage ) {
-       if ( lang ) localStorage['sparrow.l.locale'] = lang;
-       else delete localStorage['sparrow.l.locale'];
-    }
-    _.l.setLocale( lang );
+   if ( lang ) {
+      _.pref.set( 'sparrow.l.locale', lang );
+      _.l.setLocale( lang );
+   } else {
+      _.pref.set( 'sparrow.l.locale' ); // Delete preference
+   }
 };
 
 /**
@@ -1695,9 +1802,8 @@ _.l.saveLocale = function _l_saveLocale ( lang ) {
  * @return {string} Current locale after detection.
  */
 _.l.detectLocale = function _l_detectLocale ( defaultLocale ) {
-   var l = _.l, pref = navigator.language || navigator.userLanguage;
+   var l = _.l, pref = _.pref( 'sparrow.l.locale', _.get( window, 'navigator', [ 'language', 'userLanguage' ] ) );
    if ( defaultLocale ) l.fallbackLocale = defaultLocale;
-   if ( window.localStorage ) pref = localStorage['sparrow.l.locale'] || pref;
    if ( pref ) l.setLocale( _.l.matchLocale( pref, Object.keys( l.data ) ) );
    return l.currentLocale;
 };
@@ -1833,7 +1939,7 @@ _.test = function _test ( condition, name ) {
       _.assert( _test.body, '[Addiah] Named test should be called as part of test suit.' );
       _test.body.appendChild( create( 'tr', { child: [ create( 'td', name ), td = create( td ) ] } ) );
       if ( condition ) td.textContent = 'OK';
-      else td.appendChild( 'b', { class: 'err', text: 'FAIL' } );
+      else td.appendChild( 'b', { className: 'err', text: 'FAIL' } );
    } else {
       // Test suite object
       var title = create( 'h1', { parent: document.body, text : 'Testing' } );
@@ -1843,7 +1949,7 @@ _.test = function _test ( condition, name ) {
          if ( typeof( condition[test] ) === 'function' ) {
 
             var cap = create( 'caption', _.escHtml( test ).replace( /^test_+/, '' ) );
-            var table = create( 'table', { class: 'sparrow_test', border: 1, parent: document.body, child: cap } );
+            var table = create( 'table', { className: 'sparrow_test', border: 1, parent: document.body, child: cap } );
             table.appendChild( _test.body = create( 'tbody' ) );
 
             // Run test
@@ -1851,7 +1957,7 @@ _.test = function _test ( condition, name ) {
                condition[test]();
             } catch ( e ) {
                create( 'tr', { parent: _test.body, child:
-                  create( 'td', { colspan:2, class:'err', text: 'Exception during testing: ' + e } ) } );
+                  create( 'td', { colspan:2, className:'err', text: 'Exception during testing: ' + e } ) } );
             }
 
             // Update table caption
