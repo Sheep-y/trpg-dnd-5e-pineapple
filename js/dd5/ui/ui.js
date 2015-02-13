@@ -56,9 +56,9 @@ var ui = ns.ui = {
       };
    },
 
-   _hook_attribute ( component, html ) {
-      var char = component.getCharacter();
-      var updater = ui._update_attribute.bind( null, char, html ), body = document.body;
+   _hook_attribute ( component, html, updater ) {
+      var char = component.getCharacter(), body = document.body;
+      if ( ! updater ) updater = ui._update_attribute.bind( null, char, html );
       char.addObserver( 'attribute', updater );
       var destructor = new MutationObserver( ( mutations ) => { // If the last input is no longer attached, unhook updater.
          for ( var m of mutations ) if ( m.removedNodes && m.removedNodes.length ) {

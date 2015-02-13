@@ -331,8 +331,8 @@ subrule.ProfSlot = {
       var existing = this.queryChar( this.prof_type, this ) || [];
       var options = this.getCompatibleOptions( context );
       return options.map( e => {
-         var opt = sys.Option.create( e )
-         if ( e !== pick && existing.includes( e ) ) {
+         var opt = sys.Option.create( e );
+         if ( existing.includes( e ) ) {
             opt.valid = false;
             opt.note = _.l( 'dd5.system.you_have_this_proficiency', null, e.getName() );
          }

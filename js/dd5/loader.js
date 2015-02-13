@@ -226,7 +226,7 @@ var loader = ns.loader = {
             e.prof_type = 'prof$' + e.prof;
             delete e.prof;
          } else {
-            for ( var p of [ 'feature', 'slot' ] ) {
+            for ( var p of [ 'feature', 'slot', 'profSlot', 'numSlot' ] ) {
                if ( e[ p ] ) {
                   e.subrule = e.entry = p;
                   e.id = e[ p ];
@@ -247,7 +247,7 @@ var loader = ns.loader = {
             e = this.compile_object( e );
          }
          _.assert( typeof( e ) === 'object' );
-         switch ( e.subrule ) {
+         switch ( e.subrule.toLowerCase() ) {
             // Wrappers
             case 'feature' :
                result = loader.jsonp.load_rule( 'feature', e );

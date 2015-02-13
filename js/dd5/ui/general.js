@@ -78,16 +78,14 @@ function dd5_ui_edit_slot_multiple ( rule, container ) {
    // For multiple choice (non-duplicatable) Slots.  Create one checkbox for each option.
    var options = rule.getOptions();
    if ( ! options || ! options.length ) return;
-   var { id } = ui._getId( rule, container ), count = rule.count( 'ui' );
-   if ( count <= 0 ) return;
-   var picks = _.array( rule.getPick() );
-   if ( picks.length ) picks = picks.filter( e => e );
+   var { id } = ui._getId( rule, container ), count = ~~rule.count( 'ui' );
+   var picks = _.array( rule.getPick() ).filter( e => e );
    var html = _.html( `<div><label class='dd5 slot'><span>${ rule.getLabel() }</span></label></div>` );
    options.forEach( ( opt, i ) => {
-      var picked = picks.find( p => p && p.cid === opt.value.cid );
-      if ( picks.length !== count || picked ) {
+      var picked = picks.some( p => p.cid === opt.value.cid );
+      if ( count == 0 || picks.length !== count || picked ) {
          var e = opt.value;
-         var attr = opt.valid ? '' : ' disabled="disabled"';
+         var attr = opt.valid || picked ? '' : ' disabled="disabled"';
          if ( opt.note ) attr += ` title="${_.escHtml( opt.note )}"`;
          if ( picked ) attr += ' checked="checked"';
          var label = _.html( `<label><input id='${id}/${e.cid}' type='checkbox' ${attr}><span>${ e.getName() }</span></label>` );
@@ -104,6 +102,10 @@ function dd5_ui_edit_slot_multiple ( rule, container ) {
          } );
          html.appendChild( label );
       }
+   } );
+   if ( count <= 0 ) _.hide( html );
+   ui._hook_attribute( rule, html, () => {
+      _.visible( html, rule.count( 'ui' ) > 0 );
    } );
    return html;
 }

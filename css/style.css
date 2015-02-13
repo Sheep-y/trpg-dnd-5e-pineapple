@@ -104,6 +104,10 @@ input[type="checkbox"]
                color: var( --main-t2 );
                animation: hover_border_cycle 2s linear 1s infinite alternate;
             }
+   input[type="checkbox"]:disabled + span
+      {
+         color: #888;
+      }
    label:not(:last-child) > input[type="checkbox"] + span
    {
       margin-right: 0;
