@@ -12,4 +12,8 @@ _.l.set( 'en-US', 'pinbun', {
    'lnk_home'  : 'Home',
    'lnk_commit': 'Progress',
    'lnk_issue' : 'Bugs',
+   'theme' : {
+      'deepsea' : 'Deep Sea',
+      'mariner' : 'Mariner',
+   },
 } );

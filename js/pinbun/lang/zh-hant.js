@@ -12,4 +12,8 @@ _.l.set( 'zh-Hant', 'pinbun', {
    'lnk_home'  : '首頁',
    'lnk_commit': '進展',
    'lnk_issue' : '報錯',
+   'theme' : {
+      'deepsea' : '深海',
+      'mariner' : '水手',
+   },
 } );

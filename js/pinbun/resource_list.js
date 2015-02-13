@@ -1,7 +1,7 @@
 var pinbun; // Globals
 if ( ! pinbun ) throw new Error( '[pinbin.langlist] Pineapplebun must be loaded first.' );
 
-pinbun.lang = [
+pinbun.locales = [
 {
    code  : 'en-US',
    name  : 'English (US)',
@@ -14,9 +14,19 @@ pinbun.lang = [
 }
 ];
 
-pinbun.theme = [
+pinbun.themes = [ // Name is localised
 {
    code  : 'deepsea',
-   file  : [ 'deepsea.css' ],
+   files : {
+      css: 'css/deepsea.css',
+      res: [ 'img/deepsea/letter-d.svg' ],
+   },
+},
+{
+   code  : 'mariner',
+   files : {
+      css: 'css/mariner.css',
+      res: [ 'img/mariner/letter-d.svg' ],
+   },
 },
 ];

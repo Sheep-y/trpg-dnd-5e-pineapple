@@ -1779,7 +1779,8 @@ _.l.set = function _l_set ( locale, path, data ) {
 _.l.localise = function _l_localise ( root ) {
    if ( root === undefined ) {
       root = document.documentElement;
-      if ( typeof( _.l( 'title', null ) === 'string' ) ) document.title = _.l( 'title', null );
+      var title = _.l( 'title', null );
+      if ( typeof( title ) === 'string' ) document.title = title;
    }
    root.setAttribute( 'lang', _.l.currentLocale );
    _.forEach( _( ".i18n" ), function _l_localise_each ( e ) {
@@ -1787,6 +1788,8 @@ _.l.localise = function _l_localise ( root ) {
       if ( ! key ) {
          switch ( e.tagName ) {
             case 'INPUT':    key = e.value;
+                             break;
+            case 'LINK' :    key = e.getAttribute( 'title' );
                              break;
             case 'MENUITEM': key = e.getAttribute( 'label' );
                              break;
@@ -1801,6 +1804,8 @@ _.l.localise = function _l_localise ( root ) {
       var val = _.l( key, key.split('.').pop() );
       switch ( e.tagName ) {
          case 'INPUT':    e.value = val;
+                          break;
+         case 'LINK' :    e.setAttribute( 'title', val );
                           break;
          case 'MENUITEM': e.setAttribute( 'label', val );
                           break;

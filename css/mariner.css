@@ -1,0 +1,25 @@
+/** Light theme, pastel royal blue with complement.
+ * http://paletton.com/#uid=23H0u0ktXNX8xZUldUoDtslHD7C
+ */
+html {
+   --main-bkgd : var( --main-b2 );
+   --main-text : var( --main-t2 );
+
+   --main-t2 : #021028; /* rgb(   2,  16,  40 ) */
+   --main-t1 : #0A3E96; /* rgb(  10,  62, 150 ) */
+   --main    : #2267DC; /* rgb(  34, 103, 220 ) */
+   --main-b1 : #5F94ED; /* rgb(  95, 148, 237 ) */
+   --main-b2 : #BFD6FC; /* rgb( 191, 214, 252 ) */
+
+   --cmpl-t2 : #3D2700; /* rgb(  61,  39,   0 ) */
+   --cmpl-t1 : #7B5C00; /* rgb( 123,  92,   0 ) */
+   --cmpl    : #FFAA10; /* rgb( 255, 170,  16 ) */
+   --cmpl-b1 : #FFC356; /* rgb( 255, 195,  86 ) */
+   --cmpl-b2 : #FFE7BB; /* rgb( 255, 231, 187 ) */
+
+   --main-b2-o7 : rgba( 191, 214, 252, 0.7 );
+
+   --cmpl-b2-o7 : rgba( 255, 231, 187, 0.7 );
+
+   background: url("../img/mariner/letter-d.svg") center / contain no-repeat, var( --main-bkgd );
+}

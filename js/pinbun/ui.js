@@ -7,8 +7,10 @@ var dlg_main = _.ui.Dialog.create( { visible: false } ); // Main dialog
 var savedFocus, savedScrollX, savedScrollY;
 
 var ui = ns.ui = {
-   '__proto__' : null,
-   'panels' : panels,
+   __proto__ : null,
+   panels : panels,
+   theme : '', // Set by Global.create
+   get locale ( ) { return _.l.currentLocale; },
 
    init ( ) {
       _.l.detectLocale( 'en-US' ); // Detect language
@@ -16,12 +18,27 @@ var ui = ns.ui = {
       ui.Global.create();
    },
 
+   setTheme ( theme ) {
+      for ( var e of ns.themes ) {
+         if ( e.code && e.code === theme ) {
+            _.log( 'switching to ' + theme );
+            _.attr( 'menuitem[data-theme]:checked', 'checked', null );
+            _.attr( `menuitem[data-theme="${theme}"]`, 'checked', 'checked' );
+            _.forEach( _( `link.page_style:not([data-theme="${theme}"])` ), e => e.disabled = true );
+            _( `link.page_style[data-theme="${theme}"]` )[0].disabled = false;
+            _.setImmediate( () => _.forEach( _( 'link.page_style[disabled]' ), e => e.disabled = false ) );
+            ui.theme = theme;
+            break;
+         }
+      }
+   },
+
    setLocale ( locale ) {
-      for ( var lang of ns.lang ) {
-         if ( lang.code && lang.code === locale ) {
-            _.attr( '#btn_lang', 'text', lang.label );
-            _.attr( 'menuitem[data-lang]:checked', 'checked', null );
-            _.attr( `menuitem[data-lang="${locale}"]`, 'checked', 'checked' );
+      for ( var e of ns.locales ) {
+         if ( e.code && e.code === locale ) {
+            _.attr( '#btn_locale', 'text', e.label );
+            _.attr( 'menuitem[data-locale]:checked', 'checked', null );
+            _.attr( `menuitem[data-locale="${locale}"]`, 'checked', 'checked' );
             _.l.setLocale( locale );
             _.l.localise();
             break;
