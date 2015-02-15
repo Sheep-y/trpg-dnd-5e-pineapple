@@ -3,6 +3,7 @@
 html {
    --main-bkgd : #000;
    --main-text : var( --main-t2 );
+   --main-text-disabled : #013E47;
 
    --main-t2 : #A9E3EB;
    --main-t1 : #40AEBE;

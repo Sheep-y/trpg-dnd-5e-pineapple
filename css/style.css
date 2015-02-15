@@ -14,15 +14,15 @@ html, body
    }
 html
    {
+      height: 100%;
+      color: var( --main-text );
       font: 16px Arial;
       text-rendering: optimizeLegibility;
-      color: var( --main-text );
-      height: 100%;
    }
 div
    {
-      padding: 0;
       margin: 0;
+      padding: 0;
    }
 table
    {
@@ -47,26 +47,26 @@ label > span:first-child
    }
 input, select, textarea, button, input[type="checkbox"] + span
    {
+      margin: 2px 4px;
       background-color: transparent;
       color: var( --main-text );
       border: 1px solid var( --main );
       border-radius: 4px;
-      margin: 2px 4px;
       font: 16px Arial;
       transition: background-color 1s ease, border 1s ease;
    }
    @keyframes hover_border_cycle { from { border-color: var( --main-t2 ); } to { border-color: var( --main ); }  }
    input:hover, select:hover, textarea:hover, button:hover, input[type="checkbox"] + span:hover
       {
-         border-color: var( --main-t2 );
          background-color: var( --main-b2-o7 );
+         border-color: var( --main-t2 );
          animation: hover_border_cycle 2s linear 1s infinite alternate;
       }
    @keyframes focus_border_cycle { from { border-color: var( --cmpl-t2 ); } to { border-color: var( --cmpl ); }  }
    input:focus, select:focus, textarea:focus, button:focus, input[type="checkbox"]:focus + span
       {
-         border-color: var( --cmpl-t2 );
          background-color: var( --cmpl-b2-o7 );
+         border-color: var( --cmpl-t2 );
          color: var( --cmpl-t2 );
          animation: focus_border_cycle 2s linear 1s infinite alternate;
       }
@@ -86,8 +86,8 @@ input[type="checkbox"]
    {
       position: absolute;
       top: -8000px;
-      opacity: 0;
       z-index: -1000;
+      opacity: 0;
    }
    input[type="checkbox"] + span
       {
@@ -106,7 +106,7 @@ input[type="checkbox"]
             }
    input[type="checkbox"]:disabled + span
       {
-         color: #888;
+         color: var( --main-text-disabled );
       }
    label:not(:last-child) > input[type="checkbox"] + span
    {
@@ -151,15 +151,15 @@ nav#top
 /* UI component style override */
 html dialog.ui
    {
-      color: var( --main-text );
       background-color: var( --main-b2-o7 );
       border-color: var( --cmpl );
+      color: var( --main-text );
       box-shadow: none;
    }
    html dialog.ui section header
       {
-         color: var( --cmpl-t1 );
          background-color: var( --cmpl-b2 );
+         color: var( --cmpl-t1 );
          border-bottom-color: var( --cmpl );
       }
       html dialog.ui header button

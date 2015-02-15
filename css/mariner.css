@@ -4,6 +4,7 @@
 html {
    --main-bkgd : var( --main-b2 );
    --main-text : var( --main-t2 );
+   --main-text-disabled : #061866;
 
    --main-t2 : #021028; /* rgb(   2,  16,  40 ) */
    --main-t1 : #0A3E96; /* rgb(  10,  62, 150 ) */
