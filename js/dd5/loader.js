@@ -94,6 +94,7 @@ var loader = ns.loader = {
                   break;
 
                case 'character' :
+               case 'class' :
                case 'entity' :
                case 'feature' :
                case 'race' :
@@ -117,6 +118,7 @@ var loader = ns.loader = {
 
       load_rule ( type, e ) {
          if ( ! e.source && loading_source ) e.source = loading_source;
+         if ( ! e.id ) e = loader.jsonp.compile_object( e );
          var uftype = _.ucfirst( type );
          var r = rule[ uftype ].create( e );
          if ( e.subrules && e.subrules.length ) {
@@ -142,16 +144,8 @@ var loader = ns.loader = {
          var right = pos >= 0 ? e.substr( pos + 1 ).trim() : null;
          var subrule = left[0].toLowerCase();
 
+         // TODO: combine entry and subrule.
          switch ( subrule ) {
-            case 'feature':
-               if ( left.length !== 2 || ! right ) throw `Invalid feature syntax: ${e}`;
-               return { entry: 'feature', subrule: 'feature', id: left[1], subrules: right.trim().split( /\s*;\s*/g ) };
-               // TODO: combine entry and subrule.
-
-            case 'prof' :
-               if ( left.length !== 2 || ! right ) throw `Invalid prof syntax: ${e}`;
-               return { subrule: 'prof', prof_type: 'prof$' + left[1], 'value': parse_prof_string( right ) };
-
             case 'adj' :
                if ( left.length !== 2 || ! left[1] || ! right ) throw `Invalid adj syntax: ${e}`;
                var { val, min, max } = parse_value_range( right );
@@ -160,6 +154,14 @@ var loader = ns.loader = {
                if ( max !== undefined ) result.max = max;
                return result;
                break;
+
+            case 'feature':
+               if ( left.length !== 2 || ! right ) throw `Invalid feature syntax: ${e}`;
+               return { entry: 'feature', subrule: 'feature', id: left[1], subrules: right.trim().split( /\s*;\s*/g ) };
+
+            case 'include' : // include : xxx.yyy
+               if ( left.length > 1 ) throw "Invalid include syntax: " + e;
+               return { 'subrule': 'include', 'include': right };
 
             case 'negate' :
                if ( left.length !== 2 || ! left[1] ) throw `Invalid negate syntax: ${e}`;
@@ -186,9 +188,9 @@ var loader = ns.loader = {
                }
                return result;
 
-            case 'slot' :
-            case 'numslot' :
             case 'profslot' :
+            case 'numslot' :
+            case 'slot' :
                var result = { subrule: subrule, id : left.pop() };
                if ( subrule === 'profslot' ) {
                   result.prof_type = 'prof$' + left.pop();
@@ -206,9 +208,9 @@ var loader = ns.loader = {
                return result;
                break;
 
-            case 'include' : // include : xxx.yyy
-               if ( left.length > 1 ) throw "Invalid include syntax: " + e;
-               return { 'subrule': 'include', 'include': right };
+            case 'prof' :
+               if ( left.length !== 2 || ! right ) throw `Invalid prof syntax: ${e}`;
+               return { subrule: 'prof', prof_type: 'prof$' + left[1], 'value': parse_prof_string( right ) };
 
             default:
                throw new Error( "Unknown subrule shortcut type '" + left[0] + "'" );
@@ -221,6 +223,17 @@ var loader = ns.loader = {
             e.subrule = 'adj';
             e.property = e.adj;
             delete e.adj;
+
+         } else if ( e.class ) {
+            e.subrule = e.entry = 'class';
+            e.id = e.class;
+            e.level = e.class.match( /\d+$/ )[0];
+            e.class = e.class.replace( /\d+$/, '' );
+            if ( e.class.match( /^mc-/ ) ) {
+               e.class = e.class.match( /^mc-/ )
+            }
+            console.log( JSON.stringify( e ) );
+
          } else if ( e.prof ) {
             e.subrule = 'prof';
             e.prof_type = 'prof$' + e.prof;
@@ -248,49 +261,32 @@ var loader = ns.loader = {
          }
          _.assert( typeof( e ) === 'object' );
          switch ( e.subrule.toLowerCase() ) {
-            // Wrappers
+            case 'adj' : // Adjust a Value
+               result = subrule.Adj.create( e );
+               break;
+
             case 'feature' :
                result = loader.jsonp.load_rule( 'feature', e );
-               break;
-
-            // Dynamic effects
-            case 'slot' : // Entity slot
-               result = subrule.Slot.create( e );
-               break;
-
-            case 'negate' : // Negation slot
-               result = subrule.Negate.create( e );
                break;
 
             case 'numslot' : // Numeric slot
                result = subrule.NumSlot.create( e );
                break;
 
-            case 'profslot' : // Proficiency slot
-               result = subrule.ProfSlot.create( e );
-               break;
-
-            // Static effects
-            case 'adj' : // Adjust a Value
-               result = subrule.Adj.create( e );
+            case 'include' : // Include another rule
+               result = subrule.Include.create( e );
                break;
 
             case 'prof' : // Grant proficient
                result = subrule.Prof.create( e );
                break;
 
-            case 'include' : // Include another rule
-               result = subrule.Include.create( e );
+            case 'profslot' : // Proficiency slot
+               result = subrule.ProfSlot.create( e );
                break;
 
-            // Triggered effects
-            case 'check' : // Modify an ability check
-               break;
-            case 'save' : // Modify a saving throw
-               break;
-            case 'attack' : // Modify an attack
-               break;
-            case 'damage' : // Modify a damage
+            case 'slot' : // Entity slot
+               result = subrule.Slot.create( e );
                break;
 
             default:

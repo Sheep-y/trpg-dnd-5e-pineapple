@@ -9,12 +9,12 @@ dd5.loader.jsonp.load_rules( { 'version':'alpha',
 { entry:'entity', type:'ability', id:'wis', mental:1   },
 { entry:'entity', type:'ability', id:'cha', mental:1   },
 
+{ entry:'entity', type:'proficiency', id:'armour'   },
 { entry:'entity', type:'proficiency', id:'language' },
 { entry:'entity', type:'proficiency', id:'skill'    },
 { entry:'entity', type:'proficiency', id:'save'     },
 { entry:'entity', type:'proficiency', id:'tool'     },
 { entry:'entity', type:'proficiency', id:'weapon'   },
-{ entry:'entity', type:'proficiency', id:'armour'   },
 
 { entry:'entity', type:'skill', id:'athletic',      ability:'str', physical:1 },
 { entry:'entity', type:'skill', id:'acrobatics',    ability:'dex', physical:1 },
@@ -120,9 +120,10 @@ dd5.loader.jsonp.load_rules( { 'version':'alpha',
    ' slot.alignment : db.entity({ type: "alignment" }) ',
    ' slot.race : db.race() ',
    ' slot.armour : db.equipment({ type: "armour" }) ',
-] }, /* { 'slot':'background', 'options':'#background' },
-        { 'slot':'level'  , 'min_val': 1, 'max_val': 20, 'default': 1 },
-        { 'slot':'level_1', 'level':'1', 'options':'#class' }, */
+   { 'slot':'background', 'options':'db.background()' },
+   { 'slot':'level_1', 'level':'1', 'options':'db.class()' },
+   { 'slot':'level_2', 'level':'2', 'options':'db.class()' }
+] },
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////
 { entry:'race', id: 'dwarf', subrules: [
    ' slot.gender : db.entity({ type: "gender" }) ',
@@ -194,6 +195,13 @@ dd5.loader.jsonp.load_rules( { 'version':'alpha',
    ' profSlot.skill.bonus_prof : db.entity({ type: "skill" }) ',
    ' slot.feat : db.feat() ',
 ] },
+////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/* { class:'fighter1', prereq: "~~you.fighter <= 0", subrules: [
+     ' prof.armour : db.equipment({ type: "armour", armour: [ "light", "medium", "heavy" ] }) ',
+] },
+{ class:'mc-fighter1', prereq: "~~you.fighter <= 0 && you.level >= 1", subrules: [
+     ' prof.armour : db.equipment({ type: "armour", armour: [ "light", "medium", "heavy" ] }) ',
+] }, */
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////
 { entry:'equipment', type: 'armour', id: 'padded'        , armour: 'light' , cost:  5, weight:  8, subrules: [ 'adj.ac: 1' ] },
 { entry:'equipment', type: 'armour', id: 'leather'       , armour: 'light' , cost: 10, weight: 10, subrules: [ 'adj.ac: 1' ] },

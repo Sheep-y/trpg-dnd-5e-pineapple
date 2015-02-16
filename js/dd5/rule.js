@@ -304,6 +304,32 @@ rule.Character = {
    }
 };
 
+rule.Class = {
+   '__proto__' : Resource,
+   'create' ( opt ) {
+      var me = _.newIfSame( this, rule.Class );
+      Resource.create.call( me, 'class', opt );
+      _.assert( me.class && me.level, 'Class must have class and level' );
+      return me;
+   },
+   'query' ( query ) {
+      if ( query.query === me.class ) {
+         if ( ~~ query.value < this.level ) query.value = this.level;
+         return query;
+      }
+      return Resource.query.call( this, query );
+   },
+};
+
+rule.Equipment = {
+   '__proto__' : Resource,
+   'create' ( opt ) {
+      var me = _.newIfSame( this, rule.Equipment );
+      Resource.create.call( me, 'equipment', opt );
+      return me;
+   },
+};
+
 rule.Feature = {
    '__proto__' : Resource,
    'create' ( opt ) {
@@ -318,15 +344,6 @@ rule.Race = {
    'create' ( opt ) {
       var me = _.newIfSame( this, rule.Race );
       Resource.create.call( me, 'race', opt );
-      return me;
-   },
-};
-
-rule.Equipment = {
-   '__proto__' : Resource,
-   'create' ( opt ) {
-      var me = _.newIfSame( this, rule.Equipment );
-      Resource.create.call( me, 'equipment', opt );
       return me;
    },
 };

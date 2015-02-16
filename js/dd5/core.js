@@ -380,9 +380,9 @@ var Catalog = {
 };
 
 /** In-system Resources */
-[ "source", "entity", "character", "feature",
-  "race", "skill", "background", "class", "equipment",
-  "feat", "spell_list", "spell" ].forEach( ns.res.new );
+[ "background", "character", "feature",
+  "race", "class", "entity", "equipment",
+  "feat", "source", "spell_list", "spell" ].forEach( ns.res.new );
 
 sys.toCId = function dd5_sys_toCId ( data ) {
    return _.array( data ).filter( e => e ).map( (e,i,ary) => e ? ( ary.push( e.cid ) , e.cid.split('.').pop() ) : e );
