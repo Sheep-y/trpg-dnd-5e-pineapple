@@ -120,11 +120,14 @@ _.getd = function _getd ( root /*, property, defVal */ ) {
 _.ary = function _ary ( subject, startpos, length ) {
    if ( ! Array.isArray( subject ) ) {
       if ( subject === null || subject === undefined ) return subject;
-      if ( typeof( subject ) === 'string' || typeof( subject.next ) === 'function' || subject.length === undefined ) return [ subject ];
+      if ( typeof( subject ) === 'string' || typeof( subject.next ) === 'function' || ! length in subject ) return [ subject ];
       if ( subject.length <= 0 ) return [];
-      subject =  Array.from ? Array.from( subject ) : Array.prototype.concat.call( subject );
+      if ( startpos || length )
+         return Array.prototype.slice.call( subject, startpos, length );
+      else
+         return Array.from ? Array.from( subject ) : Array.prototype.concat.call( subject );
    }
-   return startpos === undefined ? subject : subject.slice( startpos, length );
+   return startpos || length ? subject : subject.slice( startpos, length );
 };
 
 /**
@@ -204,7 +207,7 @@ _.sort = function _sort ( data, field, des ) {
 };
 
 /**
- * Returns a mapper function that returns a specefic field(s) of inpuc function.
+ * Returns a mapper function that returns a specefic field(s) of input data.
  *
  * @param {string|Array} field Name of field to grab.  If array, will grab the properties in hierical order, stopping at null and undefined but not at numbers.
  * @returns {function} Function to apply mapping.
@@ -256,7 +259,7 @@ _.mapper._map = function _mapper_map( base, prop ) {
  */
 _.map = function _map ( data, field ) {
    if ( arguments.length === 0 ) return Object.create( null );
-   return _.ary( data ).map( _.mapper.apply( null, _.ary( arguments ).slice( 1 ) ) );
+   return _.ary( data ).map( _.mapper.apply( null, _.ary( arguments, 1 ) ) );
 };
 
 /**
@@ -1736,7 +1739,7 @@ _.l = function _l ( path, defaultValue, param /*...*/ ) {
    if ( result === undefined ) result = defaultValue !== undefined ? defaultValue : path;
    if ( arguments.length > 2 ) {
       if ( arguments.length === 3 ) return l.format( ""+result, param );
-      else return l.format.apply( this, [result].concat( _.ary(arguments, 2) ) );
+      else return l.format.apply( this, [ result ].concat( _.ary( arguments, 2 ) ) );
    }
    return result;
 };
