@@ -6,173 +6,145 @@
 .negative_order { order: -10; }
 .hide { display: none !important; }
 
-html, body
-   {
-      margin: 0;
-      min-width: 100%;
-      min-height: 100%;
+html, body {
+   margin: 0;
+   min-width: 100%;
+   min-height: 100%;
    }
-html
-   {
-      height: 100%;
-      color: var( --main-text );
-      font: 16px Arial;
-      text-rendering: optimizeLegibility;
+html {
+   height: 100%;
+   color: var( --main-text );
+   font: 16px Arial;
+   text-rendering: optimizeLegibility;
    }
-div
-   {
-      margin: 0;
-      padding: 0;
+div {
+   margin: 0;
+   padding: 0;
    }
-table
-   {
-      border-spacing: 0;
+table {
+   border-spacing: 0;
    }
-a, a:visited
-   {
-      color: var( --cmpl-t2 );
-      text-decoration: none;
+a,
+a:visited {
+   color: var( --cmpl-t2 );
+   text-decoration: none;
    }
-a:hover
-   {
-      color: var( --cmpl-t1 );
-      text-decoration: underline;
+a:hover {
+   color: var( --cmpl-t1 );
+   text-decoration: underline;
    }
 
 /* Input fields */
-label > span:first-child
-   {
-      display: inline-block;
-      min-width: 120px;
+label > span:first-child {
+   display: inline-block;
+   min-width: 120px;
    }
-input, select, textarea, button, input[type="checkbox"] + span
-   {
-      margin: 2px 4px;
-      background-color: transparent;
-      color: var( --main-text );
-      border: 1px solid var( --main );
-      border-radius: 4px;
-      font: 16px Arial;
-      transition: background-color 1s ease, border 1s ease;
+input, select, textarea, button, input[type="checkbox"] + span {
+   background-color: transparent;
+   color: var( --main-text );
+   border: 1px solid var( --main );
+   border-radius: 4px;
+   font: 16px Arial;
+   margin: 2px 4px;
+   transition: background-color 1s ease, border 1s ease;
    }
    @keyframes hover_border_cycle { from { border-color: var( --main-t2 ); } to { border-color: var( --main ); }  }
-   input:hover, select:hover, textarea:hover, button:hover, input[type="checkbox"] + span:hover
-      {
-         background-color: var( --main-b2-o7 );
-         border-color: var( --main-t2 );
-         animation: hover_border_cycle 2s linear 1s infinite alternate;
+   input:hover, select:hover, textarea:hover, button:hover, input[type="checkbox"] + span:hover {
+      background-color: var( --main-b2-o7 );
+      border-color: var( --main-t2 );
+      animation: hover_border_cycle 2s linear 1s infinite alternate;
       }
    @keyframes focus_border_cycle { from { border-color: var( --cmpl-t2 ); } to { border-color: var( --cmpl ); }  }
-   input:focus, select:focus, textarea:focus, button:focus, input[type="checkbox"]:focus + span
-      {
-         background-color: var( --cmpl-b2-o7 );
-         border-color: var( --cmpl-t2 );
-         color: var( --cmpl-t2 );
-         animation: focus_border_cycle 2s linear 1s infinite alternate;
+   input:focus, select:focus, textarea:focus, button:focus, input[type="checkbox"]:focus + span {
+      background-color: var( --cmpl-b2-o7 );
+      border-color: var( --cmpl-t2 );
+      color: var( --cmpl-t2 );
+      animation: focus_border_cycle 2s linear 1s infinite alternate;
       }
-input[type="number"]
-   {
-      max-width: 50px;
+input[type="number"] {
+   max-width: 50px;
    }
-select
-   {
-      min-width: 120px;
-      /** Non-standard override of select style **/
-      -webkit-appearance: none;
-      -moz-appearance: none;
+select {
+   min-width: 120px;
+   /** Non-standard override of select style **/
+   -webkit-appearance: none;
+   -moz-appearance: none;
    }
 /* Checkboxes should be followed by a span, both wrapped by a label */
-input[type="checkbox"]
-   {
-      position: absolute;
-      top: -8000px;
-      z-index: -1000;
-      opacity: 0;
+input[type="checkbox"] {
+   position: absolute;
+   top: -8000px;
+   z-index: -1000;
+   opacity: 0;
    }
-   input[type="checkbox"] + span
-      {
-         padding: 0 4px;
-         border: 1px solid transparent;
+   input[type="checkbox"] + span {
+      border: 1px solid transparent;
+      padding: 0 4px;
       }
-      input[type="checkbox"]:checked + span
-         {
-            border-color: var( --main );
+      input[type="checkbox"]:checked + span {
+         border-color: var( --main );
          }
-         input[type="checkbox"]:checked:focus + span
-            {
-               border-color: var( --main-t2 );
-               color: var( --main-t2 );
-               animation: hover_border_cycle 2s linear 1s infinite alternate;
+         input[type="checkbox"]:checked:focus + span {
+            border-color: var( --main-t2 );
+            color: var( --main-t2 );
+            animation: hover_border_cycle 2s linear 1s infinite alternate;
             }
-   input[type="checkbox"]:disabled + span
-      {
-         color: var( --main-text-disabled );
+   input[type="checkbox"]:disabled + span {
+      color: var( --main-text-disabled );
       }
-   label:not(:last-child) > input[type="checkbox"] + span
-   {
+   label:not(:last-child) > input[type="checkbox"] + span {
       margin-right: 0;
-   }
+      }
 
 /* Top navigation */
-nav#top
-   {
+nav#top {
       display: flex;
+      border-bottom: 2px solid var( --main );
       align-items: flex-end;
       justify-content: space-between;
-      border-bottom: 2px solid var( --main );
    }
-   nav#top a
-      {
-         margin: 0 5px;
-         color: var( --cmpl-t1 );
+   nav#top a {
+      color: var( --cmpl-t1 );
+      margin: 0 5px;
       }
-      nav#top a:hover
-         {
-            color: var( --cmpl-t2 );
+      nav#top a:hover {
+         color: var( --cmpl-t2 );
          }
-   nav#top h1
-      {
-         flex-grow: 1;
-         margin: 0;
-         text-align: center;
-         font-size: 100%;
+   nav#top h1 {
+      flex-grow: 1;
+      font-size: 100%;
+      margin: 0;
+      text-align: center;
       }
-   #btn_theme::before
-      {
-         content: "🎨";
+   #btn_theme::before {
+      content: "🎨";
       }
-   #btn_lang::before
-      {
-         content: "🎌";
-         margin-right: 5px;
+   #btn_lang::before {
+      content: "🎌";
+      margin-right: 5px;
       }
 
 
 /* UI component style override */
-html dialog.ui
-   {
-      background-color: var( --main-b2-o7 );
-      border-color: var( --cmpl );
-      color: var( --main-text );
-      box-shadow: none;
+html dialog.ui {
+   background-color: var( --main-b2-o7 );
+   border-color: var( --cmpl );
+   color: var( --main-text );
+   box-shadow: none;
    }
-   html dialog.ui section header
-      {
-         background-color: var( --cmpl-b2 );
-         color: var( --cmpl-t1 );
-         border-bottom-color: var( --cmpl );
+   html dialog.ui section header {
+      background-color: var( --cmpl-b2 );
+      color: var( --cmpl-t1 );
+      border-bottom-color: var( --cmpl );
       }
-      html dialog.ui header button
-         {
-            border-color: var( --cmpl );
-            color: var( --cmpl-t1 );
+      html dialog.ui header button {
+         border-color: var( --cmpl );
+         color: var( --cmpl-t1 );
          }
-         html dialog.ui header button:hover
-            {
-               border-color: var( --main-t2 );
+         html dialog.ui header button:hover {
+            border-color: var( --main-t2 );
             }
 
-.pbui.chargen
-   {
-      max-width: 330px;
+.pbui.chargen {
+   max-width: 330px;
    }
