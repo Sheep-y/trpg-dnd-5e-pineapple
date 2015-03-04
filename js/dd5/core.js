@@ -203,17 +203,11 @@ sys.Composite = {
       var me = _.newIfSame( this, sys.Composite );
       _.Composite.create.call( me );
       if ( ! opt ) return me;
-      if ( opt.id ) {
-         me.id = opt.id;
-         delete opt.id;
-      }
-      if ( opt.cid ) {
-         me.cid = opt.cid;
-         delete opt.cid;
-      }
-      if ( opt.name ) {
-         me.name = opt.name;
-         delete opt.name;
+      for ( var prop of [ 'id', 'cid', 'name' ] ) {
+         if ( opt[ prop ] ) {
+            me[ prop ] = opt[ prop ];
+            delete opt[ prop ];
+         }
       }
       if ( opt.parent ) {
          opt.parent.add( me );
@@ -330,7 +324,7 @@ var Catalog = {
          if ( typeof( crit ) === 'string' ) crit = { 'id' : crit };
          for ( var p in crit ) ( prop => {
             var criteron = crit[ prop ], filter;
-            switch ( typeof( criterion ) ) {
+            switch ( typeof( criteron ) ) {
                case 'object' :
                   if ( Array.isArray( criteron ) ) { // List match (any in list), second most common case
                      filter = ( e ) => {
@@ -355,7 +349,7 @@ var Catalog = {
                   filter = ( e ) => criteron( _.ary( e, prop ), e, prop );
                   break;
 
-               case 'symbol' : // Existance check
+               case 'symbol'   : // Existance check
                   filter = ( e ) => prop in e;
                   break;
 

@@ -286,6 +286,6 @@ _.Composite = {
    }
 };
 
-if ( Symbol && Symbol.iterator ) _.Composite[ Symbol.iterator ] = _.Composite.prototype.iterator;
+if ( Symbol && Symbol.iterator ) _.Composite[ Symbol.iterator ] = _.Composite.iterator;
 
 } )( _ );

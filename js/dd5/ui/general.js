@@ -117,7 +117,8 @@ ui.registerFactory( 'subrule.numslot', {
       html = _.html( html + `<input id='${id}' type='number' min='${ e.getMinVal() }' max='${ e.getMaxVal() }' value='${ e.getPick() }' data-attr='${ e.id }' /></label></div>` );
 
       // Update slot on change
-      _( html, 'input' )[ 0 ].addEventListener( 'change', function dd5_ui_edit_numslot_onchange ( ) { rule.setPick( +e.value ); } );
+      var input = _( html, 'input' )[0];
+      _( html, 'input' )[ 0 ].addEventListener( 'change', function dd5_ui_edit_numslot_onchange ( ) { e.setPick( +input.value ); } );
 
       for ( var c of e.children ) {
          var child = ui.createUI( c, 'edit', container );

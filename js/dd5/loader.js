@@ -269,6 +269,10 @@ var loader = ns.loader = {
                result = loader.jsonp.load_rule( 'feature', e );
                break;
 
+            case 'negate' :
+               result = subrule.Negate.create( e );
+               break;
+
             case 'numslot' : // Numeric slot
                result = subrule.NumSlot.create( e );
                break;
@@ -290,7 +294,7 @@ var loader = ns.loader = {
                break;
 
             default:
-               throw new Error( "unknown subrule type '" + e.subrule + "'" );
+               throw Error( "unknown subrule type '" + e.subrule + "'" );
          }
          return result;
       }
