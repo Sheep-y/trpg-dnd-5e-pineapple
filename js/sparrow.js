@@ -120,7 +120,7 @@ _.getd = function _getd ( root /*, property, defVal */ ) {
 _.ary = function _ary ( subject, startpos, length ) {
    if ( ! Array.isArray( subject ) ) {
       if ( subject === null || subject === undefined ) return subject;
-      if ( typeof( subject ) === 'string' || typeof( subject.next ) === 'function' || ! length in subject ) return [ subject ];
+      if ( typeof( subject ) === 'string' || typeof( subject ) === 'function' || ! ( length in subject ) ) return [ subject ];
       if ( subject.length <= 0 ) return [];
       if ( startpos || length )
          return Array.prototype.slice.call( subject, startpos, length );
@@ -506,7 +506,7 @@ _.ajax = function _ajax ( option, onload ) {
 
    var url = option.url, xhr = option.xhr;
    if ( xhr === undefined ) {
-      if ( option.cor && _.is.ie() ) xhr = new ActiveXObject( "Microsoft.XMLHttp" );
+      if ( option.cor ) try { xhr = new ActiveXObject( "Microsoft.XMLHttp" ); } catch ( err ) { }
       if ( ! xhr ) xhr = new XMLHttpRequest();
    }
    _.info( "[AJAX] Ajax: "+url);
@@ -884,7 +884,7 @@ _.alert.log = [];
  */
 _.time = function _time ( msg ) {
    var t = _.time;
-   var now = window.performance ? performance.now() : Date();
+   var now = window.performance ? performance.now() : Date.now();
    if ( msg === undefined ) {
       t.base = now;
       t.last = null;
@@ -1553,14 +1553,14 @@ _.Executor.prototype = {
          }
       }
 
-      var delay = this.interval <= 0 ? 0 : Math.max( 0, -Date().getTime() + this._lastRun + this.interval );
+      var delay = this.interval <= 0 ? 0 : Math.max( 0, -Date.now() + this._lastRun + this.interval );
       if ( delay > 12 ) return _executor_schedule_notice ( delay ); // setTimeout is not accurate so allow 12ms deviations
       for ( var i = 0 ; i < this.thread && this.waiting.length > 0 ; i++ ) {
          if ( ! this.running[i] ) {
             var r = exe.waiting.splice( 0, 1 )[0];
             exe.running[i] = r;
             //_.info('Schedule task #' + i + ' ' + r[0].name );
-            exe._lastRun = Date().getTime();
+            exe._lastRun = Date.now();
             _.setImmediate( _executor_run.bind( null, i, r ) );
             if ( exe.interval > 0 ) return _executor_schedule_notice ( exe.interval );
          }
