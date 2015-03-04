@@ -1,5 +1,5 @@
 var _, pinbun; // Globals
-if ( ! _ || ! _.time ) throw new Error( '[dd5] Sprrow libirary must be loaded first.' );
+if ( ! _ || ! _.time ) throw Error( '[dd5] Sprrow libirary must be loaded first.' );
 else if ( ! pinbun ) ( function pinbun_core_init ( ns ) { 'use strict';
 
 var log = ns.event = _.EventManager.create( [ 'load', 'l10n', 'error', 'warn', 'info', 'fine', 'finer', 'finest' ], ns );
@@ -13,7 +13,7 @@ log.add( 'error', ( e, ex ) => {
       ex.message = `${e} (${ex.message})`;
       e = ex;
    } else {
-      e = typeof( e ) === 'object' ? e : new Error( e );
+      e = typeof( e ) === 'object' ? e : Error( e );
       if ( ex ) e.cause = ex;
    }
    _.error( e );

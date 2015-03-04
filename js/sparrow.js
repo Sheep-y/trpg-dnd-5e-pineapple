@@ -344,7 +344,7 @@ _.pref = function _pref ( key, defaultValue ) {
    if ( window.localStorage ) {
       var store = localStorage;
       if ( key === undefined ) {
-         return new Array( store.length ).fill( undefined ).map( function _pref_list ( e, i ) {
+         return Array( store.length ).fill( undefined ).map( function _pref_list ( e, i ) {
             return store.key( i );
          } );
       }
@@ -884,7 +884,7 @@ _.alert.log = [];
  */
 _.time = function _time ( msg ) {
    var t = _.time;
-   var now = window.performance ? performance.now() : new Date();
+   var now = window.performance ? performance.now() : Date();
    if ( msg === undefined ) {
       t.base = now;
       t.last = null;
@@ -1553,14 +1553,14 @@ _.Executor.prototype = {
          }
       }
 
-      var delay = this.interval <= 0 ? 0 : Math.max( 0, -(new Date()).getTime() + this._lastRun + this.interval );
+      var delay = this.interval <= 0 ? 0 : Math.max( 0, -Date().getTime() + this._lastRun + this.interval );
       if ( delay > 12 ) return _executor_schedule_notice ( delay ); // setTimeout is not accurate so allow 12ms deviations
       for ( var i = 0 ; i < this.thread && this.waiting.length > 0 ; i++ ) {
          if ( ! this.running[i] ) {
             var r = exe.waiting.splice( 0, 1 )[0];
             exe.running[i] = r;
             //_.info('Schedule task #' + i + ' ' + r[0].name );
-            exe._lastRun = new Date().getTime();
+            exe._lastRun = Date().getTime();
             _.setImmediate( _executor_run.bind( null, i, r ) );
             if ( exe.interval > 0 ) return _executor_schedule_notice ( exe.interval );
          }

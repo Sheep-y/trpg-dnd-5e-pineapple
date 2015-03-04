@@ -1,5 +1,5 @@
 var dd5; // Globals
-if ( ! dd5 ) throw new Error( '[dd5.saver] 5e core module must be loaded first.' );
+if ( ! dd5 ) throw Error( '[dd5.saver] 5e core module must be loaded first.' );
 else if ( ! dd5.saver ) ( function dd5_saver_init ( ns ) { 'use strict';
 
 var sys = ns.sys;

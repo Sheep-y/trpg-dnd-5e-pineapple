@@ -1,5 +1,5 @@
 var dd5; // Globals
-if ( ! dd5 ) throw new Error( '[dd5.loader] 5e core module must be loaded first.' );
+if ( ! dd5 ) throw Error( '[dd5.loader] 5e core module must be loaded first.' );
 else if ( ! dd5.loader ) ( function dd5_loader_init ( ns ) { 'use strict';
 
 var sys = ns.sys;
@@ -213,7 +213,7 @@ var loader = ns.loader = {
                return { subrule: 'prof', prof_type: 'prof$' + left[1], 'value': parse_prof_string( right ) };
 
             default:
-               throw new Error( "Unknown subrule shortcut type '" + left[0] + "'" );
+               throw Error( "Unknown subrule shortcut type '" + left[0] + "'" );
          }
       },
 

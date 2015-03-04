@@ -1,5 +1,5 @@
 var dd5; // Globals
-if ( ! dd5 ) throw new Error( '[dd5.rule] 5e core module must be loaded first.' );
+if ( ! dd5 ) throw Error( '[dd5.rule] 5e core module must be loaded first.' );
 else if ( ! dd5.rule ) ( function dd5_rule_init ( ns ) { 'use strict';
 
 /**
@@ -21,13 +21,13 @@ var rule = ns.rule = _.map();
 rule.wrapper = {
    you ( target ) {
       var c = ( target ? target.getCharacter() : null ) || { query: _.echo, queryChar: _.dummy };
-      return new Proxy( c, { // Divert unknown properties to query function
+      return Proxy( c, { // Divert unknown properties to query function
          'get' ( me, name ) {
             return name in me ? me[ name ] : me.queryChar( name, me );
          }
       } );
    },
-   res : new Proxy( dd5.res, { // Repack categories as function
+   res : Proxy( dd5.res, { // Repack categories as function
       'get' ( me, name ) {
          return name in me
             ? criteria => rule.wrapper.first( me[ name ].get( criteria ) )
@@ -35,7 +35,7 @@ rule.wrapper = {
       }
    } ),
    first ( target ) {
-      return new Proxy( target, { // if there is only one match, divert unknown properties to first result
+      return Proxy( target, { // if there is only one match, divert unknown properties to first result
          'get' ( me, name ) {
             return name in me ? me[ name ] : ( me.length == 1 ? me[0][ name ] : undefined );
          }
@@ -54,7 +54,7 @@ function property_compiler ( subject, prop, value, args ) { // TODO: Cache compi
       var body = String( value ), func;
       if ( (""+value).match( /^(\d+|[^"\r\n]*"|'[^'\r\n]*'|`[^`]*`|true|false|null|undefined)$/ ) ) { // simple values
          body = 'return ' + body;
-         func = subject[ prop ] = new Function( body );
+         func = subject[ prop ] = Function( body );
       } else {
          var head = '', varlist = [];
          if ( body.match( /\bdb\b/ ) ) varlist.push( 'db=dd5.rule.wrapper.res' );
@@ -70,7 +70,7 @@ function property_compiler ( subject, prop, value, args ) { // TODO: Cache compi
          var func_name = prop + '_compiled';
          var exp_catch = `catch(err_obj){err_obj.message+='; source: '+${func_name}.exp;throw err_obj}`;
          // returning function expression is necessary for named function, so that the function can be referred in exception handler.
-         func = new Function(`'use strict'; return (function ${func_name}(){'use strict'; try{ ${body} } ${exp_catch} } )`)();
+         func = Function(`'use strict'; return (function ${func_name}(){'use strict'; try{ ${body} } ${exp_catch} } )`)();
       }
       subject[ prop ] = func;
       func.exp = body;
@@ -131,7 +131,7 @@ var Resource = rule.Resource = {
       rule.Rule.create.call( me, opt );
       _.assert( res[ type ] && me.id && me.cid, '[dd5.Resource] Resource must have id and compoent id.' );
       var dup = res[ type ].get( me.id );
-      if ( dup.length ) throw new Error( `Redeclaring ${ type }.${ me.id }. (already declared by ${ dup[0].source.cid })` );
+      if ( dup.length ) throw Error( `Redeclaring ${ type }.${ me.id }. (already declared by ${ dup[0].source.cid })` );
       if ( opt ) {
          if ( opt.source ) {
             if ( typeof( opt.source ) === 'string' ) opt.source = res.source.get({ id: opt.source })[0];

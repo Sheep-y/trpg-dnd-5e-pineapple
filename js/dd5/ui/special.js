@@ -1,5 +1,5 @@
 var dd5; // Globals
-if ( ! dd5 || ! dd5.ui ) throw new Error( '[dd5] dd5 UI module must be loaded first.' );
+if ( ! dd5 || ! dd5.ui ) throw Error( '[dd5] dd5 UI module must be loaded first.' );
 else if ( ! dd5.ui.registered( 'edit', 'dd5.feature.pc_ability' ) ) ( function dd5_ui_special_init ( ns ) { 'use strict';
 
 var ui = ns.ui;

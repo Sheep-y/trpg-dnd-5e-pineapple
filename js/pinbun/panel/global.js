@@ -1,5 +1,5 @@
 var pinbun; // Globals
-if ( ! pinbun || ! pinbun.ui ) throw new Error( '[dd5] Pineapplebun UI module must be loaded first.' );
+if ( ! pinbun || ! pinbun.ui ) throw Error( '[dd5] Pineapplebun UI module must be loaded first.' );
 else if ( ! pinbun.ui.Global ) ( function ui_global_init ( ns ) { 'use strict';
 
 var ui = ns.ui;

@@ -1,5 +1,5 @@
 var pinbun; // Globals
-if ( ! pinbun ) throw new Error( '[dd5] Pineapplebun core must be loaded first.' );
+if ( ! pinbun ) throw Error( '[dd5] Pineapplebun core must be loaded first.' );
 else if ( ! pinbun.ui ) ( function pinbun_ui_init ( ns ) { 'use strict';
 
 var panels = [], next_unique_id = 0;

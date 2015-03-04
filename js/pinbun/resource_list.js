@@ -1,5 +1,5 @@
 var pinbun; // Globals
-if ( ! pinbun ) throw new Error( '[pinbin.langlist] Pineapplebun must be loaded first.' );
+if ( ! pinbun ) throw Error( '[pinbin.langlist] Pineapplebun must be loaded first.' );
 
 pinbun.locales = [
 {

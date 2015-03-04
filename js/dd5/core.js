@@ -1,5 +1,5 @@
 var pinbun, dd5; // Globals
-if ( ! pinbun ) throw new Error( '[dd5] Pineapplebun must be loaded first.' );
+if ( ! pinbun ) throw Error( '[dd5] Pineapplebun must be loaded first.' );
 else if ( ! dd5 ) ( function dd5_core_init ( ns ) { 'use strict';
 
 ns.systemId = 'DD/5.0';

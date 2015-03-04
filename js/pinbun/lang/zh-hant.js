@@ -1,5 +1,5 @@
 var _; // Globals
-if ( ! _ ) throw new Error( '[dd5.l10n.zh] Sparrow library must be loaded first.' );
+if ( ! _ ) throw Error( '[dd5.l10n.zh] Sparrow library must be loaded first.' );
 
 _.l.set( 'zh-Hant', null, {
    'title': '🍞',

@@ -1,5 +1,5 @@
 var dd5; // Globals
-if ( ! dd5 || ! dd5.rule ) throw new Error( '[dd5.subrule] 5e rule module must be loaded first.' );
+if ( ! dd5 || ! dd5.rule ) throw Error( '[dd5.subrule] 5e rule module must be loaded first.' );
 else if ( ! dd5.rule.subrule ) ( function dd5_subrule_init ( ns ) { 'use strict';
 
 var sys = ns.sys;
@@ -242,7 +242,7 @@ subrule.Slot = {
                return log.warn( `[dd5.rule.Slot] Invalid picked index ${ index } for slot ${ this.id }: ${ pick }` );
             if ( orig && orig.length > index ) remover( orig[ index ] );
             result = _.ary( orig );
-            if ( ! result ) result = new Array( count ).fill( null );
+            if ( ! result ) result = Array( count ).fill( null );
             else result = result.concat(); // We need to keep orig for the events
             result[ index ] = adder( pick );
          }
