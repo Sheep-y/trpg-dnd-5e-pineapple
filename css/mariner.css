@@ -22,5 +22,6 @@ html {
 
    --cmpl-b2-o7 : rgba( 255, 231, 187, 0.7 );
 
-   background: url("../img/mariner/letter-d.svg") center / contain no-repeat, var( --main-bkgd );
+   background: url("<?coco-datauri ../img/mariner/letter-d.svg delete(the line after this) ?>") center / contain no-repeat, var( --main-bkgd );
+   background-image: url("../img/mariner/letter-d.svg");
 }
