@@ -1,5 +1,4 @@
-(function sparrrow_init() { 'use strict'; // ex: softtabstop=3 shiftwidth=3 tabstop=3 expandtab
-/**
+/*                                                                                                                      <![CDATA[ ex: softtabstop=3 shiftwidth=3 tabstop=3 expandtab *//**
  *
  * sparrow.js
  *
@@ -8,6 +7,7 @@
  * Feature support varies by browser, target is latest IE, Chrome, Firefox
  *
  */
+(function sparrrow_init() { 'use strict';
 
 var ns = this;
 
@@ -1980,4 +1980,4 @@ _.time();
 
 return _;
 
-}).call( this );
+}).call( this );/*]]>*/

@@ -1,3 +1,4 @@
+/*                                                                                                                      <![CDATA[ ex: softtabstop=3 shiftwidth=3 tabstop=3 expandtab */
 var _; // Globals
 if ( ! _ ) throw Error( '[dd5.l10n.en-us] Sparrow library must be loaded first.' );
 
@@ -153,3 +154,5 @@ _.l.set( 'en-US', 'dd5.equipment', {
    'brewer-tool': "Brewer's supplies",
    'mason-tool' : "Mason's tools",
 } );
+
+/*]]>*/

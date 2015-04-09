@@ -1,3 +1,4 @@
+/*                                                                                                                      <![CDATA[ ex: softtabstop=3 shiftwidth=3 tabstop=3 expandtab */
 var pinbun; // Globals
 if ( ! pinbun ) throw Error( '[dd5] Pineapplebun core must be loaded first.' );
 else if ( ! pinbun.ui ) ( function pinbun_ui_init ( ns ) { 'use strict';
@@ -86,4 +87,4 @@ var ui = ns.ui = {
 pinbun.event.add( 'load', e => ns.ui.openDialog( "Loaded: " + e ) );
 pinbun.event.load( 'pinbun.ui' );
 
-})( pinbun );
+})( pinbun );/*]]>*/

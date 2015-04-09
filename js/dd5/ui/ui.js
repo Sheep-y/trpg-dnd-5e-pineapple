@@ -1,3 +1,4 @@
+/*                                                                                                                      <![CDATA[ ex: softtabstop=3 shiftwidth=3 tabstop=3 expandtab */
 var dd5; // Globals
 if ( ! dd5 ) throw Error( '[dd5] dd5 core module must be loaded first.' );
 else if ( ! dd5.ui ) ( function dd5_ui_slot_init ( ns ) { 'use strict';
@@ -81,4 +82,4 @@ var ui = ns.ui = {
 
 pinbun.event.load( 'dd5.ui' );
 
-})( dd5 );
+})( dd5 );/*]]>*/

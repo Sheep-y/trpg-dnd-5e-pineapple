@@ -1,3 +1,4 @@
+/*                                                                                                                      <![CDATA[ ex: softtabstop=3 shiftwidth=3 tabstop=3 expandtab */
 var dd5; // Globals
 if ( ! dd5 || ! dd5.ui ) throw Error( '[dd5] dd5 UI module must be loaded first.' );
 else if ( ! dd5.ui.registered( 'edit', 'dd5.feature.pc_ability' ) ) ( function dd5_ui_special_init ( ns ) { 'use strict';
@@ -52,4 +53,4 @@ ui.registerFactory( 'feature.pc_ability', {
 
 pinbun.event.load( 'dd5.ui.special' );
 
-})( dd5 );
+})( dd5 );/*]]>*/

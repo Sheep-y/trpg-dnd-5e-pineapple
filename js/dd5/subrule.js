@@ -1,3 +1,4 @@
+/*                                                                                                                      <![CDATA[ ex: softtabstop=3 shiftwidth=3 tabstop=3 expandtab */
 var dd5; // Globals
 if ( ! dd5 || ! dd5.rule ) throw Error( '[dd5.subrule] 5e rule module must be loaded first.' );
 else if ( ! dd5.rule.subrule ) ( function dd5_subrule_init ( ns ) { 'use strict';
@@ -347,4 +348,4 @@ subrule.ProfSlot = {
 
 pinbun.event.load( 'dd5.rule.subrule' );
 
-})( dd5 );
+})( dd5 );/*]]>*/

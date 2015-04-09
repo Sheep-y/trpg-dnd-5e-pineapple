@@ -1,4 +1,4 @@
-/*
+/*                                                                                                                      <![CDATA[ ex: softtabstop=3 shiftwidth=3 tabstop=3 expandtab *//**
  * polyfill_es7.js
  *
  * Polyfill for ES7 features.  Requires ES5.1 support.
@@ -21,4 +21,4 @@ if ( ! [].includes ) {
    } );
 }
 
-})();
+})();/*]]>*/

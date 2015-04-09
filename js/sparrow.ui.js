@@ -1,11 +1,11 @@
-(function sparrrow_ui_init( _ ) { 'use strict'; // ex: softtabstop=3 shiftwidth=3 tabstop=3 expandtab
-/**
+/*                                                                                                                      <![CDATA[ ex: softtabstop=3 shiftwidth=3 tabstop=3 expandtab *//**
  *
  * sparrow.ui.js
  *
  * Sparrow - light weight HTML5 UI library, object oriented.  Only support latest browsers.
  *
  */
+(function sparrrow_ui_init( _ ) { 'use strict';
 
 var ui = _.ui = _.map();
 var symbol = ui.symbol = {
@@ -115,4 +115,4 @@ ui.Dialog = {
 }` }
 };
 
-})( _ );
+})( _ );/*]]>*/

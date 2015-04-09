@@ -1,3 +1,4 @@
+/*                                                                                                                      <![CDATA[ ex: softtabstop=3 shiftwidth=3 tabstop=3 expandtab */
 var pinbun; // Globals
 if ( ! pinbun ) throw Error( '[pinbin.langlist] Pineapplebun must be loaded first.' );
 
@@ -30,3 +31,5 @@ pinbun.themes = [ // Name is localised
    },
 },
 ];
+
+/*]]>*/

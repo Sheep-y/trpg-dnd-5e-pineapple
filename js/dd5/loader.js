@@ -1,3 +1,4 @@
+/*                                                                                                                      <![CDATA[ ex: softtabstop=3 shiftwidth=3 tabstop=3 expandtab */
 var dd5; // Globals
 if ( ! dd5 ) throw Error( '[dd5.loader] 5e core module must be loaded first.' );
 else if ( ! dd5.loader ) ( function dd5_loader_init ( ns ) { 'use strict';
@@ -347,4 +348,4 @@ function parse_value_range ( src ) {
 
 pinbun.event.load( 'dd5.loader' );
 
-})( dd5 );
+})( dd5 );/*]]>*/

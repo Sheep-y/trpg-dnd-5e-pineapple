@@ -1,3 +1,4 @@
+/*                                                                                                                      <![CDATA[ ex: softtabstop=3 shiftwidth=3 tabstop=3 expandtab */
 var _, pinbun; // Globals
 if ( ! _ || ! _.time ) throw Error( '[dd5] Sprrow libirary must be loaded first.' );
 else if ( ! pinbun ) ( function pinbun_core_init ( ns ) { 'use strict';
@@ -62,4 +63,4 @@ ns.themes = []; // Loaded by resource list.
 
 pinbun.event.load( 'pinbun' );
 
-})( pinbun = _.map() );
+})( pinbun = _.map() );/*]]>*/

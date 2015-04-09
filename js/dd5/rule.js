@@ -1,3 +1,4 @@
+/*                                                                                                                      <![CDATA[ ex: softtabstop=3 shiftwidth=3 tabstop=3 expandtab */
 var dd5; // Globals
 if ( ! dd5 ) throw Error( '[dd5.rule] 5e core module must be loaded first.' );
 else if ( ! dd5.rule ) ( function dd5_rule_init ( ns ) { 'use strict';
@@ -348,4 +349,4 @@ rule.Race = {
    },
 };
 
-})( dd5 );
+})( dd5 );/*]]>*/

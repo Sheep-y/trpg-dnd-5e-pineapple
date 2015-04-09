@@ -1,3 +1,4 @@
+/*                                                                                                                      <![CDATA[ ex: softtabstop=3 shiftwidth=3 tabstop=3 expandtab */
 var dd5; // Globals
 if ( ! dd5 || ! dd5.ui ) throw Error( '[dd5] dd5 UI module must be loaded first.' );
 else if ( ! dd5.ui.registered( 'edit', 'dd5.subrule.slot' ) ) ( function dd5_ui_general_init ( ns ) { 'use strict';
@@ -138,4 +139,4 @@ ui.registerFactory( 'subrule.numslot', {
 
 pinbun.event.load( 'dd5.ui.general' );
 
-})( dd5 );
+})( dd5 );/*]]>*/

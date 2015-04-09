@@ -1,3 +1,4 @@
+/*                                                                                                                      <![CDATA[ ex: softtabstop=3 shiftwidth=3 tabstop=3 expandtab */
 var pinbun, dd5; // Globals
 if ( ! pinbun ) throw Error( '[dd5] Pineapplebun must be loaded first.' );
 else if ( ! dd5 ) ( function dd5_core_init ( ns ) { 'use strict';
@@ -384,4 +385,4 @@ sys.toCId = function dd5_sys_toCId ( data ) {
 
 pinbun.event.load( 'dd5' );
 
-})( dd5 = _.map() );
+})( dd5 = _.map() );/*]]>*/

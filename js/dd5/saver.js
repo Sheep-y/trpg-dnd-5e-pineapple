@@ -1,3 +1,4 @@
+/*                                                                                                                      <![CDATA[ ex: softtabstop=3 shiftwidth=3 tabstop=3 expandtab */
 var dd5; // Globals
 if ( ! dd5 ) throw Error( '[dd5.saver] 5e core module must be loaded first.' );
 else if ( ! dd5.saver ) ( function dd5_saver_init ( ns ) { 'use strict';
@@ -21,4 +22,4 @@ var saver = ns.saver = {
 
 pinbun.event.load( 'dd5.saver' );
 
-})( dd5 );
+})( dd5 );/*]]>*/

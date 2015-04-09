@@ -1,3 +1,4 @@
+/*                                                                                                                      <![CDATA[ ex: softtabstop=3 shiftwidth=3 tabstop=3 expandtab */
 var _; // Globals
 if ( ! _ ) throw Error( '[pinbin.l10n.en-us] Sparrow library must be loaded first.' );
 
@@ -17,3 +18,5 @@ _.l.set( 'en-US', 'pinbun', {
       'mariner' : 'Mariner',
    },
 } );
+
+/*]]>*/

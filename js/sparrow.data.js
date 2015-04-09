@@ -1,4 +1,4 @@
-/*
+/*                                                                                                                      <![CDATA[ ex: softtabstop=3 shiftwidth=3 tabstop=3 expandtab *//**
  * sparrow.data.js
  *
  * Data module for Sparrow library.
@@ -288,4 +288,4 @@ _.Composite = {
 
 if ( Symbol && Symbol.iterator ) _.Composite[ Symbol.iterator ] = _.Composite.iterator;
 
-} )( _ );
+} )( _ );/*]]>*/

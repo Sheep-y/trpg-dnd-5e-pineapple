@@ -1,3 +1,4 @@
+/*                                                                                                                      <![CDATA[ ex: softtabstop=3 shiftwidth=3 tabstop=3 expandtab */
 var pinbun; // Globals
 if ( ! pinbun || ! pinbun.ui ) throw Error( '[dd5] Pineapplebun UI module must be loaded first.' );
 else if ( ! pinbun.ui.Global ) ( function ui_global_init ( ns ) { 'use strict';
@@ -94,4 +95,4 @@ function find_next_by_code( list, current ) {
 
 log.load( 'pinbun.ui.global' );
 
-})( pinbun );
+})( pinbun );/*]]>*/
