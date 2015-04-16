@@ -120,7 +120,7 @@ _.getd = function _getd ( root /*, property, defVal */ ) {
 _.ary = function _ary ( subject, startpos, length ) {
    if ( ! Array.isArray( subject ) ) {
       if ( subject === null || subject === undefined ) return subject;
-      if ( typeof( subject ) === 'string' || typeof( subject ) === 'function' || ! ( length in subject ) ) return [ subject ];
+      if ( typeof( subject ) === 'string' || typeof( subject ) === 'function' || typeof( subject.length ) !== 'number' ) return [ subject ];
       if ( subject.length <= 0 ) return [];
       if ( startpos || length )
          return Array.prototype.slice.call( subject, startpos, length );
