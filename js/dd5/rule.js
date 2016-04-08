@@ -22,13 +22,13 @@ var rule = ns.rule = _.map();
 rule.wrapper = {
    you ( target ) {
       var c = ( target ? target.getCharacter() : null ) || { query: _.echo, queryChar: _.dummy };
-      return Proxy( c, { // Divert unknown properties to query function
+      return new Proxy( c, { // Divert unknown properties to query function
          'get' ( me, name ) {
             return name in me ? me[ name ] : me.queryChar( name, me );
          }
       } );
    },
-   res : Proxy( dd5.res, { // Repack categories as function
+   res : new Proxy( dd5.res, { // Repack categories as function
       'get' ( me, name ) {
          return name in me
             ? criteria => rule.wrapper.first( me[ name ].get( criteria ) )
@@ -36,7 +36,7 @@ rule.wrapper = {
       }
    } ),
    first ( target ) {
-      return Proxy( target, { // if there is only one match, divert unknown properties to first result
+      return new Proxy( target, { // if there is only one match, divert unknown properties to first result
          'get' ( me, name ) {
             return name in me ? me[ name ] : ( me.length == 1 ? me[0][ name ] : undefined );
          }
